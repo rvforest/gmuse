@@ -1,0 +1,95 @@
+name: Run Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+env:
+  FORCE_COLOR: 1
+
+jobs:
+  run-checks:
+    name: Run checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Run checks
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+
+  run-tests:
+    name: Run tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: wntrblm/nox@main
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Run tests
+        run: nox -s "coverage-${{ matrix.python-version }}" -- --cov-report=xml -vv 
+        run: >
+          nox -s "coverage-${{ matrix.python-version }}" \
+            -- \
+            --cov-report=xml \
+            -vv \
+            --junitxml=junit.xml \
+            -o junit_family=legacy
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+
+      - name: Upload test results to Codecov
+        if:${{ !cancelled() }}uses: codecov/test-results-action@v1
+ 
+  run-doctests:
+    name: Run doctests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: wntrblm/nox@main
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run doctest
+        run: nox -s doctest -- -vv
+
+  build-check:
+    name: Build, install, and CLI smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Install built wheel
+        run: |
+          pip install dist/*.whl
+
+
+      - name: CLI smoke test
+        run: |
+          gmuse --help
+          gmuse --version

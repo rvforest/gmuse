@@ -1,0 +1,71 @@
+# Release Drafter Configuration
+# https://github.com/release-drafter/release-drafter
+
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+categories:
+  - title: "🚨 Breaking Changes"
+    labels:
+      - "breaking-change"
+  - title: "✨ New Features & Enhancements"
+    labels:
+      - "enhancement"
+  - title: "🐛 Bug Fixes"
+    labels:
+      - "bug"
+  - title: "⚡️ Performance Improvements"
+    labels:
+      - "performance"
+  - title: "🔒 Security"
+    labels:
+      - "security"
+  - title: "⬆️ Dependencies"
+    labels:
+      - "dependencies"
+  - title: "📖 Documentation"
+    labels:
+      - "documentation"
+
+# Define labels that should be excluded from the release notes entirely.
+# These are typically internal development changes that don't concern users.
+exclude-labels:
+  - "internal" # Routine maintenance, no user impact
+  - "refactor" # Internal code restructuring, no user impact
+  - "ci" # CI/CD pipeline changes
+  - "testing" # Test-related changes
+  - "ignore-for-release" # A custom label for PRs you explicitly want to skip
+
+# This ensures only PRs that match one of the defined categories are shown.
+# If a PR has a label that's not in 'categories' and not in 'exclude-labels',
+# it will simply not appear in the release notes.
+filter-by-commitish: true
+
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+change-title-escapes: '\<*_&' # You can add # and @ to disable mentions, and add ` to disable code blocks.
+
+version-resolver:
+  minor:
+    labels:
+      - 'breaking-change'  # only for v0
+      - 'feature'
+      - 'enhancement'
+  patch:
+    labels:
+      - 'bug'
+      - 'performance'
+      - 'optimization'
+      - 'security'
+      - 'dependencies'
+      - 'documentation'
+      - 'docs'
+  default: patch # If no explicit version-bump label is found, default to a patch bump
+
+# Define the template for the release notes.
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  ---
+
+  **Full Changelog**: https://github.com/$OWNER/$REPOSITORY/compare/$PREVIOUS_TAG...v$RESOLVED_VERSION

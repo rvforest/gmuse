@@ -1,0 +1,89 @@
+[build-system]
+requires = ["hatchling", "versioningit"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gmuse"
+authors = [
+    { name = "Robert Forest", email = "rvforest@gmail.com" }
+]
+description = "AI generated commit messages."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dynamic = ["version"]
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.10",
+
+    "Programming Language :: Python :: 3.11",
+
+    "Programming Language :: Python :: 3.12",
+
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "typer>=0.9.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/rvforest/gmuse"
+Documentation = "https://gmuse.readthedocs.io/"
+Source = "https://github.com/rvforest/gmuse"
+Issues = "https://github.com/rvforest/gmuse/issues"
+
+
+[project.scripts]
+gmuse = "gmuse.cli.main:app"
+
+
+[dependency-groups]
+dev = [
+  "mypy>=1.15.0",
+  "nox>=2025.2.9",
+  "pre-commit>=4.2.0",
+  "pytest>=8.3.5",
+  "pytest-cov>=6.1.1",
+  "ruff>=0.11.6",
+  "types-pyyaml>=6.0.12.20250516",
+]
+docs = [
+  "furo>=2024.8.6",
+  "myst-parser>=3.0.1",
+  "pyyaml>=6.0.2",
+  "sphinx>=7.4.7",
+  "sphinx-autobuild>=2024.10.3",
+  "sphinx-autodoc2>=0.5.0",
+]
+
+[tool.ruff]
+exclude = ["tests/*"]
+
+[tool.ruff.lint]
+per-file-ignores = { "__init__.py" = ["F401"] }
+select = ["T100"]
+
+[tool.hatch.version]
+source = "versioningit"
+
+[tool.versioningit.vcs]
+method = "git"
+match = ["v*"]
+default-tag = "0.1.0"
+
+[tool.versioningit.next-version]
+method = "smallest"
+
+[tool.versioningit.format]
+distance = "{next_version}.dev{distance}+{vcs}{rev}"
+dirty = "{base_version}+d{build_date:%Y%m%d}"
+distance-dirty = "{next_version}.dev{distance}+{vcs}{rev}.d{build_date:%Y%m%d}"
+
+[tool.versioningit.template-fields]
+pep440 = true
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true

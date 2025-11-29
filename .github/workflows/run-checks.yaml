@@ -45,7 +45,7 @@ jobs:
         run: uv python install
 
       - name: Run tests
-        run: nox -s "coverage-${{ matrix.python-version }}" -- --cov-report=xml -vv 
+        run: nox -s "coverage-${{ matrix.python-version }}" -- --cov-report=xml -vv
         run: >
           nox -s "coverage-${{ matrix.python-version }}" \
             -- \
@@ -58,7 +58,7 @@ jobs:
 
       - name: Upload test results to Codecov
         if:${{ !cancelled() }}uses: codecov/test-results-action@v1
- 
+
   run-doctests:
     name: Run doctests
     runs-on: ubuntu-latest

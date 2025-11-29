@@ -1,7 +1,7 @@
 # Data Model: LLM-Powered Commit Message Generator
 
-**Feature**: 001-llm-commit-messages  
-**Date**: 2025-11-28  
+**Feature**: 001-llm-commit-messages
+**Date**: 2025-11-28
 **Status**: Complete
 
 ## Overview

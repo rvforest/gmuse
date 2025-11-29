@@ -1,8 +1,8 @@
 # Planning Phase Summary
 
-**Feature**: 001-llm-commit-messages  
-**Branch**: `001-llm-commit-messages`  
-**Date**: 2025-11-28  
+**Feature**: 001-llm-commit-messages
+**Branch**: `001-llm-commit-messages`
+**Date**: 2025-11-28
 **Status**: ✅ COMPLETE - Ready for implementation
 
 ## Overview

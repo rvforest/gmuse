@@ -1,9 +1,9 @@
 # Tasks: LLM-Powered Commit Message Generator
 
-**Input**: Design documents from `/specs/001-llm-commit-messages/`  
+**Input**: Design documents from `/specs/001-llm-commit-messages/`
 **Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/prompt-templates.md
 
-**Feature Branch**: `001-llm-commit-messages`  
+**Feature Branch**: `001-llm-commit-messages`
 **Date**: 2025-11-28
 
 ## Format: `[ID] [P?] [Story] Description`
@@ -18,11 +18,11 @@
 
 **Purpose**: Project initialization and dependency setup
 
-- [ ] T001 Add dependencies to pyproject.toml: litellm (optional extra), pyperclip (optional extra), tomli (for Python 3.10)
-- [ ] T002 [P] Create tests/unit/ directory structure
-- [ ] T003 [P] Create tests/integration/ directory structure
-- [ ] T004 [P] Configure mypy strict mode for new modules in pyproject.toml
-- [ ] T005 [P] Update .pre-commit-config.yaml to include new src/gmuse/ modules in checks
+- [X] T001 Add dependencies to pyproject.toml: litellm (optional extra), pyperclip (optional extra), tomli (for Python 3.10)
+- [X] T002 [P] Create tests/unit/ directory structure
+- [X] T003 [P] Create tests/integration/ directory structure
+- [X] T004 [P] Configure mypy strict mode for new modules in pyproject.toml
+- [X] T005 [P] Update .pre-commit-config.yaml to include new src/gmuse/ modules in checks
 
 **Checkpoint**: Project structure ready for implementation
 
@@ -34,26 +34,26 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 [P] Create src/gmuse/config.py with XDG path resolver (`get_config_path()`) per [plan.md § Step 1.1](plan.md#step-11-configuration-module)
-- [ ] T007 [P] Implement TOML config loader (`load_config()`) in src/gmuse/config.py with tomllib/tomli per [research.md § Configuration Management](research.md#3-configuration-management)
-- [ ] T008 [P] Implement config validator (`validate_config()`) in src/gmuse/config.py per [data-model.md § UserConfig validation](data-model.md#5-userconfig)
-- [ ] T009 [P] Implement config merger (`merge_config()`) in src/gmuse/config.py with priority: CLI > config.toml > env > defaults
-- [ ] T010 [P] Create src/gmuse/git_utils.py with repo validator (`is_git_repository()`) using `git rev-parse --git-dir` per [plan.md § Step 1.2](plan.md#step-12-git-utilities-module)
-- [ ] T011 [P] Implement repo root getter (`get_repo_root()`) in src/gmuse/git_utils.py using `git rev-parse --show-toplevel`
-- [ ] T012 [P] Implement staged diff extractor (`get_staged_diff()`) in src/gmuse/git_utils.py returning StagedDiff per [data-model.md § StagedDiff](data-model.md#2-stageddiff)
-- [ ] T013 [P] Implement commit history fetcher (`get_commit_history()`) in src/gmuse/git_utils.py returning CommitHistory per [data-model.md § CommitHistory](data-model.md#3-commithistory)
-- [ ] T014 [P] Implement diff truncator (`truncate_diff()`) in src/gmuse/git_utils.py per [research.md § Token Management Strategy](research.md#7-token-management-strategy)
-- [ ] T015 [P] Create src/gmuse/llm_client.py with provider detector (`detect_provider()`) checking OPENAI_API_KEY, ANTHROPIC_API_KEY per [plan.md § Step 1.3](plan.md#step-13-llm-client-module)
-- [ ] T016 [P] Implement model resolver (`resolve_model()`) in src/gmuse/llm_client.py per [research.md § LLM Provider Integration](research.md#1-llm-provider-integration)
-- [ ] T017 [P] Implement LLMClient class with `generate()` method in src/gmuse/llm_client.py using litellm.completion()
-- [ ] T018 [P] Implement availability checker (`is_llm_available()`) in src/gmuse/llm_client.py
-- [ ] T019 [P] Create src/gmuse/prompt_builder.py with SYSTEM_PROMPT constant per [contracts/prompt-templates.md § Base System Prompt](contracts/prompt-templates.md#base-system-prompt)
-- [ ] T020 [P] Implement context builder (`build_context()`) in src/gmuse/prompt_builder.py per [contracts/prompt-templates.md § Context Section Template](contracts/prompt-templates.md#context-section-template)
-- [ ] T021 [P] Implement task prompt getters in src/gmuse/prompt_builder.py: `get_freeform_task()`, `get_conventional_task()`, `get_gitmoji_task()` per [contracts/prompt-templates.md](contracts/prompt-templates.md)
-- [ ] T022 [P] Implement prompt assembler (`build_prompt()`) in src/gmuse/prompt_builder.py with token estimation and truncation
-- [ ] T023 [P] Implement message validator (`validate_message()`) in src/gmuse/prompt_builder.py per [data-model.md § CommitMessage validation](data-model.md#1-commitmessage)
-- [ ] T024 Add custom exceptions: `ConfigError`, `NotAGitRepositoryError`, `NoStagedChangesError`, `LLMError`, `InvalidMessageError` in src/gmuse/exceptions.py
-- [ ] T025 Add structured logging with `GMUSE_DEBUG` environment variable toggle in src/gmuse/logging.py
+- [X] T006 [P] Create src/gmuse/config.py with XDG path resolver (`get_config_path()`) per [plan.md § Step 1.1](plan.md#step-11-configuration-module)
+- [X] T007 [P] Implement TOML config loader (`load_config()`) in src/gmuse/config.py with tomllib/tomli per [research.md § Configuration Management](research.md#3-configuration-management)
+- [X] T008 [P] Implement config validator (`validate_config()`) in src/gmuse/config.py per [data-model.md § UserConfig validation](data-model.md#5-userconfig)
+- [X] T009 [P] Implement config merger (`merge_config()`) in src/gmuse/config.py with priority: CLI > config.toml > env > defaults
+- [X] T010 [P] Create src/gmuse/git_utils.py with repo validator (`is_git_repository()`) using `git rev-parse --git-dir` per [plan.md § Step 1.2](plan.md#step-12-git-utilities-module)
+- [X] T011 [P] Implement repo root getter (`get_repo_root()`) in src/gmuse/git_utils.py using `git rev-parse --show-toplevel`
+- [X] T012 [P] Implement staged diff extractor (`get_staged_diff()`) in src/gmuse/git_utils.py returning StagedDiff per [data-model.md § StagedDiff](data-model.md#2-stageddiff)
+- [X] T013 [P] Implement commit history fetcher (`get_commit_history()`) in src/gmuse/git_utils.py returning CommitHistory per [data-model.md § CommitHistory](data-model.md#3-commithistory)
+- [X] T014 [P] Implement diff truncator (`truncate_diff()`) in src/gmuse/git_utils.py per [research.md § Token Management Strategy](research.md#7-token-management-strategy)
+- [X] T015 [P] Create src/gmuse/llm_client.py with provider detector (`detect_provider()`) checking OPENAI_API_KEY, ANTHROPIC_API_KEY per [plan.md § Step 1.3](plan.md#step-13-llm-client-module)
+- [X] T016 [P] Implement model resolver (`resolve_model()`) in src/gmuse/llm_client.py per [research.md § LLM Provider Integration](research.md#1-llm-provider-integration)
+- [X] T017 [P] Implement LLMClient class with `generate()` method in src/gmuse/llm_client.py using litellm.completion()
+- [X] T018 [P] Implement availability checker (`is_llm_available()`) in src/gmuse/llm_client.py
+- [X] T019 [P] Create src/gmuse/prompt_builder.py with SYSTEM_PROMPT constant per [contracts/prompt-templates.md § Base System Prompt](contracts/prompt-templates.md#base-system-prompt)
+- [X] T020 [P] Implement context builder (`build_context()`) in src/gmuse/prompt_builder.py per [contracts/prompt-templates.md § Context Section Template](contracts/prompt-templates.md#context-section-template)
+- [X] T021 [P] Implement task prompt getters in src/gmuse/prompt_builder.py: `get_freeform_task()`, `get_conventional_task()`, `get_gitmoji_task()` per [contracts/prompt-templates.md](contracts/prompt-templates.md)
+- [X] T022 [P] Implement prompt assembler (`build_prompt()`) in src/gmuse/prompt_builder.py with token estimation and truncation
+- [X] T023 [P] Implement message validator (`validate_message()`) in src/gmuse/prompt_builder.py per [data-model.md § CommitMessage validation](data-model.md#1-commitmessage)
+- [X] T024 Add custom exceptions: `ConfigError`, `NotAGitRepositoryError`, `NoStagedChangesError`, `LLMError`, `InvalidMessageError` in src/gmuse/exceptions.py
+- [X] T025 Add structured logging with `GMUSE_DEBUG` environment variable toggle in src/gmuse/logging.py
 
 **Checkpoint**: Foundation ready - user story implementation can now begin
 
@@ -71,20 +71,20 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T026 [P] [US1] Create tests/unit/test_config.py with tests for XDG path resolution, TOML parsing, validation, priority merging per [plan.md § Step 1.1 Test](plan.md#step-11-configuration-module)
-- [ ] T027 [P] [US1] Create tests/unit/test_git_utils.py with tests for repo validation, diff extraction, history fetching, diff truncation per [plan.md § Step 1.2 Test](plan.md#step-12-git-utilities-module)
-- [ ] T028 [P] [US1] Create tests/unit/test_llm_client.py with tests for provider detection, model resolution, generation (mocked), availability check per [plan.md § Step 1.3 Test](plan.md#step-13-llm-client-module)
-- [ ] T029 [P] [US1] Create tests/unit/test_prompt_builder.py with tests for context building, task prompts, prompt assembly, message validation per [plan.md § Step 1.4 Test](plan.md#step-14-prompt-builder-module)
-- [ ] T030 [US1] Create tests/integration/test_cli.py with tests for all 5 P1 acceptance scenarios using temp git repos and mocked LLM per [plan.md § Step 1.5 Test](plan.md#step-15-cli-command)
+- [X] T026 [P] [US1] Create tests/unit/test_config.py with tests for XDG path resolution, TOML parsing, validation, priority merging per [plan.md § Step 1.1 Test](plan.md#step-11-configuration-module)
+- [X] T027 [P] [US1] Create tests/unit/test_git_utils.py with tests for repo validation, diff extraction, history fetching, diff truncation per [plan.md § Step 1.2 Test](plan.md#step-12-git-utilities-module)
+- [X] T028 [P] [US1] Create tests/unit/test_llm_client.py with tests for provider detection, model resolution, generation (mocked), availability check per [plan.md § Step 1.3 Test](plan.md#step-13-llm-client-module)
+- [X] T029 [P] [US1] Create tests/unit/test_prompt_builder.py with tests for context building, task prompts, prompt assembly, message validation per [plan.md § Step 1.4 Test](plan.md#step-14-prompt-builder-module)
+- [X] T030 [US1] Create tests/integration/test_cli.py with tests for all 5 P1 acceptance scenarios using temp git repos and mocked LLM per [plan.md § Step 1.5 Test](plan.md#step-15-cli-command)
 
 ### Implementation for User Story 1
 
-- [ ] T031 [US1] Add generate command to src/gmuse/cli/main.py with flags: `--hint`, `--copy`, `--model`, `--format`, `--history-depth` per [plan.md § UX Gate CLI Changes](plan.md#ux-gate-)
-- [ ] T032 [US1] Implement main flow in generate() function: load config, validate repo, get diff, get history, build prompt, call LLM, validate, output per [plan.md § Step 1.5](plan.md#step-15-cli-command)
-- [ ] T033 [US1] Add error handling with actionable messages per [plan.md § UX Gate Error Messages](plan.md#ux-gate-): "Not a git repository", "No staged changes", "No API key", network timeout, invalid config
-- [ ] T034 [US1] Add CLI help text with examples for each flag referencing [quickstart.md](quickstart.md)
-- [ ] T035 [US1] Set exit codes: 0=success, 1=user error, 2=system error
-- [ ] T036 [US1] Add logging for all CLI operations (config load, git ops, LLM calls, errors) with GMUSE_DEBUG support
+- [X] T031 [US1] Add generate command to src/gmuse/cli/main.py with flags: `--hint`, `--copy`, `--model`, `--format`, `--history-depth` per [plan.md § UX Gate CLI Changes](plan.md#ux-gate-)
+- [X] T032 [US1] Implement main flow in generate() function: load config, validate repo, get diff, get history, build prompt, call LLM, validate, output per [plan.md § Step 1.5](plan.md#step-15-cli-command)
+- [X] T033 [US1] Add error handling with actionable messages per [plan.md § UX Gate Error Messages](plan.md#ux-gate-): "Not a git repository", "No staged changes", "No API key", network timeout, invalid config
+- [X] T034 [US1] Add CLI help text with examples for each flag referencing [quickstart.md](quickstart.md)
+- [X] T035 [US1] Set exit codes: 0=success, 1=user error, 2=system error
+- [X] T036 [US1] Add logging for all CLI operations (config load, git ops, LLM calls, errors) with GMUSE_DEBUG support
 
 **Acceptance Verification for US1**:
 1. ✅ Given staged changes, when user runs `gmuse`, then message generated and printed to STDOUT

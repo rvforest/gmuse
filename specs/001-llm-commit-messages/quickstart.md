@@ -1,7 +1,7 @@
 # Quickstart: LLM-Powered Commit Messages
 
-**Feature**: 001-llm-commit-messages  
-**Date**: 2025-11-28  
+**Feature**: 001-llm-commit-messages
+**Date**: 2025-11-28
 **Audience**: Developers using gmuse for the first time
 
 ## Quick Start (60 seconds)

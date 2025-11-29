@@ -96,4 +96,3 @@ Version bump rules:
 - PATCH: Clarifications and non-semantic wording edits.
 
 **Version**: 1.0.0 | **Ratified**: 2025-11-28 | **Last Amended**: 2025-11-28
-

@@ -1,8 +1,8 @@
 # Feature Specification: LLM-Powered Commit Message Generator
 
-**Feature Branch**: `001-llm-commit-messages`  
-**Created**: November 28, 2025  
-**Status**: Draft  
+**Feature Branch**: `001-llm-commit-messages`
+**Created**: November 28, 2025
+**Status**: Draft
 **Input**: User description: "Provide a safe, useful, and extensible CLI tool that generates commit messages using LLMs. The goal is to reduce friction in writing clear commit messages while enabling the project to build optional features such as learning from edits and commit splitting."
 
 ## User Scenarios & Testing *(mandatory)*
@@ -179,7 +179,7 @@ A developer wants to control how many recent commits are used as style context, 
   - `tests/unit/test_git_utils.py` - git operations (diff extraction, history retrieval)
   - `tests/unit/test_learning.py` - history storage and retrieval
   - `tests/integration/test_cli.py` - end-to-end CLI scenarios with mocked LLM responses
-  
+
   Coverage target: 85% for all new modules. Integration tests will cover all user stories in priority order (P1 first).
 
 - **UX**: CLI help text, error messages, and user documentation will be added for:
@@ -189,7 +189,7 @@ A developer wants to control how many recent commits are used as style context, 
   - Quickstart guide updates in `docs/source/getting_started/quickstart.md`
   - Configuration reference in `docs/source/user_guide/configuration.md`
 
-- **Performance**: 
+- **Performance**:
   - Generation latency: Target under 10 seconds for typical diffs (< 1000 lines) using standard models (GPT-3.5/4, Claude)
   - Token consumption: Implement intelligent diff truncation to keep prompts under 8K tokens for compatibility with most models
   - Network timeout: Set reasonable timeouts (30 seconds default) with clear error messages when exceeded
@@ -250,4 +250,3 @@ A developer wants to control how many recent commits are used as style context, 
 - **SC-008**: CLI help text and error messages enable users to resolve 95% of issues without consulting external documentation (measured via support request frequency)
 - **SC-009**: Message format options (freeform, conventional, gitmoji) produce correctly formatted output that passes format validation tools (e.g., commitlint for conventional commits)
 - **SC-010**: Repository-level instructions in `.gmuse` file demonstrably influence message content across multiple test cases (verified by A/B testing with and without instructions)
-

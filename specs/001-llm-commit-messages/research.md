@@ -1,7 +1,7 @@
 # Research: LLM-Powered Commit Message Generator
 
-**Feature**: 001-llm-commit-messages  
-**Date**: 2025-11-28  
+**Feature**: 001-llm-commit-messages
+**Date**: 2025-11-28
 **Status**: Complete
 
 ## Purpose
@@ -212,7 +212,7 @@ Output only the commit message, no explanations.
 1. Count lines in diff
 2. If <1000 lines: No truncation
 3. If 1000-5000 lines: Remove large repeated blocks (auto-generated code, minified files)
-4. If >5000 lines: 
+4. If >5000 lines:
    - Keep file headers (+++/--- lines)
    - Keep function/class signature lines
    - Truncate function bodies to first 10 lines
@@ -240,7 +240,7 @@ Output only the commit message, no explanations.
 1. **Not a git repository**:
    ```
    Error: Not a git repository
-   
+
    Run this command inside a git repository folder.
    To initialize a new repository: git init
    ```
@@ -248,34 +248,34 @@ Output only the commit message, no explanations.
 2. **No staged changes**:
    ```
    Error: No staged changes found
-   
+
    Stage your changes first:
      git add <files>
-   
+
    Or use 'gmuse split' to plan commits from unstaged changes (v1.1+).
    ```
 
 3. **No API key**:
    ```
    Error: No LLM provider API key configured
-   
+
    Set an environment variable for your provider:
      export OPENAI_API_KEY="sk-..."
      export ANTHROPIC_API_KEY="sk-ant-..."
-   
+
    Or configure in config.toml:
      model = "gpt-4"
-   
+
    Config location: ~/.config/gmuse/config.toml
    ```
 
 4. **Network failure**:
    ```
    Error: Failed to reach LLM provider
-   
+
    Check your network connection and try again.
    If the problem persists, the provider may be experiencing issues.
-   
+
    Timeout after 30 seconds. Increase with environment variable:
      export GMUSE_TIMEOUT=60
    ```
@@ -283,10 +283,10 @@ Output only the commit message, no explanations.
 5. **Invalid config**:
    ```
    Error: Invalid configuration file
-   
+
    File: ~/.config/gmuse/config.toml
    Line 5: Unknown key 'invalid_option'
-   
+
    Valid keys: model, copy_to_clipboard, learning_enabled, history_depth, format
    See documentation: https://gmuse.readthedocs.io/config
    ```

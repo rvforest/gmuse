@@ -1,7 +1,7 @@
 # Prompt Templates: LLM Commit Message Generation
 
-**Feature**: 001-llm-commit-messages  
-**Date**: 2025-11-28  
+**Feature**: 001-llm-commit-messages
+**Date**: 2025-11-28
 **Purpose**: Define prompt structure and format-specific templates for LLM interactions
 
 ## Overview
@@ -156,7 +156,7 @@ Output only the commit message (emoji + description), nothing else.
 
 ## Token Budget Allocation
 
-Target total: 8000 tokens  
+Target total: 8000 tokens
 Breakdown:
 - System prompt: ~200 tokens
 - Task prompt: ~200-400 tokens (varies by format)
@@ -259,7 +259,7 @@ def build_prompt(
 ) -> str:
     # 1. Start with system prompt
     prompt = BASE_SYSTEM_PROMPT
-    
+
     # 2. Add context
     prompt += build_context(
         staged_diff=staged_diff,
@@ -268,15 +268,15 @@ def build_prompt(
         user_hint=user_hint,
         learning_examples=learning_examples,
     )
-    
+
     # 3. Add format-specific task
     prompt += get_task_prompt(format)
-    
+
     # 4. Check token count
     token_count = estimate_tokens(prompt)
     if token_count > MAX_TOKENS:
         prompt = truncate_diff(prompt, target_tokens=MAX_TOKENS)
-    
+
     return prompt
 ```
 
@@ -299,7 +299,7 @@ def validate_message(message: str, format: str) -> bool:
     # Basic checks
     if not message or len(message) > 1000:
         return False
-    
+
     # Format-specific validation
     if format == "conventional":
         return bool(re.match(r'^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+', message))

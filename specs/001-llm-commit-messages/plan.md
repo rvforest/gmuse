@@ -9,35 +9,35 @@ The feature implements a CLI tool that generates commit messages using LLMs base
 
 ## Technical Context
 
-**Language/Version**: Python 3.10+ (existing project requirement)  
-**Primary Dependencies**: 
+**Language/Version**: Python 3.10+ (existing project requirement)
+**Primary Dependencies**:
 - Typer (existing) - CLI framework
 - LiteLLM - Unified LLM provider interface (supports OpenAI, Anthropic, etc.)
 - pyperclip - Cross-platform clipboard operations
 - GitPython - Git repository interactions (alternative: subprocess with git CLI)
 - tomli/tomllib (stdlib 3.11+) - TOML config parsing
 
-**Storage**: 
+**Storage**:
 - Configuration: `$XDG_CONFIG_HOME/gmuse/config.toml` (TOML file)
 - Learning history: `$XDG_DATA_HOME/gmuse/history.jsonl` (append-only JSONL)
 - Repository instructions: `.gmuse` file at repo root (plain text)
 
-**Testing**: pytest (existing), pytest-cov (existing)  
-**Target Platform**: Cross-platform (Linux, macOS, Windows)  
-**Project Type**: Single CLI application (existing structure: src/gmuse/)  
+**Testing**: pytest (existing), pytest-cov (existing)
+**Target Platform**: Cross-platform (Linux, macOS, Windows)
+**Project Type**: Single CLI application (existing structure: src/gmuse/)
 
-**Performance Goals**: 
+**Performance Goals**:
 - Generation latency: <10s for typical diffs (<1000 lines)
 - Token consumption: <8K tokens per prompt
 - Network timeout: 30s default
 
-**Constraints**: 
+**Constraints**:
 - Zero runtime dependencies by default (LiteLLM/pyperclip optional)
 - XDG Base Directory compliance for config/data storage
 - Must work in git repositories only
 - API keys via environment variables (no hardcoded secrets)
 
-**Scale/Scope**: 
+**Scale/Scope**:
 - Single-user CLI tool
 - Support for multiple concurrent repositories
 - Learning history per repository (isolated by repo identifier)
@@ -50,7 +50,7 @@ The feature implements a CLI tool that generates commit messages using LLMs base
 ### Code Quality Gate ✅
 
 - **Public API Changes**: Yes - new CLI command `gmuse` with multiple flags (`--hint`, `--copy`, `--model`, `--format`, `--history-depth`)
-- **Affected Modules**: 
+- **Affected Modules**:
   - New: `src/gmuse/config.py` (config loading/validation)
   - New: `src/gmuse/git_utils.py` (git operations)
   - New: `src/gmuse/prompt_builder.py` (prompt assembly)
@@ -70,10 +70,10 @@ The feature implements a CLI tool that generates commit messages using LLMs base
   - `tests/unit/test_prompt_builder.py` - Prompt assembly logic with various inputs
   - `tests/unit/test_llm_client.py` - LLM client abstraction (mocked API responses)
   - `tests/unit/test_learning.py` - History JSONL operations, repo identification
-  
+
 - **Integration Tests Required**:
   - `tests/integration/test_cli.py` - End-to-end CLI flows for all user stories (P1-P3)
-  
+
 - **Coverage Target**: 85% minimum for all new modules (per constitution)
 - **CI Blocking**: Yes - tests must pass before merge
 - **Test Strategy**: Unit tests with mocks for external dependencies (git, LLM APIs, filesystem); integration tests with temporary git repos and mocked LLM responses
@@ -105,11 +105,11 @@ The feature implements a CLI tool that generates commit messages using LLMs base
 ### Performance Gate ✅
 
 - **Latency Target**: <10s for typical diffs (<1000 lines) with standard models
-- **Token Management**: 
+- **Token Management**:
   - Implement diff truncation at ~6000 tokens to stay under 8K total prompt size
   - Strategy: Keep function signatures, class definitions; truncate large repeated patterns
   - Fallback: If truncation insufficient, display error suggesting commit splitting
-  
+
 - **Network Timeout**: 30s default (configurable), with retry logic for transient failures
 - **Memory**: Streaming not required for v1 (full diff loaded to memory)
 - **History Loading**: Cap at 10 most recent learning examples per repo (prevent context bloat)
@@ -197,8 +197,8 @@ This section provides a sequenced approach to implementation with references to 
 **Goal**: Implement minimum viable product - generate commit messages from staged changes.
 
 #### Step 1.1: Configuration Module
-**File**: `src/gmuse/config.py`  
-**Reference**: [research.md § Configuration Management](research.md#3-configuration-management)  
+**File**: `src/gmuse/config.py`
+**Reference**: [research.md § Configuration Management](research.md#3-configuration-management)
 **Reference**: [data-model.md § UserConfig](data-model.md#5-userconfig)
 
 Implementation tasks:
@@ -226,9 +226,9 @@ Implementation tasks:
 ---
 
 #### Step 1.2: Git Utilities Module
-**File**: `src/gmuse/git_utils.py`  
-**Reference**: [research.md § Git Operations](research.md#2-git-operations)  
-**Reference**: [data-model.md § StagedDiff](data-model.md#2-stageddiff)  
+**File**: `src/gmuse/git_utils.py`
+**Reference**: [research.md § Git Operations](research.md#2-git-operations)
+**Reference**: [data-model.md § StagedDiff](data-model.md#2-stageddiff)
 **Reference**: [data-model.md § CommitHistory](data-model.md#3-commithistory)
 
 Implementation tasks:
@@ -263,7 +263,7 @@ Implementation tasks:
 ---
 
 #### Step 1.3: LLM Client Module
-**File**: `src/gmuse/llm_client.py`  
+**File**: `src/gmuse/llm_client.py`
 **Reference**: [research.md § LLM Provider Integration](research.md#1-llm-provider-integration)
 
 Implementation tasks:
@@ -292,8 +292,8 @@ Implementation tasks:
 ---
 
 #### Step 1.4: Prompt Builder Module
-**File**: `src/gmuse/prompt_builder.py`  
-**Reference**: [contracts/prompt-templates.md](contracts/prompt-templates.md)  
+**File**: `src/gmuse/prompt_builder.py`
+**Reference**: [contracts/prompt-templates.md](contracts/prompt-templates.md)
 **Reference**: [data-model.md § CommitMessage](data-model.md#1-commitmessage)
 
 Implementation tasks:
@@ -327,7 +327,7 @@ Implementation tasks:
 ---
 
 #### Step 1.5: CLI Command
-**File**: `src/gmuse/cli/main.py` (modify existing)  
+**File**: `src/gmuse/cli/main.py` (modify existing)
 **Reference**: [spec.md § User Story 1](spec.md#user-story-1---generate-basic-commit-message-priority-p1)
 
 Implementation tasks:
@@ -373,7 +373,7 @@ Implementation tasks:
 ### Phase 2: Enhancements (P2 - Hints, Clipboard, Formats)
 
 #### Step 2.1: Repository Instructions
-**Reference**: [spec.md § User Story 5](spec.md#user-story-5---repository-level-instructions-priority-p3)  
+**Reference**: [spec.md § User Story 5](spec.md#user-story-5---repository-level-instructions-priority-p3)
 **Reference**: [data-model.md § RepositoryInstructions](data-model.md#4-repositoryinstructions)
 
 Implementation:
@@ -382,7 +382,7 @@ Implementation:
 3. Add tests for `.gmuse` presence/absence
 
 #### Step 2.2: Clipboard Support
-**Reference**: [spec.md § User Story 3](spec.md#user-story-3---copy-message-to-clipboard-priority-p2)  
+**Reference**: [spec.md § User Story 3](spec.md#user-story-3---copy-message-to-clipboard-priority-p2)
 **Reference**: [research.md § Clipboard Operations](research.md#4-clipboard-operations)
 
 Implementation:
@@ -395,9 +395,9 @@ Implementation:
 ### Phase 3: Learning (P3 - Optional)
 
 #### Step 3.1: Learning Module
-**File**: `src/gmuse/learning.py`  
-**Reference**: [spec.md § User Story 7](spec.md#user-story-7---learn-from-user-edits-priority-p3)  
-**Reference**: [data-model.md § LearningRecord](data-model.md#6-learningrecord)  
+**File**: `src/gmuse/learning.py`
+**Reference**: [spec.md § User Story 7](spec.md#user-story-7---learn-from-user-edits-priority-p3)
+**Reference**: [data-model.md § LearningRecord](data-model.md#6-learningrecord)
 **Reference**: [data-model.md § LearningHistory](data-model.md#7-learninghistory)
 
 Implementation:
@@ -424,7 +424,7 @@ Implementation:
 ### Phase 4: Documentation
 
 #### Step 4.1: User Documentation
-**Files**: `docs/source/user_guide/commit_messages.md`, `docs/source/user_guide/configuration.md`  
+**Files**: `docs/source/user_guide/commit_messages.md`, `docs/source/user_guide/configuration.md`
 **Reference**: [quickstart.md](quickstart.md)
 
 Create comprehensive guides expanding on quickstart content.

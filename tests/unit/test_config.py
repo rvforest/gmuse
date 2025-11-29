@@ -151,7 +151,9 @@ class TestMergeConfig:
         config_file = {"model": "file-model"}
         env_vars = {"model": "env-model"}
 
-        result = merge_config(cli_args=cli_args, config_file=config_file, env_vars=env_vars)
+        result = merge_config(
+            cli_args=cli_args, config_file=config_file, env_vars=env_vars
+        )
         assert result["model"] == "cli-model"
 
     def test_merge_config_file_overrides_env(self) -> None:
@@ -191,7 +193,9 @@ class TestMergeConfig:
         config_file = {"provider": "anthropic"}
         cli_args = {"provider": "openai"}
 
-        result = merge_config(cli_args=cli_args, config_file=config_file, env_vars=env_vars)
+        result = merge_config(
+            cli_args=cli_args, config_file=config_file, env_vars=env_vars
+        )
         assert result["provider"] == "openai"
 
 
@@ -249,4 +253,3 @@ class TestGetEnvConfig:
         with mock.patch.dict(os.environ, {"GMUSE_COPY": "no"}):
             config = get_env_config()
             assert config["copy_to_clipboard"] is False
-

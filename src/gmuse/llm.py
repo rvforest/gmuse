@@ -275,7 +275,7 @@ class LLMClient:
                 )
 
             # Extract generated text
-            content: str | None = response.choices[0].message.content  # type: ignore[union-attr]
+            content: str | None = response.choices[0].message.content
             if not content:
                 raise LLMError("LLM returned empty response")
 
@@ -325,8 +325,7 @@ def _convert_to_llm_error(error: Exception, timeout: int) -> LLMError:
 
     if "network" in error_msg or "connection" in error_msg:
         return LLMError(
-            "Network error. Check your internet connection.\n\n"
-            f"Original error: {error}"
+            f"Network error. Check your internet connection.\n\nOriginal error: {error}"
         )
 
     # Generic error

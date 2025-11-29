@@ -322,10 +322,14 @@ class TestValidateMessage:
 
     def test_validate_conventional_invalid_format(self) -> None:
         """Test error for invalid conventional commits format."""
-        with pytest.raises(InvalidMessageError, match="does not match Conventional Commits"):
+        with pytest.raises(
+            InvalidMessageError, match="does not match Conventional Commits"
+        ):
             validate_message("Add feature", format="conventional")
 
-        with pytest.raises(InvalidMessageError, match="does not match Conventional Commits"):
+        with pytest.raises(
+            InvalidMessageError, match="does not match Conventional Commits"
+        ):
             validate_message("invalid: message", format="conventional")
 
     def test_validate_gitmoji_missing_emoji(self) -> None:

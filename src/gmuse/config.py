@@ -3,7 +3,7 @@
 This module handles loading, validation, and merging of configuration from multiple sources:
 
 - CLI flags (highest priority)
-- config.toml file  
+- config.toml file
 - Environment variables
 - Defaults (lowest priority)
 
@@ -41,12 +41,14 @@ ConfigDict = Dict[str, Any]
 # Constants
 # -----------------------------------------------------------------------------
 
-VALID_FORMATS: Final[frozenset[str]] = frozenset({"freeform", "conventional", "gitmoji"})
+VALID_FORMATS: Final[frozenset[str]] = frozenset(
+    {"freeform", "conventional", "gitmoji"}
+)
 """Allowed values for the 'format' configuration option."""
 
-VALID_PROVIDERS: Final[frozenset[str]] = frozenset({
-    "openai", "anthropic", "cohere", "azure", "gemini", "bedrock", "huggingface"
-})
+VALID_PROVIDERS: Final[frozenset[str]] = frozenset(
+    {"openai", "anthropic", "cohere", "azure", "gemini", "bedrock", "huggingface"}
+)
 """Allowed values for the 'provider' configuration option."""
 
 HISTORY_DEPTH_MIN: Final[int] = 0
@@ -246,7 +248,9 @@ def validate_config(config: ConfigDict) -> None:
         >>> validate_config(config)  # Raises ConfigError
     """
     # Validate integer ranges
-    _validate_integer_range(config, "history_depth", HISTORY_DEPTH_MIN, HISTORY_DEPTH_MAX)
+    _validate_integer_range(
+        config, "history_depth", HISTORY_DEPTH_MIN, HISTORY_DEPTH_MAX
+    )
     _validate_integer_range(config, "timeout", TIMEOUT_MIN, TIMEOUT_MAX)
 
     # Validate string choices

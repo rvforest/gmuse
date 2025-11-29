@@ -33,7 +33,9 @@ class TestDetectProvider:
 
     def test_detect_gemini_from_model_env(self) -> None:
         """Detect gemini provider when GMUSE_MODEL indicates a gemini model."""
-        with mock.patch.dict(os.environ, {"GMUSE_MODEL": "gemini/gemini-flash-lite-latest"}, clear=True):
+        with mock.patch.dict(
+            os.environ, {"GMUSE_MODEL": "gemini/gemini-flash-lite-latest"}, clear=True
+        ):
             assert detect_provider() == "gemini"
 
     def test_detect_no_provider_raises_error(self) -> None:
@@ -72,7 +74,9 @@ class TestResolveModel:
 
     def test_resolve_auto_detect_anthropic(self) -> None:
         """Test auto-detecting Anthropic model."""
-        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "sk-ant-test"}, clear=True):
+        with mock.patch.dict(
+            os.environ, {"ANTHROPIC_API_KEY": "sk-ant-test"}, clear=True
+        ):
             model = resolve_model("anthropic")
             assert model == "claude-3-5-sonnet-20241022"
 
@@ -134,7 +138,9 @@ class TestLLMClient:
             mock_litellm.completion.assert_called_once()
 
     @mock.patch("gmuse.llm.litellm")
-    def test_generate_empty_response_raises_error(self, mock_litellm: mock.Mock) -> None:
+    def test_generate_empty_response_raises_error(
+        self, mock_litellm: mock.Mock
+    ) -> None:
         """Test error when LLM returns empty response."""
         mock_response = mock.Mock()
         mock_response.choices = [mock.Mock(message=mock.Mock(content=""))]
@@ -212,19 +218,26 @@ class TestLLMClient:
                     system_prompt="System",
                     user_prompt="User",
                 )
-    
+
         @mock.patch("gmuse.llm.litellm")
-        def test_generate_suppresses_provider_list_prints(self, mock_litellm: mock.Mock, capsys) -> None:
+        def test_generate_suppresses_provider_list_prints(
+            self, mock_litellm: mock.Mock, capsys
+        ) -> None:
             """Ensure we suppress litellm 'Provider List' prints during generation unless GMUSE_DEBUG=true."""
+
             # Create a side effect that prints the provider list and then returns a success response
             def fake_completion(*args, **kwargs):
                 print("Provider List: https://docs.litellm.ai/docs/providers")
+
                 class R:
                     class Choice:
                         class Message:
                             content = "Generated commit message"
+
                         message = Message()
+
                     choices = [Choice()]
+
                 return R()
 
             mock_litellm.completion.side_effect = fake_completion

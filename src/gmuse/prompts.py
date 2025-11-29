@@ -31,7 +31,9 @@ logger = get_logger(__name__)
 PROMPT_VERSION: Final[str] = "1.0.0"
 """Version identifier for prompt format (useful for tracking/debugging)."""
 
-SYSTEM_PROMPT: Final[str] = """You are an expert commit message generator. Your role is to analyze code changes and produce clear, informative commit messages that help developers understand what changed and why.
+SYSTEM_PROMPT: Final[
+    str
+] = """You are an expert commit message generator. Your role is to analyze code changes and produce clear, informative commit messages that help developers understand what changed and why.
 
 Guidelines:
 - Focus on WHAT changed and WHY (when obvious from diff)
@@ -356,7 +358,9 @@ def validate_message(message: str, format: str = "freeform") -> None:
 
     elif format == "gitmoji":
         # Check if message starts with an emoji (Unicode character in emoji range)
-        if not re.match(r"^[\U0001F300-\U0001F9FF\u2600-\u26FF\u2700-\u27BF] ", message):
+        if not re.match(
+            r"^[\U0001F300-\U0001F9FF\u2600-\u26FF\u2700-\u27BF] ", message
+        ):
             raise InvalidMessageError(
                 f"Message does not start with an emoji.\n"
                 f"Expected: emoji description\n"

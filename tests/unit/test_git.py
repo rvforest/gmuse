@@ -40,7 +40,9 @@ class TestIsGitRepository:
 
     def test_is_git_repository_timeout(self) -> None:
         """Test handling timeout when checking repository."""
-        with mock.patch("subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 5)):
+        with mock.patch(
+            "subprocess.run", side_effect=subprocess.TimeoutExpired("cmd", 5)
+        ):
             assert is_git_repository() is False
 
     def test_is_git_repository_git_not_found(self) -> None:
@@ -77,7 +79,9 @@ class TestGetRepoRoot:
                 "subprocess.run",
                 side_effect=subprocess.CalledProcessError(1, "git", stderr="error"),
             ):
-                with pytest.raises(NotAGitRepositoryError, match="Failed to get repository root"):
+                with pytest.raises(
+                    NotAGitRepositoryError, match="Failed to get repository root"
+                ):
                     get_repo_root()
 
 
@@ -118,8 +122,13 @@ class TestGetStagedDiff:
     def test_get_staged_diff_no_changes(self) -> None:
         """Test error when no staged changes exist."""
         with mock.patch("gmuse.git.is_git_repository", return_value=True):
-            with mock.patch("subprocess.run", return_value=mock.Mock(returncode=0, stdout="", stderr="")):
-                with pytest.raises(NoStagedChangesError, match="No staged changes found"):
+            with mock.patch(
+                "subprocess.run",
+                return_value=mock.Mock(returncode=0, stdout="", stderr=""),
+            ):
+                with pytest.raises(
+                    NoStagedChangesError, match="No staged changes found"
+                ):
                     get_staged_diff()
 
     def test_get_staged_diff_not_a_repository(self) -> None:
@@ -139,9 +148,10 @@ def456|Jane Smith|2025-11-27T09:00:00+00:00|fix: fix bug
 """
         with mock.patch("gmuse.git.is_git_repository", return_value=True):
             with mock.patch("gmuse.git.get_repo_root", return_value=Path("/repo")):
-                with mock.patch("subprocess.run", return_value=mock.Mock(
-                    returncode=0, stdout=mock_log, stderr=""
-                )):
+                with mock.patch(
+                    "subprocess.run",
+                    return_value=mock.Mock(returncode=0, stdout=mock_log, stderr=""),
+                ):
                     history = get_commit_history(depth=5)
 
                     assert len(history.commits) == 2
@@ -170,9 +180,10 @@ def456|Jane Smith|2025-11-27T09:00:00+00:00|fix: fix bug
         mock_log = "abc123|John Doe|invalid_format\n"
         with mock.patch("gmuse.git.is_git_repository", return_value=True):
             with mock.patch("gmuse.git.get_repo_root", return_value=Path("/repo")):
-                with mock.patch("subprocess.run", return_value=mock.Mock(
-                    returncode=0, stdout=mock_log, stderr=""
-                )):
+                with mock.patch(
+                    "subprocess.run",
+                    return_value=mock.Mock(returncode=0, stdout=mock_log, stderr=""),
+                ):
                     history = get_commit_history()
                     assert len(history.commits) == 0  # Malformed line skipped
 

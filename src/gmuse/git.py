@@ -239,7 +239,8 @@ def is_git_repository(path: Optional[Path] = None) -> bool:
     """
     try:
         result = _run_git(
-            "rev-parse", "--git-dir",
+            "rev-parse",
+            "--git-dir",
             cwd=str(path) if path else None,
             check=False,
         )
@@ -272,7 +273,8 @@ def get_repo_root(path: Optional[Path] = None) -> Path:
 
     try:
         result = _run_git(
-            "rev-parse", "--show-toplevel",
+            "rev-parse",
+            "--show-toplevel",
             cwd=str(path) if path else None,
         )
         return Path(result.stdout.strip())
@@ -314,9 +316,7 @@ def get_staged_diff() -> StagedDiff:
                 "No staged changes found. Stage files with 'git add' first."
             )
     except subprocess.CalledProcessError as e:
-        raise NotAGitRepositoryError(
-            f"Failed to get staged diff: {e.stderr}"
-        ) from e
+        raise NotAGitRepositoryError(f"Failed to get staged diff: {e.stderr}") from e
     except subprocess.TimeoutExpired as e:
         raise NotAGitRepositoryError("Git diff command timed out") from e
 
@@ -376,7 +376,9 @@ def get_commit_history(depth: int = 5) -> CommitHistory:
     try:
         # Format: hash|author|timestamp|message
         result = _run_git(
-            "log", f"-n{depth}", "--format=%H|%an|%aI|%s",
+            "log",
+            f"-n{depth}",
+            "--format=%H|%an|%aI|%s",
             timeout=_GIT_TIMEOUT_LONG,
         )
 

@@ -14,7 +14,7 @@ repos:
         types: [python]
       - id: types
         name: check types
-        entry: uv run mypy
+        entry: uv run pyrefly check
         language: system
         types: [python]
 

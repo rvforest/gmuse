@@ -63,13 +63,12 @@ gmuse = "gmuse.cli.main:app"
 
 [dependency-groups]
 dev = [
-  "mypy>=1.15.0",
   "nox>=2025.2.9",
   "pre-commit>=4.2.0",
+  "pyrefly>=0.16.0",
   "pytest>=8.3.5",
   "pytest-cov>=6.1.1",
   "ruff>=0.11.6",
-  "types-pyyaml>=6.0.12.20250516",
 ]
 docs = [
   "furo>=2024.8.6",
@@ -87,46 +86,8 @@ exclude = ["tests/*"]
 per-file-ignores = { "__init__.py" = ["F401"] }
 select = ["T100"]
 
-[tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-strict_equality = true
-
-[[tool.mypy.overrides]]
-module = "gmuse.config"
-strict = true
-
-[[tool.mypy.overrides]]
-module = "gmuse.git"
-strict = true
-
-[[tool.mypy.overrides]]
-module = "gmuse.llm"
-strict = true
-
-[[tool.mypy.overrides]]
-module = "gmuse.prompts"
-strict = true
-
-[[tool.mypy.overrides]]
-module = "gmuse.learning"
-strict = true
-
-[[tool.mypy.overrides]]
-module = "gmuse.exceptions"
-strict = true
-
-[[tool.mypy.overrides]]
-module = "gmuse.logging"
-strict = true
+[tool.pyrefly]
+project_includes = ["src"]
 
 [tool.hatch.version]
 source = "versioningit"

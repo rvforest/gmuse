@@ -9,7 +9,7 @@ This file provides essential project information and development standards for c
 - **Documentation**: https://gmuse.readthedocs.io
 - **License**: MIT
 - **Python Version**: 3.10+
-- **Main Dependencies**: No runtime dependencies by default. Development and documentation dependencies are defined in `pyproject.toml` (dev: Ruff, mypy, pytest, pytest-cov, pre-commit, nox; docs: Sphinx, myst-parser, furo, sphinx-autodoc2)
+- **Main Dependencies**: No runtime dependencies by default. Development and documentation dependencies are defined in `pyproject.toml` (dev: Ruff, pyrefly, pytest, pytest-cov, pre-commit, nox; docs: Sphinx, myst-parser, furo, sphinx-autodoc2)
 
 ## Architecture Overview
 
@@ -46,7 +46,7 @@ The project follows a standard layout:
 
 #### Type Hints
 - **Required**: All public functions, classes, and methods must have type hints
-- **Tool**: mypy for static type checking
+- **Tool**: pyrefly for static type checking
 - **Command**: `uv run nox -s types`
 
 #### Documentation
@@ -87,7 +87,7 @@ unit or integration tests for verifying core functionality.
 ### Pre-commit Hooks and CI
 
 #### Pre-commit Hooks
-- **Enabled**: Ruff linting/formatting, mypy type checking, yaml validation
+- **Enabled**: Ruff linting/formatting, pyrefly type checking, yaml validation
 - **Spell checking**: cspell for Markdown files only
 - **Security**: detect-secrets for credential scanning
 - **Setup**: Automatically configured with `uv sync`

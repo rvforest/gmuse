@@ -2,7 +2,6 @@
 
 import subprocess
 import tempfile
-from datetime import datetime
 from pathlib import Path
 from unittest import mock
 
@@ -10,9 +9,6 @@ import pytest
 
 from gmuse.exceptions import NoStagedChangesError, NotAGitRepositoryError
 from gmuse.git import (
-    CommitHistory,
-    CommitRecord,
-    RepositoryInstructions,
     StagedDiff,
     get_commit_history,
     get_repo_root,

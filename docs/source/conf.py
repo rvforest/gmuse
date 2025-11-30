@@ -46,8 +46,8 @@ source_suffix = {
 html_theme = "furo"
 html_static_path = ["_static"]
 html_theme_options = {
-    "light_logo": "logo/package-logo-light.png",
-    "dark_logo": "logo/package-logo-dark.png",
+    "light_logo": "logo/gmuse-logo-light.png",
+    "dark_logo": "logo/gmuse-logo-dark.png",
 }
 
 # Favicon configuration

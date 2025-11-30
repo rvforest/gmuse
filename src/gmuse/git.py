@@ -141,7 +141,7 @@ def _run_git(
     This is the core helper used by all git operations in this module.
 
     Args:
-        *args: Git command arguments (without 'git' prefix)
+        ``*args``: Git command arguments (without 'git' prefix)
         cwd: Working directory for the command (None = current directory)
         timeout: Command timeout in seconds
         check: If True, raise CalledProcessError on non-zero exit code

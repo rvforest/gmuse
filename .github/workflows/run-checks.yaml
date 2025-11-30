@@ -26,7 +26,7 @@ jobs:
         run: uv python install
 
       - name: Run checks
-        run: uv run pre-commit run --all-files --show-diff-on-failure
+        run: uv run pre-commit run --all-files --hook-stage push --show-diff-on-failure
 
   run-tests:
     name: Run tests (Python ${{ matrix.python-version }})

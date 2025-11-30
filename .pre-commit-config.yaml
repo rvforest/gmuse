@@ -27,6 +27,7 @@ repos:
       - id: trailing-whitespace
       - id: no-commit-to-branch
         args: [--branch, main]
+        stages: [commit]
 
   - repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0

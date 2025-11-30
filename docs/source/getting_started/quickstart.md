@@ -3,13 +3,13 @@
 This quick start shows the minimal steps to install gmuse, configure a provider,
 and generate an AI-powered commit message from staged git changes.
 
-## ⚙️ Prerequisites
+## Prerequisites
 
 - Python 3.10 or newer
 - A git repository (or `git init` a new one)
 - An LLM provider API key (OpenAI, Anthropic, Google Gemini, etc.) for your model of choice
 
-## 🚀 Install
+## Install
 
 Install gmuse with pip (the simplest option):
 
@@ -20,7 +20,7 @@ pip install gmuse
 For optional extras (clipboard, provider-specific integrations, etc.), see the
 [Installation](installation.md) guide for details and the provider support matrix.
 
-## 🔑 Configure Provider Credentials
+## Configure Provider Credentials
 
 Provider credentials vary; many use a single API key environment variable. For a
 quick example (OpenAI/Anthropic):
@@ -78,7 +78,7 @@ gmuse msg --model "claude-3-opus-20240229" --provider anthropic
 gmuse msg --history-depth 10
 ```
 
-## 🛠️ Troubleshooting & Debugging
+## ️Troubleshooting & Debugging
 
 - If gmuse can't detect your provider or model, run `gmuse info` to view
 	resolved environment values and merged configuration:
@@ -92,7 +92,7 @@ gmuse info
 - If your diff is large, gmuse may truncate the diffs to fit model token limits;
 	it will warn you and still produce a concise message.
 
-## 💡 Tips
+## Tips
 
 - Use `--format conventional` for Conventional Commits compatible messages when
 	your project follows semantic commit styles.
@@ -100,7 +100,7 @@ gmuse info
 	"emphasize performance" or "security fix").
 - Set `GMUSE_MODEL` in your environment to pin a model for repeated usage.
 
-## 📚 Next Steps
+## Next Steps
 
 - See the Installation page for provider-specific setup and supported models.
 - Consult the API Reference to integrate gmuse programmatically.

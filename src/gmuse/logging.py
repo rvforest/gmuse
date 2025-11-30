@@ -99,7 +99,7 @@ def configure_litellm_logging() -> None:
         try:
             import litellm
 
-            litellm.suppress_debug_info = True
+            litellm.suppress_debug_info = True  # type:ignore
         except (ImportError, AttributeError):
             # Fallback: just set the log level
             pass

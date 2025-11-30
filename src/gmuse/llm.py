@@ -266,7 +266,7 @@ class LLMClient:
         try:
             # Suppress litellm's debug output unless GMUSE_DEBUG is enabled
             with _suppress_litellm_output():
-                response = litellm.completion(
+                response = litellm.completion(  # type: ignore[operator]
                     model=self.model,
                     messages=messages,
                     temperature=temperature,

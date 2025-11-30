@@ -16,7 +16,9 @@ from typer.testing import CliRunner
 
 from gmuse.cli.main import app
 
-runner = CliRunner()
+# Disable colors to prevent ANSI escape codes in test output,
+# which can differ between local and CI environments
+runner = CliRunner(env={"NO_COLOR": "1"})
 
 
 @pytest.fixture

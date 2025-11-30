@@ -25,9 +25,7 @@ class TestGatherContext:
         mock_history = mock.Mock(commits=["commit1"])
         mock_instructions = mock.Mock(exists=True)
 
-        monkeypatch.setattr(
-            "gmuse.commit.get_staged_diff", lambda: mock_diff
-        )
+        monkeypatch.setattr("gmuse.commit.get_staged_diff", lambda: mock_diff)
         monkeypatch.setattr(
             "gmuse.commit.get_commit_history", lambda depth: mock_history
         )
@@ -138,14 +136,21 @@ class TestGenerateMessage:
         mock_client = mock.Mock()
         mock_client.generate.return_value = "feat: add new feature"
 
-        monkeypatch.setattr("gmuse.commit.gather_context", lambda **kwargs: mock_context)
+        monkeypatch.setattr(
+            "gmuse.commit.gather_context", lambda **kwargs: mock_context
+        )
         monkeypatch.setattr(
             "gmuse.commit.build_prompt", lambda **kwargs: ("system", "user")
         )
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
         monkeypatch.setattr("gmuse.commit.validate_message", lambda msg, format: None)
 
-        config = {"format": "freeform", "model": "gpt-4", "timeout": 30, "provider": None}
+        config = {
+            "format": "freeform",
+            "model": "gpt-4",
+            "timeout": 30,
+            "provider": None,
+        }
         result = generate_message(config=config, hint="test hint")
 
         assert isinstance(result, GenerationResult)
@@ -175,7 +180,12 @@ class TestGenerateMessage:
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
         monkeypatch.setattr("gmuse.commit.validate_message", lambda msg, format: None)
 
-        config = {"format": "freeform", "model": "gpt-4", "timeout": 30, "provider": None}
+        config = {
+            "format": "freeform",
+            "model": "gpt-4",
+            "timeout": 30,
+            "provider": None,
+        }
         result = generate_message(config=config, context=mock_context)
 
         assert result.message == "fix: resolve bug"
@@ -192,13 +202,20 @@ class TestGenerateMessage:
         mock_client = mock.Mock()
         mock_client.generate.side_effect = LLMError("API error")
 
-        monkeypatch.setattr("gmuse.commit.gather_context", lambda **kwargs: mock_context)
+        monkeypatch.setattr(
+            "gmuse.commit.gather_context", lambda **kwargs: mock_context
+        )
         monkeypatch.setattr(
             "gmuse.commit.build_prompt", lambda **kwargs: ("system", "user")
         )
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
 
-        config = {"format": "freeform", "model": "gpt-4", "timeout": 30, "provider": None}
+        config = {
+            "format": "freeform",
+            "model": "gpt-4",
+            "timeout": 30,
+            "provider": None,
+        }
 
         with pytest.raises(LLMError, match="API error"):
             generate_message(config=config, context=mock_context)
@@ -219,12 +236,19 @@ class TestGenerateMessage:
             captured_kwargs.update(kwargs)
             return ("system", "user")
 
-        monkeypatch.setattr("gmuse.commit.gather_context", lambda **kwargs: mock_context)
+        monkeypatch.setattr(
+            "gmuse.commit.gather_context", lambda **kwargs: mock_context
+        )
         monkeypatch.setattr("gmuse.commit.build_prompt", capture_build_prompt)
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
         monkeypatch.setattr("gmuse.commit.validate_message", lambda msg, format: None)
 
-        config = {"format": "freeform", "model": "gpt-4", "timeout": 30, "provider": None}
+        config = {
+            "format": "freeform",
+            "model": "gpt-4",
+            "timeout": 30,
+            "provider": None,
+        }
         generate_message(config=config, hint="security fix", context=mock_context)
 
         assert captured_kwargs["user_hint"] == "security fix"

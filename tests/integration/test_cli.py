@@ -62,12 +62,12 @@ def git_repo_with_history(git_repo: Path) -> Path:
 
     # Add a few more commits for history
     for i in range(3):
-        test_file.write_text(f"# Test Project\nVersion {i+1}\n")
+        test_file.write_text(f"# Test Project\nVersion {i + 1}\n")
         subprocess.run(
             ["git", "add", "README.md"], cwd=git_repo, check=True, capture_output=True
         )
         subprocess.run(
-            ["git", "commit", "-m", f"feat: update to version {i+1}"],
+            ["git", "commit", "-m", f"feat: update to version {i + 1}"],
             cwd=git_repo,
             check=True,
             capture_output=True,
@@ -87,9 +87,7 @@ def _stage_file(repo: Path, filename: str, content: str) -> None:
     """Stage a file in the repository."""
     file_path = repo / filename
     file_path.write_text(content)
-    subprocess.run(
-        ["git", "add", filename], cwd=repo, check=True, capture_output=True
-    )
+    subprocess.run(["git", "add", filename], cwd=repo, check=True, capture_output=True)
 
 
 class TestUserStory1:
@@ -241,7 +239,9 @@ class TestUserStory2:
                 old_cwd = os.getcwd()
                 os.chdir(git_repo_with_history)
                 try:
-                    result = runner.invoke(app, ["msg", "--hint", "emphasize performance"])
+                    result = runner.invoke(
+                        app, ["msg", "--hint", "emphasize performance"]
+                    )
                 finally:
                     os.chdir(old_cwd)
 
@@ -266,9 +266,7 @@ class TestUserStory2:
 
         with mock.patch("gmuse.commit.LLMClient") as mock_client_class:
             mock_client = mock.Mock()
-            mock_client.generate.return_value = (
-                "feat!: replace old_api with new_api\n\nBREAKING CHANGE: removed old_api"
-            )
+            mock_client.generate.return_value = "feat!: replace old_api with new_api\n\nBREAKING CHANGE: removed old_api"
             mock_client_class.return_value = mock_client
 
             with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}):
@@ -417,7 +415,9 @@ class TestUserStory4:
 
                 # Verify conventional format was requested in prompt
                 call_kwargs = mock_client.generate.call_args.kwargs
-                prompt = call_kwargs.get("system_prompt", "") + call_kwargs.get("user_prompt", "")
+                prompt = call_kwargs.get("system_prompt", "") + call_kwargs.get(
+                    "user_prompt", ""
+                )
                 assert "conventional" in prompt.lower() or "type(scope)" in prompt
 
     def test_format_gitmoji(self, git_repo_with_history: Path) -> None:
@@ -491,7 +491,9 @@ class TestUserStory8:
                 old_cwd = os.getcwd()
                 os.chdir(git_repo_with_history)
                 try:
-                    result = runner.invoke(app, ["msg", "--model", "claude-3-opus-20240229"])
+                    result = runner.invoke(
+                        app, ["msg", "--model", "claude-3-opus-20240229"]
+                    )
                 finally:
                     os.chdir(old_cwd)
 

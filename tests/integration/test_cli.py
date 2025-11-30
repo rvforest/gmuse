@@ -308,6 +308,7 @@ class TestUserStory2:
                 # If there's no hint, "User Hint" section shouldn't appear or be empty
                 # The prompt builder only adds hint section when hint is provided
                 # We just verify the call succeeded without hint
+                assert "User hint" not in prompt
 
 
 class TestUserStory3:

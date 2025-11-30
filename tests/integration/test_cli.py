@@ -62,12 +62,12 @@ def git_repo_with_history(git_repo: Path) -> Path:
 
     # Add a few more commits for history
     for i in range(3):
-        test_file.write_text(f"# Test Project\nVersion {i+1}\n")
+        test_file.write_text(f"# Test Project\nVersion {i + 1}\n")
         subprocess.run(
             ["git", "add", "README.md"], cwd=git_repo, check=True, capture_output=True
         )
         subprocess.run(
-            ["git", "commit", "-m", f"feat: update to version {i+1}"],
+            ["git", "commit", "-m", f"feat: update to version {i + 1}"],
             cwd=git_repo,
             check=True,
             capture_output=True,
@@ -87,9 +87,7 @@ def _stage_file(repo: Path, filename: str, content: str) -> None:
     """Stage a file in the repository."""
     file_path = repo / filename
     file_path.write_text(content)
-    subprocess.run(
-        ["git", "add", filename], cwd=repo, check=True, capture_output=True
-    )
+    subprocess.run(["git", "add", filename], cwd=repo, check=True, capture_output=True)
 
 
 class TestUserStory1:
@@ -241,7 +239,9 @@ class TestUserStory2:
                 old_cwd = os.getcwd()
                 os.chdir(git_repo_with_history)
                 try:
-                    result = runner.invoke(app, ["msg", "--hint", "emphasize performance"])
+                    result = runner.invoke(
+                        app, ["msg", "--hint", "emphasize performance"]
+                    )
                 finally:
                     os.chdir(old_cwd)
 
@@ -266,9 +266,7 @@ class TestUserStory2:
 
         with mock.patch("gmuse.commit.LLMClient") as mock_client_class:
             mock_client = mock.Mock()
-            mock_client.generate.return_value = (
-                "feat!: replace old_api with new_api\n\nBREAKING CHANGE: removed old_api"
-            )
+            mock_client.generate.return_value = "feat!: replace old_api with new_api\n\nBREAKING CHANGE: removed old_api"
             mock_client_class.return_value = mock_client
 
             with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}):
@@ -417,7 +415,9 @@ class TestUserStory4:
 
                 # Verify conventional format was requested in prompt
                 call_kwargs = mock_client.generate.call_args.kwargs
-                prompt = call_kwargs.get("system_prompt", "") + call_kwargs.get("user_prompt", "")
+                prompt = call_kwargs.get("system_prompt", "") + call_kwargs.get(
+                    "user_prompt", ""
+                )
                 assert "conventional" in prompt.lower() or "type(scope)" in prompt
 
     def test_format_gitmoji(self, git_repo_with_history: Path) -> None:
@@ -472,6 +472,366 @@ class TestUserStory4:
                 assert "Add new feature function" in result.stdout
 
 
+class TestUserStory5:
+    """Integration tests for User Story 5: Repository-Level Instructions."""
+
+    def test_gmuse_file_influences_message(self, git_repo_with_history: Path) -> None:
+        """
+        Acceptance 1: Given `.gmuse` with "Always reference issue numbers",
+        when `gmuse msg`, then message attempts to reference issues.
+        """
+        # Create .gmuse file with instructions
+        gmuse_file = git_repo_with_history / ".gmuse"
+        gmuse_file.write_text("Always reference issue numbers in commit messages.")
+
+        _stage_file(git_repo_with_history, "feature.py", "def feature():\n    pass\n")
+
+        with mock.patch("gmuse.commit.LLMClient") as mock_client_class:
+            mock_client = mock.Mock()
+            mock_client.generate.return_value = "Add feature function (Issue #123)"
+            mock_client_class.return_value = mock_client
+
+            with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}):
+                old_cwd = os.getcwd()
+                os.chdir(git_repo_with_history)
+                try:
+                    result = runner.invoke(app, ["msg"])
+                finally:
+                    os.chdir(old_cwd)
+
+                assert result.exit_code == 0
+                assert "Issue" in result.stdout
+
+                # Verify .gmuse content was included in prompt
+                call_kwargs = mock_client.generate.call_args.kwargs
+                prompt = call_kwargs.get("user_prompt", "")
+                assert "issue numbers" in prompt.lower()
+
+    def test_gmuse_file_with_hint(self, git_repo_with_history: Path) -> None:
+        """
+        Acceptance 2: Given `.gmuse` and `--hint`, when `gmuse msg`,
+        then both influence message with hint precedence.
+        """
+        # Create .gmuse file
+        gmuse_file = git_repo_with_history / ".gmuse"
+        gmuse_file.write_text("Use conventional commits format.")
+
+        _stage_file(git_repo_with_history, "security.py", "def secure():\n    pass\n")
+
+        with mock.patch("gmuse.commit.LLMClient") as mock_client_class:
+            mock_client = mock.Mock()
+            mock_client.generate.return_value = "Add security function (critical fix)"
+            mock_client_class.return_value = mock_client
+
+            with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}):
+                old_cwd = os.getcwd()
+                os.chdir(git_repo_with_history)
+                try:
+                    result = runner.invoke(
+                        app, ["msg", "--hint", "this is a critical security fix"]
+                    )
+                finally:
+                    os.chdir(old_cwd)
+
+                assert result.exit_code == 0
+
+                # Verify both .gmuse and hint were included in prompt
+                call_kwargs = mock_client.generate.call_args.kwargs
+                prompt = call_kwargs.get("user_prompt", "")
+                assert "conventional" in prompt.lower()
+                assert "critical security fix" in prompt
+
+    def test_no_gmuse_file(self, git_repo_with_history: Path) -> None:
+        """
+        Acceptance 3: Given no `.gmuse`, when `gmuse msg`,
+        then message generated without repo-specific instructions.
+        """
+        # Ensure no .gmuse file exists
+        gmuse_file = git_repo_with_history / ".gmuse"
+        if gmuse_file.exists():
+            gmuse_file.unlink()
+
+        _stage_file(git_repo_with_history, "utils.py", "def helper():\n    pass\n")
+
+        with mock.patch("gmuse.commit.LLMClient") as mock_client_class:
+            mock_client = mock.Mock()
+            mock_client.generate.return_value = "Add helper function"
+            mock_client_class.return_value = mock_client
+
+            with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}):
+                old_cwd = os.getcwd()
+                os.chdir(git_repo_with_history)
+                try:
+                    result = runner.invoke(app, ["msg"])
+                finally:
+                    os.chdir(old_cwd)
+
+                assert result.exit_code == 0
+                assert "Add helper function" in result.stdout
+
+
+class TestUserStory6:
+    """Integration tests for User Story 6: Global Configuration."""
+
+    def test_config_copy_to_clipboard(
+        self, git_repo_with_history: Path, tmp_path: Path
+    ) -> None:
+        """
+        Acceptance 1: Given config with `copy_to_clipboard = true`,
+        when `gmuse msg`, then auto-copy.
+        """
+        # Create config file
+        config_dir = tmp_path / "gmuse"
+        config_dir.mkdir(parents=True)
+        config_file = config_dir / "config.toml"
+        config_file.write_text("copy_to_clipboard = true\n")
+
+        _stage_file(git_repo_with_history, "feature.py", "def feature():\n    pass\n")
+
+        with mock.patch("gmuse.commit.LLMClient") as mock_client_class:
+            mock_client = mock.Mock()
+            mock_client.generate.return_value = "Add feature function"
+            mock_client_class.return_value = mock_client
+
+            mock_pyperclip = mock.MagicMock()
+            with mock.patch.dict("sys.modules", {"pyperclip": mock_pyperclip}):
+                with mock.patch.dict(
+                    os.environ,
+                    {
+                        "OPENAI_API_KEY": "sk-test",
+                        "XDG_CONFIG_HOME": str(tmp_path),
+                    },
+                ):
+                    old_cwd = os.getcwd()
+                    os.chdir(git_repo_with_history)
+                    try:
+                        result = runner.invoke(app, ["msg"])
+                    finally:
+                        os.chdir(old_cwd)
+
+                    assert result.exit_code == 0
+                    # Verify clipboard was called due to config
+                    mock_pyperclip.copy.assert_called_once_with("Add feature function")
+
+    def test_config_default_format(
+        self, git_repo_with_history: Path, tmp_path: Path
+    ) -> None:
+        """
+        Acceptance 4: Given config with `format = "conventional"`,
+        when `gmuse msg`, then conventional format used.
+        """
+        # Create config file
+        config_dir = tmp_path / "gmuse"
+        config_dir.mkdir(parents=True)
+        config_file = config_dir / "config.toml"
+        config_file.write_text('format = "conventional"\n')
+
+        _stage_file(git_repo_with_history, "feature.py", "def feature():\n    pass\n")
+
+        with mock.patch("gmuse.commit.LLMClient") as mock_client_class:
+            mock_client = mock.Mock()
+            mock_client.generate.return_value = "feat: add feature function"
+            mock_client_class.return_value = mock_client
+
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "OPENAI_API_KEY": "sk-test",
+                    "XDG_CONFIG_HOME": str(tmp_path),
+                },
+            ):
+                old_cwd = os.getcwd()
+                os.chdir(git_repo_with_history)
+                try:
+                    result = runner.invoke(app, ["msg"])
+                finally:
+                    os.chdir(old_cwd)
+
+                assert result.exit_code == 0
+                # Verify conventional format was requested
+                call_kwargs = mock_client.generate.call_args.kwargs
+                prompt = call_kwargs.get("system_prompt", "") + call_kwargs.get(
+                    "user_prompt", ""
+                )
+                assert "conventional" in prompt.lower() or "type(scope)" in prompt
+
+    def test_no_config_uses_defaults(self, git_repo_with_history: Path) -> None:
+        """
+        Acceptance: Given no config, when `gmuse msg`,
+        then reasonable defaults used.
+        """
+        _stage_file(git_repo_with_history, "feature.py", "def feature():\n    pass\n")
+
+        with mock.patch("gmuse.commit.LLMClient") as mock_client_class:
+            mock_client = mock.Mock()
+            mock_client.generate.return_value = "Add feature function"
+            mock_client_class.return_value = mock_client
+
+            # Use a non-existent config directory
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "OPENAI_API_KEY": "sk-test",
+                    "XDG_CONFIG_HOME": "/nonexistent/config",
+                },
+            ):
+                old_cwd = os.getcwd()
+                os.chdir(git_repo_with_history)
+                try:
+                    result = runner.invoke(app, ["msg"])
+                finally:
+                    os.chdir(old_cwd)
+
+                # Should work with defaults
+                assert result.exit_code == 0
+                assert "Add feature function" in result.stdout
+
+
+class TestUserStory7:
+    """Integration tests for User Story 7: Learn from User Edits."""
+
+    def test_learning_disabled_by_default(
+        self, git_repo_with_history: Path, tmp_path: Path
+    ) -> None:
+        """
+        Acceptance 3: Given `learning_enabled = false`, when `gmuse msg`,
+        then no data stored or used.
+        """
+        _stage_file(git_repo_with_history, "feature.py", "def feature():\n    pass\n")
+
+        with mock.patch("gmuse.commit.LLMClient") as mock_client_class:
+            mock_client = mock.Mock()
+            mock_client.generate.return_value = "Add feature function"
+            mock_client_class.return_value = mock_client
+
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "OPENAI_API_KEY": "sk-test",
+                    "XDG_DATA_HOME": str(tmp_path),
+                    "XDG_CONFIG_HOME": str(tmp_path),
+                },
+            ):
+                old_cwd = os.getcwd()
+                os.chdir(git_repo_with_history)
+                try:
+                    result = runner.invoke(app, ["msg"])
+                finally:
+                    os.chdir(old_cwd)
+
+                assert result.exit_code == 0
+
+                # No history file should be created when learning is disabled
+                history_file = tmp_path / "gmuse" / "history.jsonl"
+                assert not history_file.exists()
+
+    def test_learning_stores_record_when_enabled(
+        self, git_repo_with_history: Path, tmp_path: Path
+    ) -> None:
+        """
+        Acceptance 1: Given `learning_enabled = true`, when user runs gmuse,
+        then record saved to history.jsonl.
+        """
+        # Create config with learning enabled
+        config_dir = tmp_path / "gmuse"
+        config_dir.mkdir(parents=True)
+        config_file = config_dir / "config.toml"
+        config_file.write_text("learning_enabled = true\n")
+
+        _stage_file(git_repo_with_history, "feature.py", "def feature():\n    pass\n")
+
+        with mock.patch("gmuse.commit.LLMClient") as mock_client_class:
+            mock_client = mock.Mock()
+            mock_client.generate.return_value = "Add feature function"
+            mock_client_class.return_value = mock_client
+
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "OPENAI_API_KEY": "sk-test",
+                    "XDG_DATA_HOME": str(tmp_path),
+                    "XDG_CONFIG_HOME": str(tmp_path),
+                },
+            ):
+                old_cwd = os.getcwd()
+                os.chdir(git_repo_with_history)
+                try:
+                    result = runner.invoke(app, ["msg"])
+                finally:
+                    os.chdir(old_cwd)
+
+                assert result.exit_code == 0
+
+                # History file should be created
+                history_file = tmp_path / "gmuse" / "history.jsonl"
+                assert history_file.exists()
+
+                # Should contain the generated message
+                content = history_file.read_text()
+                assert "Add feature function" in content
+
+    def test_learning_uses_history_when_available(
+        self, git_repo_with_history: Path, tmp_path: Path
+    ) -> None:
+        """
+        Acceptance 2: Given historical edits exist, when `gmuse msg`,
+        then examples included in prompt as few-shot.
+        """
+        import json
+
+        from gmuse.learning import get_repo_id
+
+        # Create config with learning enabled
+        config_dir = tmp_path / "gmuse"
+        config_dir.mkdir(parents=True)
+        config_file = config_dir / "config.toml"
+        config_file.write_text("learning_enabled = true\n")
+
+        # Create existing history with edits
+        history_file = tmp_path / "gmuse" / "history.jsonl"
+        repo_id = get_repo_id(str(git_repo_with_history))
+        record = {
+            "timestamp": "2025-01-01T00:00:00Z",
+            "repo_id": repo_id,
+            "generated_message": "Old generated message",
+            "final_message": "feat: improved message after edit",
+            "diff_hash": "abc123",
+            "model_used": "gpt-4",
+            "format": "conventional",
+        }
+        history_file.write_text(json.dumps(record) + "\n")
+
+        _stage_file(git_repo_with_history, "feature.py", "def feature():\n    pass\n")
+
+        with mock.patch("gmuse.commit.LLMClient") as mock_client_class:
+            mock_client = mock.Mock()
+            mock_client.generate.return_value = "Add feature function"
+            mock_client_class.return_value = mock_client
+
+            with mock.patch.dict(
+                os.environ,
+                {
+                    "OPENAI_API_KEY": "sk-test",
+                    "XDG_DATA_HOME": str(tmp_path),
+                    "XDG_CONFIG_HOME": str(tmp_path),
+                },
+            ):
+                old_cwd = os.getcwd()
+                os.chdir(git_repo_with_history)
+                try:
+                    result = runner.invoke(app, ["msg"])
+                finally:
+                    os.chdir(old_cwd)
+
+                assert result.exit_code == 0
+
+                # Verify the learning example was included in prompt
+                call_kwargs = mock_client.generate.call_args.kwargs
+                prompt = call_kwargs.get("user_prompt", "")
+                assert "Old generated message" in prompt
+                assert "improved message after edit" in prompt
+
+
 class TestUserStory8:
     """Integration tests for User Story 8: Override Model Selection."""
 
@@ -491,7 +851,9 @@ class TestUserStory8:
                 old_cwd = os.getcwd()
                 os.chdir(git_repo_with_history)
                 try:
-                    result = runner.invoke(app, ["msg", "--model", "claude-3-opus-20240229"])
+                    result = runner.invoke(
+                        app, ["msg", "--model", "claude-3-opus-20240229"]
+                    )
                 finally:
                     os.chdir(old_cwd)
 
@@ -604,6 +966,7 @@ class TestCLIHelp:
 
     def test_main_help(self) -> None:
         """Verify main --help output."""
+        os.environ.pop("FORCE_COLOR", None)
         result = runner.invoke(app, ["--help"])
         assert result.exit_code == 0
         assert "gmuse" in result.stdout
@@ -612,6 +975,7 @@ class TestCLIHelp:
 
     def test_generate_help(self) -> None:
         """Verify generate command help."""
+        os.environ.pop("FORCE_COLOR", None)
         result = runner.invoke(app, ["msg", "--help"])
         assert result.exit_code == 0
         assert "--hint" in result.stdout

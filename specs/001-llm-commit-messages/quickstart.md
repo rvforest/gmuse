@@ -138,22 +138,6 @@ gmuse
 # feat: add user authentication (PROJ-123)
 ```
 
-## Learning from Your Edits (Opt-in)
-
-Enable learning to improve message quality over time:
-
-```bash
-# In ~/.config/gmuse/config.toml
-echo "learning_enabled = true" >> ~/.config/gmuse/config.toml
-```
-
-When learning is enabled:
-1. Generated messages are recorded
-2. If you edit them, the final version is saved
-3. Future generations use your edits as examples
-
-*(Note: v1 requires manual feedback recording; v1.1 will automate via git hooks)*
-
 ## Common Use Cases
 
 ### Quick Fixes

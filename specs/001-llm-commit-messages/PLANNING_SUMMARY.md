@@ -20,7 +20,6 @@ Researched and documented technical decisions for:
 - ✅ Git operations (subprocess with git CLI)
 - ✅ Configuration management (tomllib/tomli with TOML)
 - ✅ Clipboard operations (pyperclip with graceful degradation)
-- ✅ Learning data storage (JSONL format)
 - ✅ Prompt design patterns (structured system/context/task)
 - ✅ Token management strategy (intelligent truncation)
 - ✅ Error handling patterns (actionable messages)
@@ -39,8 +38,6 @@ Defined entities and relationships:
 - ✅ CommitHistory (style context)
 - ✅ RepositoryInstructions (.gmuse file)
 - ✅ UserConfig (config.toml)
-- ✅ LearningRecord (history entry)
-- ✅ LearningHistory (per-repo examples)
 
 Includes validation rules, state transitions, and privacy considerations.
 
@@ -54,7 +51,6 @@ Documented prompt structure:
 - ✅ Format-specific task prompts (freeform, conventional, gitmoji)
 - ✅ Token budget allocation
 - ✅ Truncation strategy
-- ✅ Learning examples format
 - ✅ Error handling in prompts
 - ✅ Prompt assembly algorithm
 - ✅ Validation rules
@@ -68,7 +64,6 @@ Created user-facing getting started guide:
 - ✅ Basic workflows (standard, with hints, clipboard, formats)
 - ✅ Configuration examples
 - ✅ Repository-level instructions
-- ✅ Learning setup
 - ✅ Common use cases
 - ✅ Troubleshooting
 - ✅ Advanced tips
@@ -123,12 +118,11 @@ specs/001-llm-commit-messages/
 ## Key Decisions Summary
 
 | Area | Decision | Rationale |
-|------|----------|-----------|
+|------|----------|----------|
 | LLM Provider | LiteLLM | Unified interface, 100+ providers, auto-detection |
 | Git Operations | subprocess + CLI | Universal availability, no dependencies |
 | Config Format | TOML | Stdlib support, human-friendly, XDG compliant |
 | Clipboard | pyperclip (optional) | Cross-platform, graceful degradation |
-| Learning Storage | JSONL | Append-only, standard format, no DB |
 | Prompt Design | Structured sections | Clear system/context/task separation |
 | Token Management | Intelligent truncation | Preserve structure, warn users |
 | Error Messages | Actionable guidance | 95% self-service resolution target |
@@ -170,11 +164,11 @@ After tasks are generated:
 - **Planning Duration**: Single session (2025-11-28)
 - **Documents Created**: 7 files (plan, research, data-model, quickstart, contracts, checklist, summary)
 - **Constitution Gates**: 4/4 passed
-- **User Stories**: 9 prioritized (P1-P3)
-- **Functional Requirements**: 25 documented
-- **Success Criteria**: 10 measurable outcomes
-- **Test Files Planned**: 6 unit + 1 integration
-- **New Source Modules**: 5 (config, git_utils, prompt_builder, llm_client, learning)
+- **User Stories**: 8 prioritized (P1-P3)
+- **Functional Requirements**: 20 documented
+- **Success Criteria**: 9 measurable outcomes
+- **Test Files Planned**: 5 unit + 1 integration
+- **New Source Modules**: 4 (config, git_utils, prompt_builder, llm_client)
 
 ## Risk Assessment
 
@@ -188,7 +182,6 @@ After tasks are generated:
 - Optional dependencies for LLM/clipboard (graceful degradation)
 - Intelligent diff truncation (token limits)
 - Clear error messages (95% self-service)
-- Learning is opt-in (privacy/security)
 - Comprehensive test strategy (85% coverage)
 
 ## Conclusion

@@ -41,15 +41,15 @@
 - ✓ All requirements are testable via unit/integration tests or user acceptance testing
 - ✓ Success criteria include specific metrics (10 seconds, 90% minimal editing, 95% self-service resolution)
 - ✓ Success criteria avoid implementation details and focus on user outcomes
-- ✓ All 9 user stories have detailed acceptance scenarios in Given/When/Then format
+- ✓ All 8 user stories have detailed acceptance scenarios in Given/When/Then format
 - ✓ Edge cases comprehensively cover failure modes (large diffs, network failures, no history, binary files, etc.)
-- ✓ Scope clearly excludes v1.1+ features (commit splitting, IDE plugins, git-tab completions)
+- ✓ Scope clearly excludes v1.1+ features (commit splitting, IDE plugins, git-tab completions, learning from edits)
 - ✓ Dependencies identified: git, LLM provider API keys, clipboard support (graceful degradation)
 
 **Feature Readiness**:
-- ✓ 25 functional requirements each map to specific acceptance scenarios in user stories
+- ✓ 20 functional requirements each map to specific acceptance scenarios in user stories
 - ✓ User scenarios prioritized P1-P3 with P1 (basic generation) as independently testable MVP
-- ✓ Success criteria SC-001 through SC-010 are all measurable and achievable
+- ✓ Success criteria SC-001 through SC-009 are all measurable and achievable
 - ✓ No implementation leaks detected (spec describes behavior, not code structure)
 
 **Overall Assessment**: ✅ PASSED - Specification is complete, unambiguous, and ready for planning phase.

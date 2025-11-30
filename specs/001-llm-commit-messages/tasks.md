@@ -240,116 +240,83 @@
 
 ---
 
-## Phase 9: User Story 7 - Learn from User Edits (Priority: P3)
-
-**Goal**: Opt-in learning from user edits to improve message quality over time
-
-**Independent Test**: Enable learning, provide edited messages, verify future messages use edits as examples
-
-**Reference**: [spec.md § User Story 7](spec.md#user-story-7---learn-from-user-edits-priority-p3)
-
-### Tests for User Story 7
-
-- [ ] T063 [P] [US7] Create tests/unit/test_learning.py with tests for repo ID generation, record appending, history loading, few-shot formatting per [plan.md § Step 3.1 Test](plan.md#step-31-learning-module)
-- [ ] T064 [P] [US7] Add integration tests to tests/integration/test_cli.py for all 4 P3 acceptance scenarios with learning enabled/disabled
-
-### Implementation for User Story 7
-
-- [ ] T065 [P] [US7] Create src/gmuse/learning.py with repo identifier (`get_repo_id()`) using SHA256 of repo root path per [data-model.md § LearningRecord](data-model.md#6-learningrecord)
-- [ ] T066 [P] [US7] Implement record writer (`append_learning_record()`) in src/gmuse/learning.py appending to `$XDG_DATA_HOME/gmuse/history.jsonl` per [data-model.md § LearningRecord persistence](data-model.md#persistence-format-jsonl)
-- [ ] T067 [P] [US7] Implement history loader (`load_learning_history()`) in src/gmuse/learning.py filtering by repo_id, returning last 10 per [data-model.md § LearningHistory](data-model.md#7-learninghistory)
-- [ ] T068 [P] [US7] Implement few-shot formatter (`format_learning_examples()`) in src/gmuse/learning.py per [contracts/prompt-templates.md § Learning Examples Format](contracts/prompt-templates.md#learning-examples-format)
-- [ ] T069 [US7] Integrate learning into CLI flow in src/gmuse/cli/main.py: check config, load history if enabled, append record after generation
-- [ ] T070 [US7] Integrate learning examples into `build_context()` in src/gmuse/prompt_builder.py
-- [ ] T071 [US7] Add XDG data directory path resolver for history.jsonl location
-
-**Acceptance Verification for US7**:
-1. ✅ Given `learning_enabled = true`, when user provides final message, then edit recorded to history.jsonl
-2. ✅ Given historical edits exist, when `gmuse`, then last 10 examples included in prompt as few-shot
-3. ✅ Given `learning_enabled = false`, when `gmuse`, then no data stored or used
-4. ✅ Given multi-repo history, when generating in repo A, then only repo A's history used
-
-**Checkpoint**: User Story 7 complete - Learning system working!
-
----
-
-## Phase 10: User Story 8 - Override Model Selection (Priority: P3)
+## Phase 9: User Story 7 - Override Model Selection (Priority: P3)
 
 **Goal**: Per-commit model selection for cost/quality trade-offs
 
 **Independent Test**: Run `gmuse --model gpt-4` and verify gpt-4 is used via logs
 
-**Reference**: [spec.md § User Story 8](spec.md#user-story-8---override-model-selection-priority-p3)
+**Reference**: [spec.md § User Story 7](spec.md#user-story-7---override-model-selection-priority-p3)
 
-### Tests for User Story 8
+### Tests for User Story 7
 
-- [ ] T072 [P] [US8] Add integration tests to tests/integration/test_cli.py for all 3 P3 acceptance scenarios with various --model values
+- [ ] T063 [P] [US7] Add integration tests to tests/integration/test_cli.py for all 3 P3 acceptance scenarios with various --model values
 
-### Implementation for User Story 8
+### Implementation for User Story 7
 
-- [ ] T073 [US8] Verify `--model` flag properly overrides config and auto-detection in src/gmuse/cli/main.py (should already work from Phase 2)
-- [ ] T074 [US8] Verify model resolution works with explicit models, config models, and auto-detection per [research.md § LLM Provider Integration](research.md#1-llm-provider-integration)
-- [ ] T075 [US8] Add logging to show which model is being used (helpful for debugging)
-- [ ] T076 [US8] Update CLI help text with `--model` flag description and examples
+- [ ] T064 [US7] Verify `--model` flag properly overrides config and auto-detection in src/gmuse/cli/main.py (should already work from Phase 2)
+- [ ] T065 [US7] Verify model resolution works with explicit models, config models, and auto-detection per [research.md § LLM Provider Integration](research.md#1-llm-provider-integration)
+- [ ] T066 [US7] Add logging to show which model is being used (helpful for debugging)
+- [ ] T067 [US7] Update CLI help text with `--model` flag description and examples
 
-**Acceptance Verification for US8**:
+**Acceptance Verification for US7**:
 1. ✅ Given staged changes, when `gmuse --model claude-3-opus`, then claude-3-opus used
 2. ✅ Given config model, when `gmuse --model gpt-3.5-turbo`, then CLI flag overrides config
 3. ✅ Given no model specified, when `gmuse`, then auto-detect from env vars
 
-**Checkpoint**: User Story 8 complete - Model override working!
+**Checkpoint**: User Story 7 complete - Model override working!
 
 ---
 
-## Phase 11: User Story 9 - Adjust Commit History Depth (Priority: P3)
+## Phase 10: User Story 8 - Adjust Commit History Depth (Priority: P3)
 
 **Goal**: Control number of recent commits used for style context
 
 **Independent Test**: Run `gmuse --history-depth 10` and verify 10 commits included in prompt
 
-**Reference**: [spec.md § User Story 9](spec.md#user-story-9---adjust-commit-history-depth-priority-p3)
+**Reference**: [spec.md § User Story 8](spec.md#user-story-8---adjust-commit-history-depth-priority-p3)
 
-### Tests for User Story 9
+### Tests for User Story 8
 
-- [ ] T077 [P] [US9] Add integration tests to tests/integration/test_cli.py for all 4 P3 acceptance scenarios with various depth values
+- [ ] T068 [P] [US8] Add integration tests to tests/integration/test_cli.py for all 4 P3 acceptance scenarios with various depth values
 
-### Implementation for User Story 9
+### Implementation for User Story 8
 
-- [ ] T078 [US9] Verify `--history-depth` flag properly overrides config in src/gmuse/cli/main.py (should already work from Phase 2)
-- [ ] T079 [US9] Verify `get_commit_history()` respects depth parameter per [data-model.md § CommitHistory](data-model.md#3-commithistory)
-- [ ] T080 [US9] Handle edge case: repo has fewer commits than requested depth (use all available)
-- [ ] T081 [US9] Update CLI help text with `--history-depth` flag description and examples
+- [ ] T069 [US8] Verify `--history-depth` flag properly overrides config in src/gmuse/cli/main.py (should already work from Phase 2)
+- [ ] T070 [US8] Verify `get_commit_history()` respects depth parameter per [data-model.md § CommitHistory](data-model.md#3-commithistory)
+- [ ] T071 [US8] Handle edge case: repo has fewer commits than requested depth (use all available)
+- [ ] T072 [US8] Update CLI help text with `--history-depth` flag description and examples
 
-**Acceptance Verification for US9**:
+**Acceptance Verification for US8**:
 1. ✅ Given staged changes, when `gmuse --history-depth 15`, then 15 commits used
 2. ✅ Given staged changes, when `gmuse --history-depth 0`, then no commit history used
 3. ✅ Given config depth=8, when `gmuse`, then 8 commits used
 4. ✅ Given repo with 3 commits, when `gmuse --history-depth 10`, then all 3 used
 
-**Checkpoint**: User Story 9 complete - History depth control working!
+**Checkpoint**: User Story 8 complete - History depth control working!
 
 ---
 
-## Phase 12: Polish & Cross-Cutting Concerns
+## Phase 11: Polish & Cross-Cutting Concerns
 
 **Purpose**: Improvements affecting multiple user stories, documentation, and final validation
 
-- [ ] T082 [P] Create docs/source/user_guide/commit_messages.md comprehensive guide expanding on [quickstart.md](quickstart.md)
-- [ ] T083 [P] Create docs/source/user_guide/configuration.md documenting all config.toml options per [data-model.md § UserConfig](data-model.md#5-userconfig)
-- [ ] T084 [P] Update docs/source/getting_started/quickstart.md with commit message generation example from [quickstart.md](quickstart.md)
-- [ ] T085 [P] Update README.md with basic usage example and link to documentation
-- [ ] T086 [P] Add Google-style docstrings to all public functions in src/gmuse/*.py per [plan.md § Code Quality Gate](plan.md#code-quality-gate-)
-- [ ] T087 [P] Run mypy on all new modules and fix any type errors
-- [ ] T088 [P] Run Ruff on all new modules and fix any linting issues
-- [ ] T089 Add performance test in tests/integration/test_performance.py verifying <10s latency for typical diffs per [spec.md § Success Criteria SC-001](spec.md#success-criteria-mandatory)
-- [ ] T090 Add token usage monitoring test verifying prompts stay under 8K tokens per [plan.md § Performance Gate](plan.md#performance-gate-)
-- [ ] T091 Verify all error messages match specification per [plan.md § UX Gate Error Messages](plan.md#ux-gate-)
-- [ ] T092 Run full integration test suite covering all 9 user stories
-- [ ] T093 Verify 85% code coverage for all new modules per [plan.md § Testing Gate](plan.md#testing-gate-)
-- [ ] T094 Manual validation: Follow [quickstart.md](quickstart.md) steps end-to-end in fresh environment
-- [ ] T095 Security review: Verify no API keys logged, sensitive data in learning history follows privacy guidelines per [data-model.md § Privacy & Security](data-model.md#privacy--security-considerations)
-- [ ] T096 [P] Add CHANGELOG.md entry documenting new feature
-- [ ] T097 [P] Update planning/roadmap.md marking v1.0 complete
+- [ ] T073 [P] Create docs/source/user_guide/commit_messages.md comprehensive guide expanding on [quickstart.md](quickstart.md)
+- [ ] T074 [P] Create docs/source/user_guide/configuration.md documenting all config.toml options per [data-model.md § UserConfig](data-model.md#5-userconfig)
+- [ ] T075 [P] Update docs/source/getting_started/quickstart.md with commit message generation example from [quickstart.md](quickstart.md)
+- [ ] T076 [P] Update README.md with basic usage example and link to documentation
+- [ ] T077 [P] Add Google-style docstrings to all public functions in src/gmuse/*.py per [plan.md § Code Quality Gate](plan.md#code-quality-gate-)
+- [ ] T078 [P] Run mypy on all new modules and fix any type errors
+- [ ] T079 [P] Run Ruff on all new modules and fix any linting issues
+- [ ] T080 Add performance test in tests/integration/test_performance.py verifying <10s latency for typical diffs per [spec.md § Success Criteria SC-001](spec.md#success-criteria-mandatory)
+- [ ] T081 Add token usage monitoring test verifying prompts stay under 8K tokens per [plan.md § Performance Gate](plan.md#performance-gate-)
+- [ ] T082 Verify all error messages match specification per [plan.md § UX Gate Error Messages](plan.md#ux-gate-)
+- [ ] T083 Run full integration test suite covering all 8 user stories
+- [ ] T084 Verify 85% code coverage for all new modules per [plan.md § Testing Gate](plan.md#testing-gate-)
+- [ ] T085 Manual validation: Follow [quickstart.md](quickstart.md) steps end-to-end in fresh environment
+- [ ] T086 Security review: Verify no API keys logged per [data-model.md § Privacy & Security](data-model.md#privacy--security-considerations)
+- [ ] T087 [P] Add CHANGELOG.md entry documenting new feature
+- [ ] T088 [P] Update planning/roadmap.md marking v1.0 complete
 
 **Checkpoint**: All user stories complete, tested, documented, and validated!
 
@@ -361,10 +328,10 @@
 
 - **Setup (Phase 1)**: No dependencies - can start immediately
 - **Foundational (Phase 2)**: Depends on Setup completion - **BLOCKS all user stories**
-- **User Stories (Phases 3-11)**: All depend on Foundational phase completion
+- **User Stories (Phases 3-10)**: All depend on Foundational phase completion
   - User stories can proceed in parallel (if staffed) after Phase 2
-  - Or sequentially in priority order: US1 (P1) → US2-US4 (P2) → US5-US9 (P3)
-- **Polish (Phase 12)**: Depends on all desired user stories being complete
+  - Or sequentially in priority order: US1 (P1) → US2-US4 (P2) → US5-US8 (P3)
+- **Polish (Phase 11)**: Depends on all desired user stories being complete
 
 ### User Story Dependencies
 
@@ -376,9 +343,8 @@ All user stories are **independently testable** and can be implemented in any or
 - **US4 (P2)**: Foundation only - independently testable
 - **US5 (P3)**: Foundation only - independently testable
 - **US6 (P3)**: Foundation only - independently testable (config already built)
-- **US7 (P3)**: Foundation only - independently testable
-- **US8 (P3)**: Foundation only - independently testable (model selection already built)
-- **US9 (P3)**: Foundation only - independently testable
+- **US7 (P3)**: Foundation only - independently testable (model selection already built)
+- **US8 (P3)**: Foundation only - independently testable
 
 ### Within Each User Story
 
@@ -404,12 +370,12 @@ All user stories are **independently testable** and can be implemented in any or
 - Implementation tasks follow their module's internal sequence
 
 **After Foundational Phase**:
-- All user stories (US1-US9) can be worked on in parallel by different developers
+- All user stories (US1-US8) can be worked on in parallel by different developers
 - Recommended sequence if sequential: P1 → P2 → P3
 
 **Polish Phase** (Many can run in parallel):
-- T082-T088, T096-T097 all parallelizable
-- T089-T095 depend on implementation completion
+- T073-T079, T087-T088 all parallelizable
+- T080-T086 depend on implementation completion
 
 ---
 
@@ -459,7 +425,7 @@ After MVP (US1), add user stories in priority order:
 
 1. US1 (P1) → MVP deployed ✅
 2. US2-US4 (P2) → Enhanced version with hints/clipboard/formats
-3. US5-US9 (P3) → Full-featured version with config/learning
+3. US5-US8 (P3) → Full-featured version with config
 
 Each user story adds value without breaking previous stories.
 
@@ -491,15 +457,15 @@ For detailed implementation guidance, see:
 
 ## Task Statistics
 
-- **Total Tasks**: 97
-- **Phases**: 12
-- **User Stories Covered**: 9 (US1-US9)
-- **Parallelizable Tasks**: 47 tasks marked [P]
+- **Total Tasks**: 88
+- **Phases**: 11
+- **User Stories Covered**: 8 (US1-US8)
+- **Parallelizable Tasks**: 40 tasks marked [P]
 - **Test Tasks**: 13 (covering unit + integration)
 - **MVP Tasks (Setup + Foundational + US1)**: 36 tasks
 - **Estimated Timeline**:
   - MVP (US1): 2-3 weeks (1 developer) or 1-2 weeks (parallel team)
-  - Full feature (US1-US9): 6-8 weeks (1 developer) or 3-4 weeks (parallel team)
+  - Full feature (US1-US8): 5-7 weeks (1 developer) or 3-4 weeks (parallel team)
 
 ---
 

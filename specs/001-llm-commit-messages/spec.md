@@ -3,7 +3,7 @@
 **Feature Branch**: `001-llm-commit-messages`
 **Created**: November 28, 2025
 **Status**: Draft
-**Input**: User description: "Provide a safe, useful, and extensible CLI tool that generates commit messages using LLMs. The goal is to reduce friction in writing clear commit messages while enabling the project to build optional features such as learning from edits and commit splitting."
+**Input**: User description: "Provide a safe, useful, and extensible CLI tool that generates commit messages using LLMs. The goal is to reduce friction in writing clear commit messages."
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -107,24 +107,7 @@ A developer wants to set personal preferences (default model, clipboard behavior
 
 ---
 
-### User Story 7 - Learn from User Edits (Priority: P3)
-
-A developer frequently edits generated messages to match their personal style. They want the tool to learn from these edits and generate better messages over time without manual configuration.
-
-**Why this priority**: Provides long-term value and personalization but requires opt-in due to data persistence. The tool is fully functional without this feature.
-
-**Independent Test**: Can be fully tested by enabling `learning_enabled = true` in config, providing edited final messages multiple times, then generating new messages and verifying style convergence. Delivers value by reducing editing frequency over time.
-
-**Acceptance Scenarios**:
-
-1. **Given** `learning_enabled = true` in config.toml, **When** a user provides a final edited message via command, **Then** the edit is recorded to `$XDG_DATA_HOME/gmuse/history.jsonl`
-2. **Given** historical edits exist for the current repository, **When** the user runs `gmuse`, **Then** the most recent 10 edit examples from this repo are included as few-shot examples in the prompt
-3. **Given** `learning_enabled = false` (default), **When** the user runs `gmuse`, **Then** no learning data is stored or used
-4. **Given** learning history exists from multiple repositories, **When** generating a message in repo A, **Then** only repo A's history is used for context
-
----
-
-### User Story 8 - Override Model Selection (Priority: P3)
+### User Story 7 - Override Model Selection (Priority: P3)
 
 A developer wants to use a specific LLM model for a particular commit (e.g., a more powerful model for complex changes, or a cheaper model for simple formatting fixes).
 
@@ -140,7 +123,7 @@ A developer wants to use a specific LLM model for a particular commit (e.g., a m
 
 ---
 
-### User Story 9 - Adjust Commit History Depth (Priority: P3)
+### User Story 8 - Adjust Commit History Depth (Priority: P3)
 
 A developer wants to control how many recent commits are used as style context, either to provide more examples for better pattern matching or fewer for faster generation.
 
@@ -166,18 +149,16 @@ A developer wants to control how many recent commits are used as style context, 
 - **Clipboard unavailable**: On systems without clipboard support (e.g., headless servers), the `--copy` flag should degrade gracefully with a warning rather than failing.
 - **Binary or non-text diffs**: When staged changes include binary files, the diff may not be meaningful text. The tool should acknowledge this and either exclude binary content from the prompt or mention the file type in the message.
 - **Empty commits**: When attempting to generate a message for an empty commit (allowed with `--allow-empty`), the tool should prompt for a hint or generate a generic message.
-- **Multi-repo workspaces**: If learning is enabled and the user works in multiple repositories, ensure history is correctly isolated by repository identifier to prevent cross-contamination of styles.
 
 ## Constitution Check (Mandatory)
 
-- **Code Quality**: This spec introduces a new CLI command structure and public API for message generation. All public functions will have type hints (mypy enforcement), Google-style docstrings, and will follow existing project patterns. New modules include prompt building, LLM client abstraction, config parsing, and learning history management. All changes will be linted with Ruff and type-checked with mypy before merge.
+- **Code Quality**: This spec introduces a new CLI command structure and public API for message generation. All public functions will have type hints (mypy enforcement), Google-style docstrings, and will follow existing project patterns. New modules include prompt building, LLM client abstraction, and config parsing. All changes will be linted with Ruff and type-checked with mypy before merge.
 
 - **Testing**: Unit tests will be added for each module:
   - `tests/unit/test_config.py` - config parsing and validation
   - `tests/unit/test_prompt_builder.py` - prompt assembly logic
   - `tests/unit/test_llm_client.py` - LLM client abstraction (mocked API calls)
   - `tests/unit/test_git_utils.py` - git operations (diff extraction, history retrieval)
-  - `tests/unit/test_learning.py` - history storage and retrieval
   - `tests/integration/test_cli.py` - end-to-end CLI scenarios with mocked LLM responses
 
   Coverage target: 85% for all new modules. Integration tests will cover all user stories in priority order (P1 first).
@@ -194,7 +175,6 @@ A developer wants to control how many recent commits are used as style context, 
   - Token consumption: Implement intelligent diff truncation to keep prompts under 8K tokens for compatibility with most models
   - Network timeout: Set reasonable timeouts (30 seconds default) with clear error messages when exceeded
   - Config loading: Config files parsed once at startup with caching for repeat invocations
-  - History loading: Load maximum 10 most recent learning examples per repository to prevent context bloat
 
 ## Requirements *(mandatory)*
 
@@ -213,18 +193,15 @@ A developer wants to control how many recent commits are used as style context, 
 - **FR-011**: System MUST support `--format` flag with values "freeform" (default), "conventional", and "gitmoji"
 - **FR-012**: System MUST support `--history-depth` flag to control number of recent commits used as context
 - **FR-013**: System MUST read global configuration from `$XDG_CONFIG_HOME/gmuse/config.toml` if it exists
-- **FR-014**: System MUST support config keys: `model`, `copy_to_clipboard`, `learning_enabled`, `history_depth`, `format`
+- **FR-014**: System MUST support config keys: `model`, `copy_to_clipboard`, `history_depth`, `format`
 - **FR-015**: System MUST read repository-level instructions from `.gmuse` file at repository root if it exists
 - **FR-016**: System MUST prioritize configuration in order: CLI flags > config.toml > defaults
 - **FR-017**: System MUST provide clear, actionable error messages for: not a git repo, no staged changes, no API key, network failures, invalid config
-- **FR-018**: When `learning_enabled` is true, system MUST append generation records to `$XDG_DATA_HOME/gmuse/history.jsonl` containing: timestamp, generated_message, final_message (if provided), diff_hash, model_used, repo_identifier
-- **FR-019**: When generating messages with learning enabled, system MUST load the 10 most recent edit examples from the current repository and include them as few-shot examples in the prompt
-- **FR-020**: System MUST identify repositories using repo root path hash or repo name to segregate learning history by project
-- **FR-021**: System MUST handle network timeouts gracefully with appropriate error messages
-- **FR-022**: System MUST truncate large diffs intelligently to stay within token limits while preserving meaningful context
-- **FR-023**: System MUST handle repositories with no commit history (first commit) without errors
-- **FR-024**: System MUST handle clipboard unavailability gracefully, displaying warning instead of failing
-- **FR-025**: System MUST handle binary files in staged changes appropriately
+- **FR-018**: System MUST handle network timeouts gracefully with appropriate error messages
+- **FR-019**: System MUST truncate large diffs intelligently to stay within token limits while preserving meaningful context
+- **FR-020**: System MUST handle repositories with no commit history (first commit) without errors
+- **FR-021**: System MUST handle clipboard unavailability gracefully, displaying warning instead of failing
+- **FR-022**: System MUST handle binary files in staged changes appropriately
 
 ### Key Entities
 
@@ -232,9 +209,7 @@ A developer wants to control how many recent commits are used as style context, 
 - **StagedDiff**: The git diff output for staged changes; attributes include raw diff text, file paths changed, number of lines added/removed
 - **CommitHistory**: Collection of recent commit messages used for style context; attributes include commit hash, message text, author, timestamp, limited to configurable depth
 - **RepositoryInstructions**: Text from `.gmuse` file at repository root; represents project-level guidance for commit message generation
-- **UserConfig**: Configuration loaded from `$XDG_CONFIG_HOME/gmuse/config.toml`; attributes include model preference, clipboard behavior, learning toggle, history depth, message format
-- **LearningRecord**: Single entry in learning history; attributes include timestamp, generated message text, final message text (if edited), diff hash, model used, repository identifier
-- **LearningHistory**: Collection of LearningRecord entries for a specific repository; used for few-shot learning; limited to most recent 10 entries per repository
+- **UserConfig**: Configuration loaded from `$XDG_CONFIG_HOME/gmuse/config.toml`; attributes include model preference, clipboard behavior, history depth, message format
 
 ## Success Criteria *(mandatory)*
 
@@ -245,8 +220,7 @@ A developer wants to control how many recent commits are used as style context, 
 - **SC-003**: System handles all specified error conditions (no repo, no staged changes, no API key, network failures) with actionable error messages that allow users to resolve issues independently
 - **SC-004**: Users can customize message generation behavior via configuration without editing code (verified by testing all config options)
 - **SC-005**: Generated messages reflect the style of recent commit history when 5+ commits exist in the repository (verified by comparing message format to commit history patterns)
-- **SC-006**: With learning enabled and 10+ historical edits, users perceive improvement in message quality over time (qualitative feedback post-v1; quantitative edit frequency reduction in v1.1+)
-- **SC-007**: Zero-config first-time setup works for users with standard environment variables (OPENAI_API_KEY or equivalent) - no manual configuration required for basic usage
-- **SC-008**: CLI help text and error messages enable users to resolve 95% of issues without consulting external documentation (measured via support request frequency)
-- **SC-009**: Message format options (freeform, conventional, gitmoji) produce correctly formatted output that passes format validation tools (e.g., commitlint for conventional commits)
-- **SC-010**: Repository-level instructions in `.gmuse` file demonstrably influence message content across multiple test cases (verified by A/B testing with and without instructions)
+- **SC-006**: Zero-config first-time setup works for users with standard environment variables (OPENAI_API_KEY or equivalent) - no manual configuration required for basic usage
+- **SC-007**: CLI help text and error messages enable users to resolve 95% of issues without consulting external documentation (measured via support request frequency)
+- **SC-008**: Message format options (freeform, conventional, gitmoji) produce correctly formatted output that passes format validation tools (e.g., commitlint for conventional commits)
+- **SC-009**: Repository-level instructions in `.gmuse` file demonstrably influence message content across multiple test cases (verified by A/B testing with and without instructions)

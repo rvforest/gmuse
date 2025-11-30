@@ -76,19 +76,6 @@ class GenerationResult:
     message: str
     context: GenerationContext
 
-    # -----------------------------------------------------------------------------
-    # Public API
-    # -----------------------------------------------------------------------------
-    """Result of commit message generation.
-
-    Attributes:
-        message: The generated commit message
-        context: The context used for generation
-    """
-
-    message: str
-    context: GenerationContext
-
 
 def gather_context(
     history_depth: int = 5,

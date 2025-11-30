@@ -38,7 +38,9 @@ repos:
     hooks:
       - id: cspell # Spell check changed files
         name: check docs spelling
-        files: \.(md)$
+        # Only run cspell for the top-level README.md and all markdown files
+        # under docs/. This avoids running it on unrelated .md files elsewhere.
+        files: '^(README\.md|docs/.*\\.md)$'
 
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0

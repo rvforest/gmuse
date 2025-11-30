@@ -81,7 +81,7 @@ uv run nox -s check
 
 Use type hints throughout the codebase. Example:
 
-```{testcode}
+```python
 def example_function(param1: str, param2: int) -> bool:
     """Example function with type hints."""
     return len(param1) > param2
@@ -91,7 +91,7 @@ def example_function(param1: str, param2: int) -> bool:
 
 All public functions, classes, and methods should have docstrings following the [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings):
 
-```{testcode}
+```python
 def example_function(param1: str, param2: int) -> bool:
     """Example function with Google style docstring.
 

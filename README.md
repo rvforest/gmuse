@@ -1,3 +1,11 @@
+<!-- markdownlint-disable MD033 MD041 -->
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/rvforest/gmuse/main/docs/source/_static/logo/gmuse-logo-dark.png" width="500">
+<img alt="gmuse Logo" src="https://raw.githubusercontent.com/rvforest/gmuse/main/docs/source/_static/logo/gmuse-logo-light.png" width="500">
+  </picture>
+</div>
+
 # gmuse
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)

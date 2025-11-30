@@ -61,34 +61,6 @@ def test(session: nox.Session) -> None:
     session.run("pytest", *session.posargs)
 
 
-@nox.session(venv_backend="uv", tags=[TEST_TAG])
-def doctest(session: nox.Session) -> None:
-    """Run both doctests in Python modules and documentation files."""
-    session.notify("doctest_docstrings")
-    session.notify("doctest_docs")
-
-
-@nox.session(venv_backend="uv", tags=[TEST_TAG])
-def doctest_docstrings(session: nox.Session) -> None:
-    """Run doctests in Python modules (docstrings)."""
-    _run_install(session, groups=["main", "dev", "docs"])
-    session.run("pytest", "--doctest-modules", "src/gmuse/", *session.posargs)
-
-
-@nox.session(venv_backend="uv", tags=[TEST_TAG])
-def doctest_docs(session: nox.Session) -> None:
-    """Run doctests in documentation files."""
-    _run_install(session, groups=["main", "dev", "docs"])
-    session.run(
-        "sphinx-build",
-        "-b",
-        "doctest",
-        "docs/source",
-        "docs/build/doctest",
-        *session.posargs,
-    )
-
-
 @nox.session(
     venv_backend="uv", tags=[TEST_TAG], python=["3.10", "3.11", "3.12", "3.13"]
 )

@@ -70,8 +70,6 @@ The project follows a standard layout:
 ### Testing Standards
 
 This project uses pytest for testing, with a focus on unit tests and integration tests.
-Doctests are run to ensure validity of code examples, but should not be used in place of
-unit or integration tests for verifying core functionality.
 
 #### Framework and Coverage
 - **Framework**: pytest
@@ -79,7 +77,6 @@ unit or integration tests for verifying core functionality.
 - **Commands**:
   - Run tests: `uv run nox -s test`
   - Coverage report: `uv run nox -s coverage`
-  - Doctests: `uv run nox -s doctest_docs`
 
 #### Test Organization
 - Tests are organized in `tests/` directory, mirroring `src/` structure

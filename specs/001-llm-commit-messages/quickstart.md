@@ -1,7 +1,7 @@
 # Quickstart: LLM-Powered Commit Messages
 
-**Feature**: 001-llm-commit-messages  
-**Date**: 2025-11-28  
+**Feature**: 001-llm-commit-messages
+**Date**: 2025-11-28
 **Audience**: Developers using gmuse for the first time
 
 ## Quick Start (60 seconds)
@@ -137,22 +137,6 @@ gmuse
 # Output:
 # feat: add user authentication (PROJ-123)
 ```
-
-## Learning from Your Edits (Opt-in)
-
-Enable learning to improve message quality over time:
-
-```bash
-# In ~/.config/gmuse/config.toml
-echo "learning_enabled = true" >> ~/.config/gmuse/config.toml
-```
-
-When learning is enabled:
-1. Generated messages are recorded
-2. If you edit them, the final version is saved
-3. Future generations use your edits as examples
-
-*(Note: v1 requires manual feedback recording; v1.1 will automate via git hooks)*
 
 ## Common Use Cases
 

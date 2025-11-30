@@ -131,7 +131,7 @@ Your code must pass all required checks before it can be merged.
 The main checks include:
 
 - Code formatting and linting (using Ruff and pre-commit)
-- Running the test suite (including doctests)
+- Running the test suite
 
 You can view the status of these checks on your pull request page under the "Checks" tab.
 

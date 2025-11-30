@@ -24,6 +24,30 @@ classifiers = [
 ]
 dependencies = [
     "typer>=0.9.0",
+    "tomli>=2.0.0; python_version < '3.11'",
+    "litellm>=1.0.0",
+]
+
+[project.optional-dependencies]
+clipboard = [
+    "pyperclip>=1.8.0",
+]
+gemini = [
+    "google-generativeai>=0.8.0",
+]
+bedrock = [
+    "boto3>=1.28.0",
+]
+huggingface = [
+    "transformers>=4.30.0",
+    "torch>=2.0.0",
+]
+all = [
+    "pyperclip>=1.8.0",
+    "google-generativeai>=0.8.0",
+    "boto3>=1.28.0",
+    "transformers>=4.30.0",
+    "torch>=2.0.0",
 ]
 
 [project.urls]
@@ -39,13 +63,12 @@ gmuse = "gmuse.cli.main:app"
 
 [dependency-groups]
 dev = [
-  "mypy>=1.15.0",
   "nox>=2025.2.9",
   "pre-commit>=4.2.0",
+  "pyrefly>=0.16.0",
   "pytest>=8.3.5",
   "pytest-cov>=6.1.1",
   "ruff>=0.11.6",
-  "types-pyyaml>=6.0.12.20250516",
 ]
 docs = [
   "furo>=2024.8.6",
@@ -62,6 +85,9 @@ exclude = ["tests/*"]
 [tool.ruff.lint]
 per-file-ignores = { "__init__.py" = ["F401"] }
 select = ["T100"]
+
+[tool.pyrefly]
+project_includes = ["src"]
 
 [tool.hatch.version]
 source = "versioningit"

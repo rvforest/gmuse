@@ -1,7 +1,7 @@
 # Prompt Templates: LLM Commit Message Generation
 
-**Feature**: 001-llm-commit-messages  
-**Date**: 2025-11-28  
+**Feature**: 001-llm-commit-messages
+**Date**: 2025-11-28
 **Purpose**: Define prompt structure and format-specific templates for LLM interactions
 
 ## Overview
@@ -43,8 +43,6 @@ Recent commits for style reference:
 
 {user_hint}
 
-{learning_examples}
-
 Staged changes summary:
 - Files changed: {files_count}
 - Lines added: {lines_added}
@@ -60,7 +58,6 @@ Diff:
 - `{commit_history}`: Last N commit messages, one per line
 - `{repository_instructions}`: Content of `.gmuse` file (if exists)
 - `{user_hint}`: Value of `--hint` flag (if provided)
-- `{learning_examples}`: Few-shot examples from learning history (if available)
 - `{files_count}`, `{lines_added}`, `{lines_removed}`: Diff statistics
 - `{staged_diff}`: Output of `git diff --cached` (possibly truncated)
 
@@ -156,15 +153,14 @@ Output only the commit message (emoji + description), nothing else.
 
 ## Token Budget Allocation
 
-Target total: 8000 tokens  
+Target total: 8000 tokens
 Breakdown:
 - System prompt: ~200 tokens
 - Task prompt: ~200-400 tokens (varies by format)
 - Context metadata: ~200 tokens
 - Commit history: ~500 tokens (5 commits × ~100 tokens each)
 - Repository instructions: ~200 tokens
-- Learning examples: ~500 tokens (5 examples × ~100 tokens each)
-- Staged diff: ~6000 tokens (remaining budget)
+- Staged diff: ~6500 tokens (remaining budget)
 
 ### Truncation Strategy
 
@@ -191,28 +187,6 @@ If staged diff exceeds budget:
    Warning: Large diff truncated to fit token limits.
    Consider splitting this commit into smaller logical changes.
    ```
-
-## Learning Examples Format
-
-When learning is enabled and history exists:
-
-```
-Previous style examples from this repository:
-
-Example 1:
-Generated: "Add authentication"
-You edited to: "feat(auth): implement JWT-based authentication"
-
-Example 2:
-Generated: "Fix bug in API"
-You edited to: "fix(api): handle null pointer in user endpoint"
-
-Example 3:
-Generated: "Update docs"
-You edited to: "docs: add troubleshooting section to README"
-
-Please match this editing style in your response.
-```
 
 ## Error Handling in Prompts
 
@@ -255,28 +229,26 @@ def build_prompt(
     commit_history: list[str],
     repo_instructions: str | None,
     user_hint: str | None,
-    learning_examples: list[tuple[str, str]] | None,
 ) -> str:
     # 1. Start with system prompt
     prompt = BASE_SYSTEM_PROMPT
-    
+
     # 2. Add context
     prompt += build_context(
         staged_diff=staged_diff,
         commit_history=commit_history,
         repo_instructions=repo_instructions,
         user_hint=user_hint,
-        learning_examples=learning_examples,
     )
-    
+
     # 3. Add format-specific task
     prompt += get_task_prompt(format)
-    
+
     # 4. Check token count
     token_count = estimate_tokens(prompt)
     if token_count > MAX_TOKENS:
         prompt = truncate_diff(prompt, target_tokens=MAX_TOKENS)
-    
+
     return prompt
 ```
 
@@ -288,7 +260,6 @@ Each prompt template should be tested with:
 2. **Typical input**: 3-5 files, ~200 lines changed
 3. **Large input**: 10+ files, >1000 lines changed (test truncation)
 4. **Edge cases**: Binary files, empty commits, no history
-5. **Learning context**: With and without few-shot examples
 
 ## Validation
 
@@ -299,7 +270,7 @@ def validate_message(message: str, format: str) -> bool:
     # Basic checks
     if not message or len(message) > 1000:
         return False
-    
+
     # Format-specific validation
     if format == "conventional":
         return bool(re.match(r'^(feat|fix|docs|style|refactor|test|chore)(\(.+\))?: .+', message))
@@ -315,7 +286,6 @@ Track prompt template versions for reproducibility:
 
 ```python
 PROMPT_VERSION = "1.0.0"
-# Stored in learning records for debugging
 ```
 
 Future versions may adjust templates based on:

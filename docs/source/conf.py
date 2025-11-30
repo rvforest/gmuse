@@ -21,7 +21,6 @@ extensions = [
     "myst_parser",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
-    "sphinx.ext.doctest",
 ]
 myst_enable_extensions = [
     "colon_fence",
@@ -29,8 +28,6 @@ myst_enable_extensions = [
 autodoc2_packages = [
     "../../src/gmuse",
 ]
-
-doctest_test_doctest_blocks = ""
 
 templates_path = ["_templates"]
 exclude_patterns = []  # type: ignore

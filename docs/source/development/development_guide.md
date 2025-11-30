@@ -10,7 +10,7 @@ This guide includes:
 - Tests and CI details (nox sessions and GitHub Actions)
 - Release and versioning process (versioningit/Hatch)
 - How to add new dependencies and maintain `pyproject.toml`
-- Documentation and doctest guidance
+- Documentation guidance
 - Debugging tips and examples
 - How to manage the changelog and releases
 - Local debugging and running of CI tasks
@@ -62,11 +62,10 @@ uv run nox -s lint
 uv run nox -s types
 ```
 
-- Run doc builds and doctests before changing API docs:
+- Run doc builds before changing API docs:
 
 ```bash
 uv run nox -s docs
-uv run nox -s doctest_docs
 ```
 
 ## CI and GitHub Actions
@@ -144,8 +143,7 @@ uv run pytest tests/test_some_module.py -q
 ## How to update docs for public APIs
 
 - Update docstrings in source code and Sphinx markdown in `docs/source/`
-- Include examples and doctests in the docstrings when applicable
-- Run doctests with `uv run nox -s doctest_docs`
+- Include examples in the docstrings when applicable
 
 ## Housekeeping & repository rules for maintainers
 

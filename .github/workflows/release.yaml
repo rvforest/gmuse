@@ -6,11 +6,12 @@ on:
       - "v*.*.*"
 
 permissions:
-  contents: write
+  contents: read
   id-token: write
 
 jobs:
   publish:
+    name: Publish to PyPI
     runs-on: ubuntu-latest
     environment:
       name: release

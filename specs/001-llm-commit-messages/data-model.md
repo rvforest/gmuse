@@ -1,7 +1,7 @@
 # Data Model: LLM-Powered Commit Message Generator
 
-**Feature**: 001-llm-commit-messages  
-**Date**: 2025-11-28  
+**Feature**: 001-llm-commit-messages
+**Date**: 2025-11-28
 **Status**: Complete
 
 ## Overview
@@ -31,7 +31,6 @@ This document defines the data entities, their relationships, and state transiti
 - Generated from one `StagedDiff`
 - May optionally be influenced by `RepositoryInstructions`
 - May optionally be influenced by `CommitHistory`
-- May optionally be influenced by `LearningHistory`
 
 ---
 
@@ -60,7 +59,7 @@ This document defines the data entities, their relationships, and state transiti
 **State Transitions**:
 - Created: Extract from git repository
 - Truncated: If size exceeds token limits, apply intelligent truncation
-- Hashed: Calculate SHA256 for learning record identification
+- Hashed: Calculate SHA256 for deduplication
 
 ---
 
@@ -124,7 +123,6 @@ Mention breaking changes prominently.
 **Attributes**:
 - `model` (string, optional): Default LLM model name
 - `copy_to_clipboard` (boolean): Auto-copy messages to clipboard (default: false)
-- `learning_enabled` (boolean): Enable learning from user edits (default: false)
 - `history_depth` (integer): Number of commits for style context (default: 5)
 - `format` (enum): Default message format - "freeform", "conventional", "gitmoji" (default: "freeform")
 - `timeout` (integer): Network timeout in seconds (default: 30)
@@ -145,78 +143,9 @@ Mention breaking changes prominently.
 ```toml
 model = null  # Auto-detect from environment
 copy_to_clipboard = false
-learning_enabled = false
 history_depth = 5
 format = "freeform"
 timeout = 30
-```
-
----
-
-### 6. LearningRecord
-
-**Purpose**: Single entry in learning history tracking generated vs. final messages.
-
-**Attributes**:
-- `timestamp` (datetime): When the generation occurred
-- `repo_id` (string): SHA256 hash of repository root path
-- `generated_message` (string): Original LLM-generated message
-- `final_message` (string, optional): User-edited final message (if provided)
-- `diff_hash` (string): SHA256 hash of staged diff
-- `model_used` (string): LLM model identifier
-- `format` (string): Message format used
-
-**Validation Rules**:
-- `generated_message` must not be empty
-- `final_message` may be null if user didn't provide feedback
-- `repo_id` must be valid SHA256 hash (64 hex characters)
-- `diff_hash` must be valid SHA256 hash
-
-**Persistence Format** (JSONL):
-```json
-{"timestamp": "2025-11-28T10:30:00Z", "repo_id": "abc123...", "generated_message": "Add feature", "final_message": "feat: add user authentication", "diff_hash": "def456...", "model_used": "gpt-4", "format": "conventional"}
-```
-
-**State Transitions**:
-- Created: After message generation (if `learning_enabled` is true)
-- Updated: If user provides final message via feedback command
-- Read: When loading learning context for few-shot prompting
-
----
-
-### 7. LearningHistory
-
-**Purpose**: Collection of learning records for a specific repository.
-
-**Attributes**:
-- `repo_id` (string): SHA256 hash of repository root path
-- `records` (list[LearningRecord]): Ordered list of records (newest first)
-- `max_records` (integer): Maximum records to load for context (default: 10)
-
-**Validation Rules**:
-- `records` list length must not exceed `max_records`
-- All records must have matching `repo_id`
-- Records must be ordered by timestamp (newest first)
-
-**Relationships**:
-- Multiple `LearningRecord` entities per repository
-- Used to provide few-shot examples in prompt
-- Isolated by `repo_id` (no cross-repository contamination)
-
-**Loading Strategy**:
-1. Read `$XDG_DATA_HOME/gmuse/history.jsonl`
-2. Filter records by current `repo_id`
-3. Take most recent `max_records` entries
-4. Include in prompt as few-shot examples
-
-**Few-Shot Example Format**:
-```
-Previous edits in this repository:
-Generated: "Add authentication"
-Final: "feat(auth): implement JWT-based authentication"
-
-Generated: "Fix bug"
-Final: "fix(api): handle null pointer in user endpoint"
 ```
 
 ---
@@ -237,19 +166,19 @@ Final: "fix(api): handle null pointer in user endpoint"
          │
          │ uses
          ▼
-┌─────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│   StagedDiff    │────▶│ CommitMessage    │────▶│ LearningRecord   │
-└─────────────────┘     └──────────────────┘     └──────────────────┘
-         │                      ▲                         │
-         │                      │                         │
-         ▼                      │                         ▼
-┌─────────────────┐            │               ┌──────────────────┐
-│ CommitHistory   │────────────┘               │ LearningHistory  │
-└─────────────────┘                            └──────────────────┘
-         ▲                                              │
-         │                                              │
-         │              ┌──────────────────────┐       │
-         └──────────────│ Repository Context   │───────┘
+┌─────────────────┐     ┌──────────────────┐
+│   StagedDiff    │────▶│ CommitMessage    │
+└─────────────────┘     └──────────────────┘
+         │                      ▲
+         │                      │
+         ▼                      │
+┌─────────────────┐            │
+│ CommitHistory   │────────────┘
+└─────────────────┘
+         ▲
+         │
+         │              ┌──────────────────────┐
+         └──────────────│ Repository Context   │
                         │  (git repo root)     │
                         └──────────────────────┘
                                  ▲
@@ -271,19 +200,10 @@ Final: "fix(api): handle null pointer in user endpoint"
    - Create `StagedDiff` from `git diff --cached`
    - Create `CommitHistory` from `git log`
    - Load `RepositoryInstructions` from `.gmuse` if exists
-   - Load `LearningHistory` if `learning_enabled` is true
 4. **Build Prompt**: Combine all context into structured prompt
 5. **Call LLM**: Send prompt to provider, receive response
 6. **Create CommitMessage**: Parse LLM response, validate format
 7. **Output**: Print message to STDOUT, optionally copy to clipboard
-8. **Record Learning**: If `learning_enabled`, append `LearningRecord` to JSONL
-
-### Secondary Flow: Learn from Edit
-
-1. **User Provides Final Message**: Via command or hook (v1.1+)
-2. **Load Recent Record**: Find matching `LearningRecord` by diff_hash
-3. **Update Record**: Set `final_message` field
-4. **Persist**: Append updated record to JSONL
 
 ## Storage Locations
 
@@ -294,21 +214,14 @@ Final: "fix(api): handle null pointer in user endpoint"
 | CommitHistory | Runtime only (from git) | List | Transient |
 | RepositoryInstructions | `<repo_root>/.gmuse` | Plain text | Git-tracked |
 | UserConfig | `$XDG_CONFIG_HOME/gmuse/config.toml` | TOML | Persistent |
-| LearningRecord | `$XDG_DATA_HOME/gmuse/history.jsonl` | JSONL | Append-only |
-| LearningHistory | Derived from history.jsonl | In-memory | Transient |
 
 ## Privacy & Security Considerations
 
-- **No raw diffs stored**: Only diff hashes stored in learning records
-- **Repo identification**: Use SHA256 hash of path (not actual path)
 - **API keys**: Never stored, only read from environment variables
-- **Learning opt-in**: Disabled by default, requires explicit user consent
-- **Data export**: JSONL format allows easy inspection and deletion
 - **XDG compliance**: Standard paths enable user control over data location
 
 ## Extension Points for Future Versions
 
-- **v1.1**: Add `final_message` capture via git hooks
-- **v1.2**: Add commit splitting entities (hunk-level analysis)
-- **v1.3**: Add user-level instructions file (similar to .gmuse but global)
+- **v1.1**: Add commit splitting entities (hunk-level analysis)
+- **v1.2**: Add user-level instructions file (similar to .gmuse but global)
 - **v2.0**: Add message templates (custom format definitions)

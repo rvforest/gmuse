@@ -614,10 +614,10 @@ class TestCLIHelp:
         """Verify generate command help."""
         result = runner.invoke(app, ["msg", "--help"])
         assert result.exit_code == 0
-        assert "--hint" in result.stdout
-        assert "--copy" in result.stdout
-        assert "--model" in result.stdout
-        assert "--format" in result.stdout
+        assert "-hint" in result.stdout
+        assert "-copy" in result.stdout
+        assert "-model" in result.stdout
+        assert "-format" in result.stdout
 
 
 class TestExitCodes:

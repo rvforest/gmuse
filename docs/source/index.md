@@ -43,5 +43,4 @@ apidocs/index
 :hidden:
 
 development/contributing.md
-development/development_guide.md
 ```

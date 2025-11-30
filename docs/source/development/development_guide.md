@@ -71,7 +71,7 @@ uv run nox -s docs
 ## CI and GitHub Actions
 
 - The GitHub Actions workflows automatically use `uv` and run the pre-commit hooks & nox sessions.
-- Keep the workflows up to date in `.github/workflows/run-checks.yaml.jinja`.
+- Keep the workflows up to date in `.github/workflows/run-checks.yaml`.
 
 ## Testing details
 
@@ -100,7 +100,7 @@ uv run nox -s livedocs
 
 ## Adding or updating dependencies
 
-- Add runtime dependencies to `project.dependencies` in `pyproject.toml.jinja` if a package is required for users.
+- Add runtime dependencies to `project.dependencies` in `pyproject.toml` if a package is required for users.
 - Add development or docs dependencies to the `dependency-groups` `dev` or `docs` sections respectively.
 - To test installation flow:
 
@@ -147,7 +147,7 @@ uv run pytest tests/test_some_module.py -q
 
 ## Housekeeping & repository rules for maintainers
 
-- Keep dependency versions up-to-date; update `pyproject.toml.jinja` and make sure `uv` sync completes locally.
+- Keep dependency versions up-to-date; update `pyproject.toml` and make sure `uv` sync completes locally.
 - Keep `cspell.json` entries accurate for new technical terms and acronyms in docs.
 - Maintain minimal surface area for the public API; mark internal helpers as private.
 

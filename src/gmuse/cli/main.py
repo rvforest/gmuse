@@ -269,10 +269,11 @@ def _load_config(
 
     Configuration is loaded from multiple sources with the following
     precedence (highest to lowest):
-        1. CLI arguments (passed to this function)
-        2. Environment variables (GMUSE_*)
-        3. Configuration file (.gmuse.toml or pyproject.toml)
-        4. Built-in defaults
+
+    1. CLI arguments (passed to this function)
+    2. Environment variables (GMUSE_*)
+    3. Configuration file (.gmuse.toml or pyproject.toml)
+    4. Built-in defaults
 
     Args:
         model: CLI model override.

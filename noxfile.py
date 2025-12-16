@@ -13,7 +13,7 @@ DOCS_TAG = "docs"
 CLEAN_TAG = "clean"
 
 # Add a single source of truth for the Python testing matrix
-TEST_PYTHON_VERSIONS: tuple[str, ...] = ("3.10", "3.11", "3.12", "3.13")
+TEST_PYTHON_VERSIONS: tuple[str, ...] = ("3.10", "3.11", "3.12", "3.13", "3.14")
 
 nox.options.sessions = ["lint", "format", "types", "test"]
 

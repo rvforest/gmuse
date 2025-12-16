@@ -12,6 +12,9 @@ FORMAT_TAG = "format"
 DOCS_TAG = "docs"
 CLEAN_TAG = "clean"
 
+# Add a single source of truth for the Python testing matrix
+TEST_PYTHON_VERSIONS: tuple[str, ...] = ("3.10", "3.11", "3.12", "3.13")
+
 nox.options.sessions = ["lint", "format", "types", "test"]
 
 # ==================== CHECKS ====================
@@ -52,18 +55,14 @@ def fix(session: nox.Session) -> None:
 # ==================== TESTS ====================
 
 
-@nox.session(
-    venv_backend="uv", tags=[TEST_TAG], python=["3.10", "3.11", "3.12", "3.13"]
-)
+@nox.session(venv_backend="uv", tags=[TEST_TAG], python=TEST_PYTHON_VERSIONS)
 def test(session: nox.Session) -> None:
-    """Run tests with pytest across multiple Python versions (3.9-3.13)."""
+    """Run tests with pytest across multiple Python versions (3.10-3.13)."""
     _run_install(session)
     session.run("pytest", *session.posargs)
 
 
-@nox.session(
-    venv_backend="uv", tags=[TEST_TAG], python=["3.10", "3.11", "3.12", "3.13"]
-)
+@nox.session(venv_backend="uv", tags=[TEST_TAG], python=TEST_PYTHON_VERSIONS)
 def coverage(session: nox.Session) -> None:
     """Run tests with coverage reporting."""
     _run_install(session)

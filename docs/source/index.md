@@ -20,6 +20,7 @@ AI generated commit messages.
 
 getting_started/installation.md
 getting_started/quickstart.md
+getting_started/completions.md
 
 ```
 

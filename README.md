@@ -60,4 +60,28 @@ CLI provider override:
 gmuse --provider gemini
 gmuse --provider anthropic --model claude-3-opus-20240229
 ```
+
+## Zsh completions (experimental)
+
+Generate and install a Zsh completion script that provides AI-powered commit
+message suggestions for `git commit -m`.
+
+Quick install:
+
+```bash
+mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions"
+gmuse completions zsh > "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions/_gmuse"
+# Add the directory to your fpath and enable completions if necessary
+fpath=("${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions" $fpath)
+autoload -Uz compinit
+compinit
+```
+
+Configuration:
+
+- `GMUSE_COMPLETIONS_ENABLED` (default `true`) — enable/disable completions
+- `GMUSE_COMPLETIONS_TIMEOUT` (default `3.0`) — generation timeout in seconds
+- `GMUSE_COMPLETIONS_CACHE_TTL` (default `30`) — cache TTL in seconds
+
+See the documentation for details: https://gmuse.readthedocs.io/en/latest/getting_started/completions.html
 ```

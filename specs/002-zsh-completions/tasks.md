@@ -61,7 +61,15 @@
 *Goal: Final cleanup and verification.*
 
 - [x] T027 Review and update help text for new commands in `src/gmuse/cli/completions.py`
-- [x] T028 Verify XDG compliance in documentation and output messages
+- [x] T028 Update installation instructions to use eval-based approach
+
+## Phase 9: Eval-based Installation Update
+*Goal: Simplify installation by using `eval "$(gmuse completions zsh)"` approach.*
+
+- [x] T029 Update spec.md, quickstart.md, research.md, plan.md for eval approach
+- [x] T030 Update ZSH_COMPLETION_TEMPLATE installation comments
+- [x] T031 Update docs/source/getting_started/completions.md
+- [x] T032 Update tests to verify new installation instructions
 
 ## Dependencies
 

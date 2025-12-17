@@ -18,7 +18,7 @@ As a user, I want to generate the zsh completion script so that I can install it
 **Acceptance Scenarios**:
 
 1. **Given** gmuse is installed on PATH, **When** the user runs `gmuse completions zsh`, **Then** the command prints a zsh completion script to stdout.
-2. **Given** the user saves the output to `$XDG_DATA_HOME/zsh/site-functions/_gmuse` and runs `autoload -Uz _gmuse; compinit`, **When** they type `git commit -m ` and press TAB, **Then** zsh has the completion function available.
+2. **Given** the user adds `eval "$(gmuse completions zsh)"` to their `~/.zshrc` and restarts the shell, **When** they type `git commit -m ` and press TAB, **Then** zsh has the completion function available.
 
 ---
 

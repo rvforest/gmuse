@@ -2,21 +2,12 @@
 
 ## Installation
 
-1.  **Generate the completion script**:
+1.  **Add to your `~/.zshrc`**:
     ```zsh
-    mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions"
-    gmuse completions zsh > "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions/_gmuse"
+    eval "$(gmuse completions zsh)"
     ```
 
-2.  **Enable completions** (if not already enabled):
-    Add the following to your `~/.zshrc`:
-    ```zsh
-    fpath=("${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions" $fpath)
-    autoload -Uz compinit
-    compinit
-    ```
-
-3.  **Restart zsh**:
+2.  **Restart zsh**:
     ```zsh
     exec zsh
     ```

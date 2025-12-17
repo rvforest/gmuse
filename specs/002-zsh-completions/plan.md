@@ -16,7 +16,7 @@ Implement zsh completions for `gmuse` that provide AI-generated commit messages.
 **Target Platform**: WSL2 Ubuntu (zsh 5.9)
 **Project Type**: Python CLI
 **Performance Goals**: Generation < 4s, Cache hit < 200ms
-**Constraints**: XDG compliance, no secrets leakage, offline fallback
+**Constraints**: Simple eval-based installation, no secrets leakage, offline fallback
 **Scale/Scope**: Single feature, CLI extension
 
 ## Constitution Check

@@ -49,15 +49,17 @@ _message -r "gmuse: No staged changes detected"
 - Use a custom cache policy function (`_gmuse_cache_policy`) to invalidate the cache after `GMUSE_COMPLETIONS_CACHE_TTL` (default 30s).
 - For rate limiting, we can check the modification time of a "last_run" file.
 
-## 4. XDG Compliance
+## 4. Installation Method
 
-**Decision**: Recommend installing to `$XDG_DATA_HOME/zsh/site-functions`.
+**Decision**: Use `eval "$(gmuse completions zsh)"` in `~/.zshrc`.
 
 **Rationale**:
-- Standard XDG location for user-specific data.
-- Zsh users often add this path to their `fpath`.
-- Fallback to `$HOME/.local/share/zsh/site-functions` if `XDG_DATA_HOME` is unset.
+- Simpler installation: single line added to `.zshrc`.
+- No need to manage file paths or create directories.
+- Script is always up-to-date with the installed version of gmuse.
+- Common pattern used by many CLI tools (e.g., `pyenv`, `rbenv`, `starship`).
 
 **Implementation Details**:
-- The `gmuse completions zsh` command should print instructions or the script itself.
-- Documentation should guide users to add the path to `fpath` if necessary.
+- The `gmuse completions zsh` command prints the completion script to stdout.
+- Users add `eval "$(gmuse completions zsh)"` to their `.zshrc`.
+- Zsh-side caching still uses `$XDG_CACHE_HOME` for cache files.

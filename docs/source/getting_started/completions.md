@@ -44,36 +44,11 @@ Environment variables:
 - `GMUSE_COMPLETIONS_TIMEOUT` (default `3.0`) — generation timeout in seconds
 - `GMUSE_COMPLETIONS_CACHE_TTL` (default `30`) — completion-side cache TTL in seconds
 
-## Runtime helper contract
+## Developer & implementation notes
 
-Completion scripts should invoke the runtime helper `gmuse completions-run` with
-arguments `--shell <shell> --for "git commit -m"` and expect a JSON response of
-the form:
+For implementation details, the runtime helper contract, and a checklist for
+adding new shells, see the developer guide: `docs/source/development/shell-completions.md`.
 
-```json
-{
-  "suggestion": "feat: add login",
-  "status": "ok",
-  "metadata": {
-    "truncated": false,
-    "elapsed_ms": 1200
-  }
-}
-```
-
-Status values: `ok`, `timeout`, `offline`, `no_staged_changes`, `error`.
-
-When implementing support for a new shell, use the same contract and map
-shell-specific behaviors (parsing, insertion, fallbacks) to this JSON API.
-
-## Adding new shells (developer notes)
-
-- Implement a completion script for the target shell that calls
-  `gmuse completions-run --shell <shell> --for "git commit -m"` and handles
-  the returned JSON according to the runtime contract above.
-- Update documentation and add an entry under **Supported shells**.
-- Add a spec or extend `specs/002-zsh-completions/spec.md` with any
-  shell-specific details if needed.
 
 ## Troubleshooting & Notes
 

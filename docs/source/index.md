@@ -44,4 +44,5 @@ apidocs/index
 :hidden:
 
 development/contributing.md
+development/shell-completions.md
 ```

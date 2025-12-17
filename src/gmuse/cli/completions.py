@@ -11,8 +11,8 @@ Commands:
     completions-run: Runtime helper called by shell completion functions
 
 Example:
-    >>> # Generate zsh completions and save to fpath
-    >>> # gmuse completions zsh > "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions/_gmuse"
+    >>> # Add to ~/.zshrc:
+    >>> # eval "$(gmuse completions zsh)"
 """
 
 import json
@@ -116,18 +116,17 @@ class CompletionResponse:
 # =============================================================================
 
 ZSH_COMPLETION_TEMPLATE = r"""#compdef git
+#compdef git
 
 # gmuse zsh completion script
 # Provides AI-generated commit message suggestions for 'git commit -m'
 #
 # Installation:
-#   mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions"
-#   gmuse completions zsh > "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions/_gmuse"
+#   Add to your ~/.zshrc:
+#     eval "$(gmuse completions zsh)"
 #
-# Then add to your ~/.zshrc:
-#   fpath=("${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions" $fpath)
-#   autoload -Uz compinit
-#   compinit
+#   Then restart your shell:
+#     exec zsh
 
 # Cache policy for gmuse completions
 _gmuse_cache_policy() {
@@ -150,7 +149,7 @@ _gmuse_git_commit_message() {
     local hint="${words[CURRENT]}"
     local timeout="${GMUSE_COMPLETIONS_TIMEOUT:-3.0}"
     local cache_key="gmuse_commit_suggestion"
-    local json_output suggestion status
+    local json_output suggestion gmuse_status
 
     # Try to retrieve from cache first
     if _cache_invalid "$cache_key" || ! _retrieve_cache "$cache_key"; then
@@ -163,11 +162,11 @@ _gmuse_git_commit_message() {
         fi
 
         # Parse JSON output using sed (avoiding jq dependency)
-        status=$(echo "$json_output" | sed -n 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
+        gmuse_status=$(echo "$json_output" | sed -n 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
         suggestion=$(echo "$json_output" | sed -n 's/.*"suggestion"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
 
         # Handle non-ok statuses
-        case "$status" in
+        case "$gmuse_status" in
             no_staged_changes)
                 _message -r "gmuse: No staged changes detected"
                 return 1
@@ -225,6 +224,8 @@ _git_commit_message_gmuse() {
 zstyle ':completion:*' cache-path "${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 zstyle ":completion:*:*:git:*" use-cache on
 zstyle ":completion:*:*:git:*" cache-policy _gmuse_cache_policy
+
+compdef _git_commit_message_gmuse git
 """
 
 
@@ -238,10 +239,10 @@ def completions_zsh() -> None:
     """Emit the zsh completion script to stdout.
 
     The script provides AI-generated commit message suggestions when completing
-    'git commit -m'. Output should be saved to your zsh fpath.
+    'git commit -m'. Add to your ~/.zshrc using eval.
 
     Example:
-        gmuse completions zsh > ~/.local/share/zsh/site-functions/_gmuse
+        eval "$(gmuse completions zsh)"
     """
     typer.echo(ZSH_COMPLETION_TEMPLATE)
 

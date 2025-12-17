@@ -92,8 +92,11 @@ class TestCompletionsZsh:
     def test_zsh_template_contains_installation_instructions(self) -> None:
         """Zsh template should contain installation instructions."""
         assert "Installation:" in ZSH_COMPLETION_TEMPLATE
-        assert "XDG_DATA_HOME" in ZSH_COMPLETION_TEMPLATE
-        assert "zsh/site-functions" in ZSH_COMPLETION_TEMPLATE
+        assert 'eval "$(gmuse completions zsh)"' in ZSH_COMPLETION_TEMPLATE
+        assert "exec zsh" in ZSH_COMPLETION_TEMPLATE
+        # Template should try multiple invocation strategies for the runtime helper
+        assert "command -v gmuse" in ZSH_COMPLETION_TEMPLATE
+        assert "python3 -m gmuse.cli.main" in ZSH_COMPLETION_TEMPLATE
 
     def test_zsh_template_contains_env_var_checks(self) -> None:
         """Zsh template should check for configuration environment variables."""

@@ -10,6 +10,8 @@ This module provides the command-line interface using Typer. It handles:
 Commands:
     msg: Generate a commit message from staged changes.
     info: Display resolved configuration for debugging.
+    completions: Shell completion utilities.
+    completions-run: Runtime helper for shell completions.
 
 Example:
     >>> # From command line:
@@ -38,6 +40,7 @@ from gmuse.exceptions import (
 )
 from gmuse.commit import generate_message, gather_context
 from gmuse.logging import get_logger
+from gmuse.cli.completions import completions_app, completions_run_command
 
 logger = get_logger(__name__)
 
@@ -49,6 +52,12 @@ app = typer.Typer(
     help="gmuse: AI generated commit messages.",
     no_args_is_help=True,
 )
+
+# Register completions subcommand group
+app.add_typer(completions_app, name="completions")
+
+# Register completions-run as a top-level command
+app.command(name="completions-run")(completions_run_command)
 
 
 # -----------------------------------------------------------------------------
@@ -360,3 +369,7 @@ def _error_exit(message: str, code: int = 1, hint: Optional[str] = None) -> None
     if hint:
         typer.echo(f"\n{hint}", err=True)
     raise typer.Exit(code=code)
+
+
+if __name__ == "__main__":
+    app()

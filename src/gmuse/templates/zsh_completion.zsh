@@ -17,6 +17,9 @@
 # This helps environments where the CLI is available as a module but not
 # installed as an executable. The script will also check for `command -v gmuse`.
 
+# UX note: To avoid surprising behavior, this completion only generates an AI
+# suggestion when the `-m/--message` argument is empty (i.e., `git commit -m ` + TAB).
+
 # Cache policy for gmuse completions
 _gmuse_cache_policy() {
     local cache_ttl="${GMUSE_COMPLETIONS_CACHE_TTL:-30}"
@@ -29,10 +32,10 @@ _gmuse_cache_policy() {
 # Helper to invoke runtime helper with fallbacks
 _gmuse_invoke_helper() {
     if command -v gmuse >/dev/null 2>&1; then
-        gmuse completions-run --shell zsh --for "git commit -m" --hint "$1" --timeout "$2" 2>/dev/null
+        gmuse completions-run --shell zsh --for "git commit -m" --timeout "$1" 2>/dev/null
     else
         # Try running the module directly as a fallback
-        python3 -m gmuse.cli.main completions-run --shell zsh --for "git commit -m" --hint "$1" --timeout "$2" 2>/dev/null || true
+        python3 -m gmuse.cli.main completions-run --shell zsh --for "git commit -m" --timeout "$1" 2>/dev/null || true
     fi
 }
 
@@ -50,10 +53,16 @@ _gmuse_git_commit_message() {
     local cache_key="gmuse_commit_suggestion"
     local json_output suggestion gmuse_status
 
+    # Avoid surprising behavior: only generate a suggestion when the message
+    # argument is empty (i.e., user typed `git commit -m ` then TAB).
+    if [[ -n "$hint" ]]; then
+        return 1
+    fi
+
     # Try to retrieve from cache first
     if _cache_invalid "$cache_key" || ! _retrieve_cache "$cache_key"; then
         # Call the runtime helper (with fallbacks)
-        json_output=$(_gmuse_invoke_helper "$hint" "$timeout")
+        json_output=$(_gmuse_invoke_helper "$timeout")
 
         if [[ -z "$json_output" ]]; then
             _message -r "gmuse: Failed to generate suggestion"

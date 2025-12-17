@@ -8,7 +8,6 @@
 |----------|------|----------|-------------|
 | `--shell` | `str` | Yes | The target shell (e.g., `zsh`). |
 | `--for` | `str` | Yes | The command being completed (e.g., `git commit -m`). |
-| `--hint` | `str` | No | Partial commit message typed by the user. |
 | `--timeout` | `float` | No | Timeout in seconds (default: env var or 3.0). |
 
 ## Output (stdout)

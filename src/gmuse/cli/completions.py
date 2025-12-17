@@ -21,7 +21,6 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from importlib import resources as _importlib_resources
-from typing import Optional
 
 import typer
 
@@ -72,12 +71,10 @@ class CompletionRequest:
 
     Attributes:
         staged_diff: The staged changes from git diff --staged.
-        hint: Optional partial commit message typed by the user.
         timeout: Timeout in seconds for the generation.
     """
 
     staged_diff: str
-    hint: Optional[str] = None
     timeout: float = 3.0
 
 
@@ -175,11 +172,6 @@ def completions_run_command(
         "--for",
         help="The command being completed (e.g., 'git commit -m')",
     ),
-    hint: Optional[str] = typer.Option(
-        None,
-        "--hint",
-        help="Partial commit message typed by the user",
-    ),
     timeout: float = typer.Option(
         3.0,
         "--timeout",
@@ -252,7 +244,7 @@ def completions_run_command(
             )
 
             # Generate message
-            result = generate_message(config=config, hint=hint, context=context)
+            result = generate_message(config=config, hint=None, context=context)
 
             elapsed_ms = int((time.time() - start_time) * 1000)
 

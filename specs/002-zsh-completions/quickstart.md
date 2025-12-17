@@ -22,10 +22,6 @@
 2.  Type `git commit -m ` and press **TAB**.
     - `gmuse` will generate a commit message and insert it.
 
-3.  **With a hint**:
-    Type `git commit -m "fix auth` and press **TAB**.
-    - `gmuse` will complete the message based on your hint.
-
 ## Configuration
 
 | Environment Variable | Default | Description |

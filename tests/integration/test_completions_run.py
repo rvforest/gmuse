@@ -22,7 +22,6 @@ class TestCompletionsRunIntegration:
         assert result.returncode == 0
         assert "--shell" in result.stdout
         assert "--for" in result.stdout
-        assert "--hint" in result.stdout
         assert "--timeout" in result.stdout
 
     def test_completions_run_output_is_valid_json(

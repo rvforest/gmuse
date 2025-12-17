@@ -7,7 +7,6 @@ Represents the input context for generating a commit message.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `hint` | `str` (optional) | Partial commit message typed by the user. |
 | `staged_diff` | `str` | The staged changes (`git diff --staged`). |
 | `config` | `dict` | Configuration values (timeout, etc.). |
 

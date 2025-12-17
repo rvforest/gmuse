@@ -33,15 +33,10 @@
 - [x] T013 [US2] Add unit tests for `completions-run` (mocking git/llm) in `tests/unit/test_cli_completions.py`
 - [x] T014 [US2] Add integration test for `completions-run` output format in `tests/integration/test_completions_run.py`
 
-## Phase 5: User Story 3 - Generate suggestion using a partial hint
-*Goal: Support partial hints to guide generation.*
+## Phase 5: (Removed) Hint-based completions
+*Goal: Hint-based completions were removed to avoid surprising tab behavior (Dec 2025).*
 
-- [x] T015 [P] [US3] Update `completions-run` to handle `--hint` argument in `src/gmuse/cli/completions.py`
-- [x] T016 [P] [US3] Update LLM prompt generation to include hint in `src/gmuse/cli/completions.py`
-- [x] T017 [US3] Update Zsh template to capture current word as hint and pass to runtime
-- [x] T018 [US3] Add unit tests for hint handling in `tests/unit/test_cli_completions.py`
-
-## Phase 6: User Story 4 - Timeout and fallback behavior
+## Phase 6: User Story 3 - Timeout and fallback behavior
 *Goal: Ensure reliability and graceful degradation.*
 
 - [x] T019 [P] [US4] Implement timeout enforcement in `completions-run` (Python side) in `src/gmuse/cli/completions.py`
@@ -49,7 +44,7 @@
 - [x] T021 [US4] Update Zsh template to handle non-ok statuses gracefully
 - [x] T022 [US4] Add tests for timeout and error scenarios in `tests/unit/test_cli_completions.py`
 
-## Phase 7: User Story 5 - User opt-out and configuration
+## Phase 7: User Story 4 - User opt-out and configuration
 *Goal: Provide user control and performance optimization.*
 
 - [x] T023 [US5] Update Zsh template to check `GMUSE_COMPLETIONS_ENABLED`
@@ -75,17 +70,16 @@
 
 - **US1** (Emit Script) is independent.
 - **US2** (Runtime) depends on Setup and Foundational.
-- **US3** (Hint), **US4** (Timeout), **US5** (Config) depend on US2 (Runtime).
-- **US3**, **US4**, **US5** can be developed in parallel after US2.
+- **US3** (Timeout), **US4** (Config) depend on US2 (Runtime).
+- **US3** and **US4** can be developed in parallel after US2.
 
 ## Parallel Execution Examples
 
 - **US2**: T007 (CLI skeleton), T008 (Git logic), and T009 (LLM logic) can be implemented in parallel.
-- **US3/US4**: T015 (Hint arg) and T019 (Timeout logic) can be implemented in parallel.
+- **US3**: T019 (Timeout logic) can be implemented in parallel with caching/config work.
 
 ## Implementation Strategy
 
 1.  **MVP (US1 + US2)**: Deliver the ability to generate the script and get a basic suggestion. This provides immediate value.
-2.  **Enhancement (US3)**: Add hint support for better control.
-3.  **Reliability (US4)**: Add timeouts and error handling.
-4.  **Optimization (US5)**: Add caching and configuration.
+2.  **Reliability (US3)**: Add timeouts and error handling.
+3.  **Optimization (US4)**: Add caching and configuration.

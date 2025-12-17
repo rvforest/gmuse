@@ -33,26 +33,11 @@ As a user, I want to get an AI-generated commit message when I press TAB on an e
 **Acceptance Scenarios**:
 
 1. **Given** there are staged changes and GMUSE_COMPLETIONS_ENABLED=true, **When** the user types `git commit -m ` and presses TAB, **Then** the completion invokes `gmuse completions-run` and the returned suggestion is auto-inserted as the -m argument within GMUSE_COMPLETIONS_TIMEOUT seconds.
-2. **Given** there are no staged changes, **When** the user types `git commit -m ` and presses TAB, **Then** the completion does not call the runtime helper and instead returns an immediate local fallback message "No staged changes".
+2. **Given** there are no staged changes, **When** the user types `git commit -m ` and presses TAB, **Then** the runtime helper returns status `no_staged_changes` and the completion shows a non-intrusive warning without inserting any text.
 
 ---
 
-### User Story 3 - Generate suggestion using a partial hint (Priority: P2)
-
-As a user, I want to provide a hint to guide the generation.
-
-**Why this priority**: Enhances usability and control.
-
-**Independent Test**: Verify `gmuse completions-run` accepts `--hint` and returns relevant suggestion.
-
-**Acceptance Scenarios**:
-
-1. **Given** the user types `git commit -m "fix auth` and presses TAB, **When** gmuse completions-run is available, **Then** the completion captures `fix auth` as the hint, passes it to runtime helper, and the returned suggestion replaces the -m argument.
-2. **Given** the partial hint contains quotes/backslashes, **When** the completion inserts the returned suggestion, **Then** it is escaped/quoted correctly for zsh so the resulting command is syntactically valid.
-
----
-
-### User Story 4 - Timeout and fallback behavior (Priority: P2)
+### User Story 3 - Timeout and fallback behavior (Priority: P2)
 
 As a user, I want the completion to fail gracefully if it takes too long or is offline.
 
@@ -84,7 +69,7 @@ As a user, I want to configure or disable the feature via environment variables.
 
 - No staged changes -> do not call remote provider; display a non-intrusive warning (do not insert text), e.g., a `zle` message or stderr warning. Do not insert the string "No staged changes" into the `-m` argument.
 - Very large diffs -> Python layer truncates deterministically; runtime metadata.truncated=true.
-- Quoting/escaping -> user typed partial hint inside single/double quotes or with backslashes; completion must detect quoting context and escape insertion properly.
+- Quoting/escaping -> inserted suggestion must be safe to paste into the command line; when in doubt, do not insert.
 - Long delays / slow provider -> completion must timeout at GMUSE_COMPLETIONS_TIMEOUT and fallback without blocking shell.
 - Rapid repeated TABs -> enforce rate-limiting and return cached result where possible.
 - Provider errors -> runtime returns status=error; completion must not print stack traces or provider credentials.
@@ -112,7 +97,6 @@ As a user, I want to configure or disable the feature via environment variables.
 - **FR-002**: System MUST provide a CLI command `gmuse completions zsh` that emits a valid zsh completion script.
 - **FR-002**: System MUST provide a runtime helper command `gmuse completions-run` that returns JSON-formatted suggestions.
 - **FR-003**: The completion script MUST support auto-inserting the generated message into the `-m` argument.
-- **FR-004**: The system MUST support passing a partial hint from the command line to the generation logic.
 - **FR-005**: The system MUST respect `GMUSE_COMPLETIONS_TIMEOUT` and abort if generation exceeds the limit.
 - **FR-006**: The system MUST implement a short-lived cache (default 30s) to avoid redundant API calls.
 - **FR-007**: The system MUST implement client-side rate limiting (default 1 req/2s).
@@ -121,7 +105,7 @@ As a user, I want to configure or disable the feature via environment variables.
 
 ### Key Entities *(include if feature involves data)*
 
-- **CompletionRequest**: Represents the context for generation (hint, staged diff, config).
+- **CompletionRequest**: Represents the context for generation (staged diff, config).
 - **CompletionResponse**: JSON structure containing the suggestion, status, and metadata.
 - **CacheEntry**: Stored suggestion with timestamp for caching.
 

@@ -22,8 +22,10 @@ exec zsh
 - Stage some changes: `git add .`
 - Type `git commit -m ` and press TAB — gmuse will generate a suggestion and
   insert it into the `-m` argument.
-- Provide a hint: `git commit -m "fix auth` + TAB — the current word will be
-  passed as a hint to help guide the generated message.
+
+Note: To avoid surprising behavior, the completion only runs when the message
+argument is empty. If you've already typed a message after `-m`, pressing TAB
+falls back to normal git/zsh completion behavior.
 
 ## Configuration
 
@@ -36,8 +38,8 @@ Environment variables:
 ## Runtime helper contract
 
 The completion script calls the runtime helper `gmuse completions-run` with
-arguments `--shell zsh --for "git commit -m" --hint <hint>` and expects a JSON
-response of the form:
+arguments `--shell zsh --for "git commit -m"` and expects a JSON response of
+the form:
 
 ```json
 {

@@ -23,20 +23,7 @@ class TestDataStructures:
         request = CompletionRequest(staged_diff="diff content")
 
         assert request.staged_diff == "diff content"
-        assert request.hint is None
         assert request.timeout == 3.0
-
-    def test_completion_request_full(self) -> None:
-        """CompletionRequest should accept all fields."""
-        request = CompletionRequest(
-            staged_diff="diff content",
-            hint="fix auth",
-            timeout=5.0,
-        )
-
-        assert request.staged_diff == "diff content"
-        assert request.hint == "fix auth"
-        assert request.timeout == 5.0
 
     def test_completion_response_to_json_ok(self) -> None:
         """CompletionResponse.to_json should serialize correctly for ok status."""
@@ -174,7 +161,6 @@ class TestCompletionsRun:
         completions_run_command(
             shell="zsh",
             for_command="git commit -m",
-            hint=None,
             timeout=3.0,
         )
 
@@ -230,7 +216,6 @@ class TestCompletionsRun:
         completions_run_command(
             shell="zsh",
             for_command="git commit -m",
-            hint=None,
             timeout=3.0,
         )
 
@@ -242,54 +227,6 @@ class TestCompletionsRun:
         assert result["status"] == "ok"
         assert result["suggestion"] == "feat: add hello world"
         assert "elapsed_ms" in result["metadata"]
-
-    def test_completions_run_with_hint(
-        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
-    ) -> None:
-        """completions-run should pass hint to generate_message."""
-        from gmuse.commit import GenerationContext, GenerationResult
-
-        mock_diff = self._create_mock_diff()
-        captured_hint: list[str | None] = []
-
-        monkeypatch.setattr(
-            "gmuse.cli.completions.get_staged_diff",
-            lambda: mock_diff,
-        )
-        monkeypatch.setattr(
-            "gmuse.cli.completions.load_config",
-            lambda: {},
-        )
-        monkeypatch.setattr(
-            "gmuse.cli.completions.get_env_config",
-            lambda: {},
-        )
-        monkeypatch.setattr(
-            "gmuse.cli.completions.merge_config",
-            lambda **kwargs: {"timeout": 3.0},
-        )
-
-        def mock_generate_message(**kwargs: object) -> GenerationResult:
-            captured_hint.append(kwargs.get("hint"))  # type: ignore
-            context = kwargs.get("context")
-            return GenerationResult(
-                message="fix: auth issue resolved",
-                context=context,  # type: ignore
-            )
-
-        monkeypatch.setattr(
-            "gmuse.cli.completions.generate_message",
-            mock_generate_message,
-        )
-
-        completions_run_command(
-            shell="zsh",
-            for_command="git commit -m",
-            hint="fix auth",
-            timeout=3.0,
-        )
-
-        assert captured_hint[0] == "fix auth"
 
     def test_completions_run_llm_error_auth(
         self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
@@ -327,7 +264,6 @@ class TestCompletionsRun:
         completions_run_command(
             shell="zsh",
             for_command="git commit -m",
-            hint=None,
             timeout=3.0,
         )
 
@@ -359,7 +295,6 @@ class TestCompletionsRun:
         completions_run_command(
             shell="zsh",
             for_command="git commit -m",
-            hint=None,
             timeout=3.0,  # CLI default, should be overridden by env
         )
 

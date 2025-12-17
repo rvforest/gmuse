@@ -63,18 +63,14 @@ gmuse --provider anthropic --model claude-3-opus-20240229
 
 ## Zsh completions (experimental)
 
-Generate and install a Zsh completion script that provides AI-powered commit
-message suggestions for `git commit -m`.
+Generate a Zsh completion script that provides AI-powered commit message
+suggestions for `git commit -m`.
 
 Quick install:
 
 ```bash
-mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions"
-gmuse completions zsh > "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions/_gmuse"
-# Add the directory to your fpath and enable completions if necessary
-fpath=("${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions" $fpath)
-autoload -Uz compinit
-compinit
+# Add to your ~/.zshrc so the completion is loaded on shell startup
+eval "$(gmuse completions zsh)"
 ```
 
 Configuration:

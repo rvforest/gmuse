@@ -20,6 +20,7 @@ import os
 import time
 from dataclasses import dataclass
 from enum import Enum
+from importlib import resources as _importlib_resources
 from typing import Optional
 
 import typer
@@ -100,7 +101,6 @@ class CompletionResponse:
         Returns:
             JSON string representation of the response.
         """
-        import json
 
         return json.dumps(
             {
@@ -113,120 +113,25 @@ class CompletionResponse:
 
 # =============================================================================
 # Zsh Completion Script Template
-# =============================================================================
 
-ZSH_COMPLETION_TEMPLATE = r"""#compdef git
-#compdef git
 
-# gmuse zsh completion script
-# Provides AI-generated commit message suggestions for 'git commit -m'
-#
-# Installation:
-#   Add to your ~/.zshrc:
-#     eval "$(gmuse completions zsh)"
-#
-#   Then restart your shell:
-#     exec zsh
+def _load_zsh_template() -> str:
+    """Load the zsh completion template from package resources.
 
-# Cache policy for gmuse completions
-_gmuse_cache_policy() {
-    local cache_ttl="${GMUSE_COMPLETIONS_CACHE_TTL:-30}"
-    local -a oldp
-    # Invalidate cache if older than cache_ttl seconds
-    oldp=( "$1"(Nms+${cache_ttl}) )
-    (( $#oldp ))
-}
+    Raises:
+        RuntimeError: If the template cannot be read.
+    """
 
-# Main completion function for git commit -m
-_gmuse_git_commit_message() {
-    # Check if completions are enabled
-    if [[ "${GMUSE_COMPLETIONS_ENABLED:-true}" != "true" ]]; then
-        return 1
-    fi
-
-    local curcontext="$curcontext" state
-    local -a suggestions
-    local hint="${words[CURRENT]}"
-    local timeout="${GMUSE_COMPLETIONS_TIMEOUT:-3.0}"
-    local cache_key="gmuse_commit_suggestion"
-    local json_output suggestion gmuse_status
-
-    # Try to retrieve from cache first
-    if _cache_invalid "$cache_key" || ! _retrieve_cache "$cache_key"; then
-        # Call the runtime helper
-        json_output=$(gmuse completions-run --shell zsh --for "git commit -m" --hint "$hint" --timeout "$timeout" 2>/dev/null)
-
-        if [[ -z "$json_output" ]]; then
-            _message -r "gmuse: Failed to generate suggestion"
-            return 1
-        fi
-
-        # Parse JSON output using sed (avoiding jq dependency)
-        gmuse_status=$(echo "$json_output" | sed -n 's/.*"status"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
-        suggestion=$(echo "$json_output" | sed -n 's/.*"suggestion"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')
-
-        # Handle non-ok statuses
-        case "$gmuse_status" in
-            no_staged_changes)
-                _message -r "gmuse: No staged changes detected"
-                return 1
-                ;;
-            timeout)
-                _message -r "gmuse: Request timed out"
-                return 1
-                ;;
-            offline)
-                _message -r "gmuse: Offline or credentials missing"
-                return 1
-                ;;
-            error)
-                _message -r "gmuse: Error generating suggestion"
-                return 1
-                ;;
-            ok)
-                if [[ -n "$suggestion" ]]; then
-                    suggestions=("$suggestion")
-                    _store_cache "$cache_key" suggestions
-                fi
-                ;;
-        esac
-    fi
-
-    # Provide the suggestion as a completion
-    if [[ -n "${suggestions[1]}" ]]; then
-        compadd -Q -S '' -- "${suggestions[@]}"
-        return 0
-    fi
-
-    return 1
-}
-
-# Hook into git completion for commit -m
-_git_commit_message_gmuse() {
-    # Only activate for git commit -m pattern
-    if [[ "${words[1]}" == "git" && "${words[2]}" == "commit" ]]; then
-        local i
-        for ((i = 3; i <= CURRENT; i++)); do
-            if [[ "${words[i]}" == "-m" || "${words[i]}" == "--message" ]]; then
-                if [[ $CURRENT -eq $((i + 1)) ]]; then
-                    _gmuse_git_commit_message
-                    return
-                fi
-            fi
-        done
-    fi
-
-    # Fall back to default git completion
-    _git "$@"
-}
-
-# Register with completion system using zstyle cache policy
-zstyle ':completion:*' cache-path "${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
-zstyle ":completion:*:*:git:*" use-cache on
-zstyle ":completion:*:*:git:*" cache-policy _gmuse_cache_policy
-
-compdef _git_commit_message_gmuse git
-"""
+    try:
+        return (
+            _importlib_resources.files("gmuse")
+            .joinpath("templates", "zsh_completion.zsh")
+            .read_text(encoding="utf-8")
+        )
+    except Exception as exc:  # pragma: no cover - error path tested
+        raise RuntimeError(
+            "zsh completion template is missing or cannot be read; reinstall gmuse or check packaging."
+        ) from exc
 
 
 # =============================================================================
@@ -244,7 +149,14 @@ def completions_zsh() -> None:
     Example:
         eval "$(gmuse completions zsh)"
     """
-    typer.echo(ZSH_COMPLETION_TEMPLATE)
+    try:
+        template = _load_zsh_template()
+    except RuntimeError as exc:
+        # Provide a clear error and exit non-zero so callers (and CI) notice
+        typer.secho(str(exc), err=True)
+        raise typer.Exit(code=1)
+
+    typer.echo(template)
 
 
 # =============================================================================

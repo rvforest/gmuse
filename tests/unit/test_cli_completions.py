@@ -9,7 +9,7 @@ from gmuse.cli.completions import (
     CompletionRequest,
     CompletionResponse,
     CompletionStatus,
-    ZSH_COMPLETION_TEMPLATE,
+    _load_zsh_template,
     completions_run_command,
     completions_zsh,
 )
@@ -91,18 +91,55 @@ class TestCompletionsZsh:
 
     def test_zsh_template_contains_installation_instructions(self) -> None:
         """Zsh template should contain installation instructions."""
-        assert "Installation:" in ZSH_COMPLETION_TEMPLATE
-        assert 'eval "$(gmuse completions zsh)"' in ZSH_COMPLETION_TEMPLATE
-        assert "exec zsh" in ZSH_COMPLETION_TEMPLATE
+        template = _load_zsh_template()
+        assert "Installation:" in template
+        assert 'eval "$(gmuse completions zsh)"' in template
+        assert "exec zsh" in template
         # Template should try multiple invocation strategies for the runtime helper
-        assert "command -v gmuse" in ZSH_COMPLETION_TEMPLATE
-        assert "python3 -m gmuse.cli.main" in ZSH_COMPLETION_TEMPLATE
+        assert "command -v gmuse" in template
+        assert "python3 -m gmuse.cli.main" in template
 
     def test_zsh_template_contains_env_var_checks(self) -> None:
         """Zsh template should check for configuration environment variables."""
-        assert "GMUSE_COMPLETIONS_ENABLED" in ZSH_COMPLETION_TEMPLATE
-        assert "GMUSE_COMPLETIONS_TIMEOUT" in ZSH_COMPLETION_TEMPLATE
-        assert "GMUSE_COMPLETIONS_CACHE_TTL" in ZSH_COMPLETION_TEMPLATE
+        template = _load_zsh_template()
+        assert "GMUSE_COMPLETIONS_ENABLED" in template
+        assert "GMUSE_COMPLETIONS_TIMEOUT" in template
+        assert "GMUSE_COMPLETIONS_CACHE_TTL" in template
+
+    def test_zsh_template_resource_file_exists_and_matches(self) -> None:
+        """The zsh template should be stored as a package resource and match the exported constant."""
+        import importlib.resources as resources
+
+        file_text = (
+            resources.files("gmuse")
+            .joinpath("templates", "zsh_completion.zsh")
+            .read_text(encoding="utf-8")
+        )
+
+        assert file_text == _load_zsh_template()
+        # Ensure we included multiple invocation strategies in the template
+        assert "command -v gmuse" in file_text
+        assert "python3 -m gmuse.cli.main" in file_text
+
+    def test_completions_zsh_missing_template_should_exit(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """If the template cannot be loaded, the command should exit non-zero with an error."""
+
+        def raise_runtime() -> str:
+            raise RuntimeError("missing template")
+
+        monkeypatch.setattr("gmuse.cli.completions._load_zsh_template", raise_runtime)
+
+        with pytest.raises(typer.Exit) as excinfo:
+            completions_zsh()
+
+        captured = capsys.readouterr()
+        assert "missing template" in captured.err
+        # Ensure exit code is non-zero
+        assert (
+            getattr(excinfo.value, "exit_code", getattr(excinfo.value, "code", 1)) != 0
+        )
 
 
 class TestCompletionsRun:

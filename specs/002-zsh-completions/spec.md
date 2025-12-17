@@ -91,7 +91,7 @@ As a user, I want to configure or disable the feature via environment variables.
 
 ## Constitution Check (Mandatory)
 
-- **Code Quality**: This spec introduces new CLI commands (`completions`, `completions-run`). All new Python code must be type-hinted and pass `ruff` checks. The zsh script is external but should be clean and commented.
+- **Code Quality**: This spec introduces new CLI commands (`completions`, `completions-run`). All new Python code must be type-hinted and pass `ruff` checks. The zsh script is external but should be clean and commented. The zsh script is stored as a package resource at `src/gmuse/templates/zsh_completion.zsh` and loaded via `importlib.resources` so it can be packaged and tested independently.
 - **Testing**:
     - Unit tests added for `gmuse.cli.completions` module.
     - Integration tests for `gmuse completions-run` output format.

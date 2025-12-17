@@ -5,22 +5,13 @@ commit message suggestions when completing git commit messages.
 
 ## Installation
 
-1. Generate the completion script and save it to your user `fpath`:
+1. Add the following to your `~/.zshrc`:
 
 ```zsh
-mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions"
-gmuse completions zsh > "${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions/_gmuse"
+eval "$(gmuse completions zsh)"
 ```
 
-2. Enable completions (if not already enabled). Add to your `~/.zshrc`:
-
-```zsh
-fpath=("${XDG_DATA_HOME:-$HOME/.local/share}/zsh/site-functions" $fpath)
-autoload -Uz compinit
-compinit
-```
-
-3. Restart Zsh:
+2. Restart Zsh:
 
 ```zsh
 exec zsh

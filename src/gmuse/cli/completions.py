@@ -183,10 +183,41 @@ def completions_run_command(
     This command is called by shell completion functions to generate
     AI-powered commit message suggestions. It outputs JSON to stdout.
 
+    Args:
+        shell: The target shell. Currently only "zsh" is supported.
+        for_command: The command being completed. Expected to contain "git commit".
+        timeout: Timeout in seconds for LLM generation.
+
     The output format is:
         {"suggestion": "...", "status": "ok|timeout|offline|no_staged_changes|error", "metadata": {...}}
     """
     start_time = time.time()
+
+    # Validate shell parameter
+    if shell != "zsh":
+        response = CompletionResponse(
+            suggestion="",
+            status=CompletionStatus.ERROR,
+            metadata={
+                "error": f"Unsupported shell: {shell}. Only 'zsh' is currently supported.",
+                "elapsed_ms": int((time.time() - start_time) * 1000),
+            },
+        )
+        typer.echo(response.to_json())
+        return
+
+    # Validate for_command parameter
+    if "git commit" not in for_command.lower():
+        response = CompletionResponse(
+            suggestion="",
+            status=CompletionStatus.ERROR,
+            metadata={
+                "error": f"Invalid command: {for_command}. Expected a 'git commit' command.",
+                "elapsed_ms": int((time.time() - start_time) * 1000),
+            },
+        )
+        typer.echo(response.to_json())
+        return
 
     # Override timeout from environment if set
     env_timeout = os.getenv("GMUSE_COMPLETIONS_TIMEOUT")

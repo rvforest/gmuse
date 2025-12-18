@@ -10,6 +10,7 @@ from pathlib import Path
 
 
 project = "gmuse"
+html_title = "gmuse"
 copyright = "2025, Robert Forest"
 author = "Robert Forest"
 
@@ -21,9 +22,14 @@ extensions = [
     "myst_parser",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
+    "sphinx_copybutton",
+    "sphinx_design",
 ]
 myst_enable_extensions = [
     "colon_fence",
+    "deflist",
+    "fieldlist",
+    "tasklist",
 ]
 autodoc2_packages = [
     "../../src/gmuse",
@@ -43,12 +49,25 @@ source_suffix = {
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 # html_theme = 'sphinx_rtd_theme'
-html_theme = "furo"
+html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
 html_theme_options = {
-    "light_logo": "logo/gmuse-logo-light.png",
-    "dark_logo": "logo/gmuse-logo-dark.png",
+    "path_to_docs": "docs/source",
+    "repository_url": "https://github.com/rvforest/gmuse",
+    "repository_branch": "main",
+    "use_repository_button": True,
+    "use_edit_page_button": True,
+    "use_issues_button": True,
+    "home_page_in_toc": True,
+    "logo": {
+        "image_light": "_static/logo/gmuse-logo-light.png",
+        "image_dark": "_static/logo/gmuse-logo-dark.png",
+    },
 }
+
+html_css_files = [
+    "custom.css",
+]
 
 # Favicon configuration
 # html_favicon = "_static/logo/favicon.png"

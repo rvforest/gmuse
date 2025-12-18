@@ -1,0 +1,15 @@
+/* Ensure sidebar scrollbar only appears when needed */
+.bd-sidebar-primary {
+    overflow-y: auto !important;
+}
+
+/* Prevent logo from causing overflow issues */
+.bd-sidebar-primary .logo__image {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Hide ReadTheDocs footer container if it's empty to prevent extra spacing */
+#rtd-footer-container:empty {
+    display: none;
+}

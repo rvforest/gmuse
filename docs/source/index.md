@@ -1,54 +1,94 @@
-# gmuse documentation
+:::{grid}
+:gutter: 3
+:class-container: sd-text-center sd-mt-5
 
-[![GitHub](https://img.shields.io/badge/GitHub-rvforest%2Fgmuse-blue?logo=github)](https://github.com/rvforest/gmuse)
-[![Read the Docs](https://img.shields.io/readthedocs/gmuse)](https://gmuse.readthedocs.io)
+::::{grid-item}
+:::{image} _static/logo/gmuse-logo-light.png
+:align: center
+:width: 300px
+:class: sd-m-auto only-light
+:::
+:::{image} _static/logo/gmuse-logo-dark.png
+:align: center
+:width: 300px
+:class: sd-m-auto only-dark
+:::
+::::
 
-[![Checks](https://img.shields.io/github/check-runs/rvforest/gmuse/main)](https://github.com/rvforest/gmuse/actions/workflows/run-checks.yaml?query=branch%3Amain)
-[![codecov](https://codecov.io/gh/rvforest/gmuse/graph/badge.svg?token=JXB4LR2241)](https://codecov.io/gh/rvforest/gmuse)
+::::{grid-item}
+:class: sd-fs-4 sd-text-center sd-d-flex sd-flex-column sd-justify-content-center
 
-[![PyPI](https://img.shields.io/pypi/v/gmuse.svg)](https://pypi.org/project/gmuse/)
-[![Python Versions](https://img.shields.io/pypi/pyversions/gmuse.svg)](https://pypi.org/project/gmuse/)
+**AI-generated git commit messages in the shell.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+gmuse streamline your workflow by using LLMs to generate meaningful commit messages directly from your staged changes.
 
-AI generated commit messages.
+:::{div} sd-mt-3
+{bdg-primary-line}`Open Source` {bdg-secondary-line}`Python` {bdg-info-line}`AI Powered`
+:::
+
+:::{button-link} tutorials/quickstart
+:color: primary
+:outline:
+:shadow:
+:class: sd-mt-4
+
+{octicon}`rocket;1.2em` Quickstart
+:::
+::::
+:::
+
+:::{grid}
+:gutter: 3
+:class-container: sd-mt-5
+
+::::{grid-item}
+:::{card} {octicon}`book;1.2em;sd-text-primary` Tutorials
+:link: tutorials/index
+:link-type: doc
+:shadow: md
+
+Step-by-step lessons to help you get started with gmuse.
+:::
+::::
+
+::::{grid-item}
+:::{card} {octicon}`tools;1.2em;sd-text-primary` How-to Guides
+:link: how_to/index
+:link-type: doc
+:shadow: md
+
+Practical guides to solve specific problems and tasks.
+:::
+::::
+
+::::{grid-item}
+:::{card} {octicon}`info;1.2em;sd-text-primary` Explanation
+:link: explanation/index
+:link-type: doc
+:shadow: md
+
+Deep dives into the architecture, concepts, and design.
+:::
+::::
+
+::::{grid-item}
+:::{card} {octicon}`code-square;1.2em;sd-text-primary` Reference
+:link: reference/index
+:link-type: doc
+:shadow: md
+
+Technical reference for APIs, CLI, and configuration.
+:::
+::::
+:::
 
 ```{toctree}
 :maxdepth: 1
-:caption: Tutorials
 :hidden:
 
 tutorials/index
-```
-
-```{toctree}
-:maxdepth: 1
-:caption: How-to Guides
-:hidden:
-
 how_to/index
-```
-
-```{toctree}
-:maxdepth: 1
-:caption: Reference
-:hidden:
-
 reference/index
-```
-
-```{toctree}
-:maxdepth: 1
-:caption: Explanation
-:hidden:
-
 explanation/index
-```
-
-```{toctree}
-:maxdepth: 1
-:caption: Development
-:hidden:
-
 development/index
 ```

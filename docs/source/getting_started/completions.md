@@ -4,6 +4,32 @@ This page describes how to install a *shell* completion script to get AI-powered
 commit message suggestions when completing `git commit` messages. Currently,
 `zsh` is supported; other shells may be added in the future.
 
+## Try it now
+
+Quickly load the Zsh completion into your current shell and test it locally:
+
+1. Load completions for the current session (temporary):
+
+```zsh
+# load completions into current shell (temporary)
+eval "$(gmuse completions zsh)"
+```
+
+2. Ensure you have staged changes so gmuse has context:
+
+```bash
+git add .  # stage your changes
+```
+
+3. Test the completion:
+
+```zsh
+git commit -m <TAB>
+# gmuse will generate a suggested commit message and insert it into the -m argument
+```
+
+To persist the completion across sessions, add the `eval` line to your `~/.zshrc` and restart your shell (or run `exec zsh`).
+
 ## Supported shells
 
 - `zsh` — supported (see installation below)

@@ -19,7 +19,12 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-AI generated commit messages using LLMs.
+AI generated git commit messages using LLMs.
+
+## Highlights
+
+- **AI-powered shell completions (zsh, experimental)** — context-aware suggestions for `git commit -m` that help you generate commit messages faster. Try: `eval "$(gmuse completions zsh)"`
+- **Fast, configurable message generation** — `gmuse msg` with `--hint`, `--format`, and provider support.
 
 ## Installation
 
@@ -71,6 +76,15 @@ Quick install:
 ```bash
 # Add to your ~/.zshrc so the completion is loaded on shell startup
 eval "$(gmuse completions zsh)"
+```
+
+Quick test (temporary):
+
+```bash
+# load completions into your current shell without editing your startup files
+eval "$(gmuse completions zsh)"
+# run a local suggestion to see the feature in action
+gmuse completions-run --for "git commit -m" --shell zsh --hint "start of message" --timeout 3.0
 ```
 
 Configuration:

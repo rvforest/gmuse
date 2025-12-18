@@ -102,7 +102,7 @@ _gmuse_git_commit_message() {
 
     # Provide the suggestion as a completion
     if [[ -n "${suggestions[1]}" ]]; then
-        compadd -Q -S '' -- "${suggestions[@]}"
+        compadd -S '' -- "${suggestions[@]}"
         return 0
     fi
 

@@ -304,6 +304,47 @@ class TestCompletionsRun:
         result = json.loads(captured.out)
         assert result["status"] == "no_staged_changes"
 
+    def test_completions_run_invalid_shell(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """completions-run should return error status for unsupported shell."""
+        completions_run_command(
+            shell="bash",
+            for_command="git commit -m",
+            timeout=3.0,
+        )
+
+        captured = capsys.readouterr()
+        import json
+
+        result = json.loads(captured.out)
+
+        assert result["status"] == "error"
+        assert result["suggestion"] == ""
+        assert "Unsupported shell: bash" in result["metadata"]["error"]
+        assert "elapsed_ms" in result["metadata"]
+
+    def test_completions_run_invalid_command(
+        self, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """completions-run should return error status for invalid command."""
+        completions_run_command(
+            shell="zsh",
+            for_command="svn commit",
+            timeout=3.0,
+        )
+
+        captured = capsys.readouterr()
+        import json
+
+        result = json.loads(captured.out)
+
+        assert result["status"] == "error"
+        assert result["suggestion"] == ""
+        assert "Invalid command: svn commit" in result["metadata"]["error"]
+        assert "git commit" in result["metadata"]["error"]
+        assert "elapsed_ms" in result["metadata"]
+
 
 class TestCompletionStatus:
     """Tests for CompletionStatus enum."""

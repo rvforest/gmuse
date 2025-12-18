@@ -194,6 +194,7 @@ def completions_run_command(
         try:
             timeout = float(env_timeout)
         except ValueError:
+            # Invalid GMUSE_COMPLETIONS_TIMEOUT; ignore and keep the existing timeout value.
             pass
 
     try:

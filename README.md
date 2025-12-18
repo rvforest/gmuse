@@ -96,4 +96,3 @@ Configuration:
 - `GMUSE_COMPLETIONS_CACHE_TTL` (default `30`) — cache TTL in seconds
 
 See the documentation for details: https://gmuse.readthedocs.io/en/latest/getting_started/completions.html
-```

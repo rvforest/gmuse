@@ -62,9 +62,11 @@ Install and load completions (Zsh example), then try a quick completions run:
 ```bash
 # load completions into current shell
 eval "$(gmuse completions zsh)"
+```
 
-# simulate invocation and show suggestions
-gmuse completions-run --for "git commit -m" --shell zsh --hint "start of message" --timeout 3.0
+```zsh
+git commit -m <TAB>
+# gmuse will generate a suggested commit message and insert it into the -m argument
 ```
 
 If you want the message copied to your clipboard automatically, either pass the

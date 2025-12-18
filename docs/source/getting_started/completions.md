@@ -1,10 +1,10 @@
-# Shell completions (gmuse)
+# Shell completions
 
 This page describes how to install a *shell* completion script to get AI-powered
 commit message suggestions when completing `git commit` messages. Currently,
 `zsh` is supported; other shells may be added in the future.
 
-## Try it now
+## Quickstart
 
 Quickly load the Zsh completion into your current shell and test it locally:
 

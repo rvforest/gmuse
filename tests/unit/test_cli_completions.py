@@ -60,12 +60,12 @@ class TestDataStructures:
 
 
 class TestCompletionsZsh:
-    """Tests for the 'gmuse completions zsh' command."""
+    """Tests for the 'gmuse generate-git-completions zsh' command."""
 
     def test_completions_zsh_outputs_template(
         self, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """gmuse completions zsh should print the zsh completion template."""
+        """gmuse generate-git-completions zsh should print the zsh completion template."""
         completions_zsh()
 
         captured = capsys.readouterr()
@@ -74,17 +74,17 @@ class TestCompletionsZsh:
         assert "#compdef git" in captured.out
         assert "_gmuse_cache_policy" in captured.out
         assert "_gmuse_git_commit_message" in captured.out
-        assert "gmuse completions-run" in captured.out
+        assert "gmuse git-completions-run" in captured.out
 
     def test_zsh_template_contains_installation_instructions(self) -> None:
         """Zsh template should contain installation instructions."""
         template = _load_zsh_template()
         assert "Installation:" in template
-        assert 'eval "$(gmuse completions zsh)"' in template
+        assert 'eval "$(gmuse generate-git-completions zsh)"' in template
         assert "exec zsh" in template
         # Template should try multiple invocation strategies for the runtime helper
         assert "command -v gmuse" in template
-        assert "python3 -m gmuse.cli.main" in template
+        assert "python3 -m gmuse git-completions-run" in template
 
     def test_zsh_template_contains_env_var_checks(self) -> None:
         """Zsh template should check for configuration environment variables."""
@@ -106,7 +106,7 @@ class TestCompletionsZsh:
         assert file_text == _load_zsh_template()
         # Ensure we included multiple invocation strategies in the template
         assert "command -v gmuse" in file_text
-        assert "python3 -m gmuse.cli.main" in file_text
+        assert "python3 -m gmuse git-completions-run" in file_text
 
     def test_completions_zsh_missing_template_should_exit(
         self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
@@ -130,7 +130,7 @@ class TestCompletionsZsh:
 
 
 class TestCompletionsRun:
-    """Tests for the 'gmuse completions-run' runtime helper command."""
+    """Tests for the 'gmuse git-completions-run' runtime helper command."""
 
     def _create_mock_diff(self) -> mock.Mock:
         """Create a mock StagedDiff object."""
@@ -147,7 +147,7 @@ class TestCompletionsRun:
     def test_completions_run_no_staged_changes(
         self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """completions-run should return no_staged_changes status when no changes."""
+        """git-completions-run should return no_staged_changes status when no changes."""
         from gmuse.exceptions import NoStagedChangesError
 
         def mock_get_staged_diff() -> None:
@@ -176,7 +176,7 @@ class TestCompletionsRun:
     def test_completions_run_success(
         self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """completions-run should return ok status with suggestion on success."""
+        """git-completions-run should return ok status with suggestion on success."""
         from gmuse.commit import GenerationContext, GenerationResult
 
         mock_diff = self._create_mock_diff()
@@ -231,7 +231,7 @@ class TestCompletionsRun:
     def test_completions_run_llm_error_auth(
         self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """completions-run should return offline status for auth errors."""
+        """git-completions-run should return offline status for auth errors."""
         from gmuse.exceptions import LLMError
 
         mock_diff = self._create_mock_diff()
@@ -278,7 +278,7 @@ class TestCompletionsRun:
     def test_completions_run_timeout_from_env(
         self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """completions-run should respect GMUSE_COMPLETIONS_TIMEOUT env var."""
+        """git-completions-run should respect GMUSE_COMPLETIONS_TIMEOUT env var."""
         from gmuse.exceptions import NoStagedChangesError
 
         monkeypatch.setenv("GMUSE_COMPLETIONS_TIMEOUT", "5.0")
@@ -307,7 +307,7 @@ class TestCompletionsRun:
     def test_completions_run_invalid_shell(
         self, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """completions-run should return error status for unsupported shell."""
+        """git-completions-run should return error status for unsupported shell."""
         completions_run_command(
             shell="bash",
             for_command="git commit -m",
@@ -327,7 +327,7 @@ class TestCompletionsRun:
     def test_completions_run_invalid_command(
         self, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """completions-run should return error status for invalid command."""
+        """git-completions-run should return error status for invalid command."""
         completions_run_command(
             shell="zsh",
             for_command="svn commit",

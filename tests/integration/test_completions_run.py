@@ -1,4 +1,4 @@
-"""Integration tests for gmuse completions-run command."""
+"""Integration tests for gmuse git-completions-run command."""
 
 import json
 import os
@@ -10,13 +10,13 @@ import pytest
 
 
 class TestCompletionsRunIntegration:
-    """Integration tests for the completions-run runtime helper."""
+    """Integration tests for the git-completions-run runtime helper."""
 
     def test_completions_run_help(self) -> None:
-        """gmuse completions-run --help should display help text."""
+        """gmuse git-completions-run --help should display help text."""
 
         result = subprocess.run(
-            [sys.executable, "-m", "gmuse.cli.main", "completions-run", "--help"],
+            [sys.executable, "-m", "gmuse", "git-completions-run", "--help"],
             capture_output=True,
             text=True,
             env={**os.environ, "TERM": "dumb", "NO_COLOR": "1"},
@@ -30,7 +30,7 @@ class TestCompletionsRunIntegration:
     def test_completions_run_output_is_valid_json(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """completions-run output should always be valid JSON."""
+        """git-completions-run output should always be valid JSON."""
         # Create a non-git directory to trigger an error
         monkeypatch.chdir(tmp_path)
 
@@ -38,8 +38,8 @@ class TestCompletionsRunIntegration:
             [
                 sys.executable,
                 "-m",
-                "gmuse.cli.main",
-                "completions-run",
+                "gmuse",
+                "git-completions-run",
                 "--shell",
                 "zsh",
                 "--for",
@@ -62,7 +62,7 @@ class TestCompletionsRunIntegration:
     def test_completions_run_no_staged_changes_in_git_repo(
         self, tmp_path: Path
     ) -> None:
-        """completions-run in git repo without staged changes returns correct status."""
+        """git-completions-run in git repo without staged changes returns correct status."""
         # Initialize git repo
         subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
         subprocess.run(
@@ -80,8 +80,8 @@ class TestCompletionsRunIntegration:
             [
                 sys.executable,
                 "-m",
-                "gmuse.cli.main",
-                "completions-run",
+                "gmuse",
+                "git-completions-run",
                 "--shell",
                 "zsh",
                 "--for",
@@ -98,9 +98,9 @@ class TestCompletionsRunIntegration:
         assert output["suggestion"] == ""
 
     def test_completions_zsh_command(self) -> None:
-        """gmuse completions zsh should emit the completion script."""
+        """gmuse generate-git-completions zsh should emit the completion script."""
         result = subprocess.run(
-            [sys.executable, "-m", "gmuse.cli.main", "completions", "zsh"],
+            [sys.executable, "-m", "gmuse", "generate-git-completions", "zsh"],
             capture_output=True,
             text=True,
         )
@@ -108,12 +108,12 @@ class TestCompletionsRunIntegration:
         assert result.returncode == 0
         assert "#compdef git" in result.stdout
         assert "_gmuse_git_commit_message" in result.stdout
-        assert "gmuse completions-run" in result.stdout
+        assert "gmuse git-completions-run" in result.stdout
 
     def test_completions_help(self) -> None:
-        """gmuse completions --help should show subcommands."""
+        """gmuse generate-git-completions --help should show subcommands."""
         result = subprocess.run(
-            [sys.executable, "-m", "gmuse.cli.main", "completions", "--help"],
+            [sys.executable, "-m", "gmuse", "generate-git-completions", "--help"],
             capture_output=True,
             text=True,
         )

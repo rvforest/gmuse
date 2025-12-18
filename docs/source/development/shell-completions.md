@@ -57,7 +57,7 @@ Completion scripts must:
 - For local testing of the runtime helper, run:
 
 ```sh
-GMUSE_DEBUG=1 gmuse completions-run --shell zsh --for "git commit -m" --hint "start of message" --timeout 3.0
+GMUSE_DEBUG=1 gmuse completions-run --shell zsh --for "git commit -m" --timeout 3.0
 ```
 
 (adjust `--shell` and other args as needed for the target shell).

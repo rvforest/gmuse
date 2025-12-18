@@ -24,7 +24,7 @@ AI generated git commit messages in the shell using LLMs.
 ## Highlights
 
 - **AI-powered shell completions (zsh, experimental)** — context-aware suggestions for `git commit -m` that help you generate commit messages faster.
-- **Fast, configurable message generation** —
+- **Fast, configurable message generation** — generate high‑quality commit messages via the CLI with customizable prompts, models, and provider settings.
 
 ## Quickstart
 

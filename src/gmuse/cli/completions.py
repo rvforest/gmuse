@@ -240,7 +240,7 @@ def completions_run_command(
                 diff=staged_diff,
                 history=None,
                 repo_instructions=None,
-                diff_was_truncated=False,
+                diff_was_truncated=staged_diff.truncated,
             )
 
             # Generate message

@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
 #compdef git
-#compdef git
 
 # gmuse zsh completion script
 # Provides AI-generated commit message suggestions for 'git commit -m'
+#
 #
 # Installation:
 #   Add to your ~/.zshrc:

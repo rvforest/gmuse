@@ -1,6 +1,7 @@
 """Integration tests for gmuse completions-run command."""
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -13,10 +14,12 @@ class TestCompletionsRunIntegration:
 
     def test_completions_run_help(self) -> None:
         """gmuse completions-run --help should display help text."""
+
         result = subprocess.run(
             [sys.executable, "-m", "gmuse.cli.main", "completions-run", "--help"],
             capture_output=True,
             text=True,
+            env={**os.environ, "TERM": "dumb", "NO_COLOR": "1"},
         )
 
         assert result.returncode == 0

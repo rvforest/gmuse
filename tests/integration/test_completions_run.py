@@ -16,7 +16,7 @@ class TestCompletionsRunIntegration:
         """gmuse git-completions-run --help should display help text."""
 
         result = subprocess.run(
-            [sys.executable, "-m", "gmuse", "git-completions-run", "--help"],
+            [sys.executable, "-m", "gmuse.cli.main", "git-completions-run", "--help"],
             capture_output=True,
             text=True,
             env={**os.environ, "TERM": "dumb", "NO_COLOR": "1"},
@@ -38,7 +38,7 @@ class TestCompletionsRunIntegration:
             [
                 sys.executable,
                 "-m",
-                "gmuse",
+                "gmuse.cli.main",
                 "git-completions-run",
                 "--shell",
                 "zsh",
@@ -80,7 +80,7 @@ class TestCompletionsRunIntegration:
             [
                 sys.executable,
                 "-m",
-                "gmuse",
+                "gmuse.cli.main",
                 "git-completions-run",
                 "--shell",
                 "zsh",
@@ -100,7 +100,7 @@ class TestCompletionsRunIntegration:
     def test_completions_zsh_command(self) -> None:
         """gmuse generate-git-completions zsh should emit the completion script."""
         result = subprocess.run(
-            [sys.executable, "-m", "gmuse", "generate-git-completions", "zsh"],
+            [sys.executable, "-m", "gmuse.cli.main", "generate-git-completions", "zsh"],
             capture_output=True,
             text=True,
         )
@@ -113,7 +113,13 @@ class TestCompletionsRunIntegration:
     def test_completions_help(self) -> None:
         """gmuse generate-git-completions --help should show subcommands."""
         result = subprocess.run(
-            [sys.executable, "-m", "gmuse", "generate-git-completions", "--help"],
+            [
+                sys.executable,
+                "-m",
+                "gmuse.cli.main",
+                "generate-git-completions",
+                "--help",
+            ],
             capture_output=True,
             text=True,
         )

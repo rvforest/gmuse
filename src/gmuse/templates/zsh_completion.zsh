@@ -13,7 +13,7 @@
 #     exec zsh
 #
 # The runtime helper can be invoked in multiple ways; the completion will
-# try `gmuse git-completions-run` first and fall back to `python3 -m gmuse git-completions-run`.
+# try `gmuse git-completions-run` first and fall back to `python3 -m gmuse.cli.main git-completions-run`.
 # This helps environments where the CLI is available as a module but not
 # installed as an executable. The script will also check for `command -v gmuse`.
 
@@ -36,7 +36,7 @@ _gmuse_invoke_helper() {
         result=$(gmuse git-completions-run --shell zsh --for "git commit -m" --timeout "$1" 2>&1)
     else
         # Try running the module directly as a fallback
-        result=$(python3 -m gmuse git-completions-run --shell zsh --for "git commit -m" --timeout "$1" 2>&1) || true
+        result=$(python3 -m gmuse.cli.main git-completions-run --shell zsh --for "git commit -m" --timeout "$1" 2>&1) || true
     fi
 
     # Check if result looks like valid JSON (starts with {)

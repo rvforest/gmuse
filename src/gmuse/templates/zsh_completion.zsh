@@ -31,12 +31,26 @@ _gmuse_cache_policy() {
 
 # Helper to invoke runtime helper with fallbacks
 _gmuse_invoke_helper() {
+    local result
     if command -v gmuse >/dev/null 2>&1; then
-        gmuse completions-run --shell zsh --for "git commit -m" --timeout "$1" 2>/dev/null
+        result=$(gmuse completions-run --shell zsh --for "git commit -m" --timeout "$1" 2>&1)
     else
         # Try running the module directly as a fallback
-        python3 -m gmuse.cli.main completions-run --shell zsh --for "git commit -m" --timeout "$1" 2>/dev/null || true
+        result=$(python3 -m gmuse.cli.main completions-run --shell zsh --for "git commit -m" --timeout "$1" 2>&1) || true
     fi
+
+    # Check if result looks like valid JSON (starts with {)
+    case "$result" in
+        {*)
+            # Valid JSON output
+            echo "$result"
+            ;;
+        *)
+            # Error or empty output
+            [[ -n "$result" ]] && echo "DEBUG: gmuse error: $result" >&2
+            return 1
+            ;;
+    esac
 }
 
 # Main completion function for git commit -m

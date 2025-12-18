@@ -19,7 +19,23 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-AI generated commit messages using LLMs.
+AI generated git commit messages in the shell using LLMs.
+
+## Highlights
+
+- **AI-powered shell completions (zsh, experimental)** — context-aware suggestions for `git commit -m` that help you generate commit messages faster.
+- **Fast, configurable message generation** — generate high‑quality commit messages via the CLI with customizable prompts, models, and provider settings.
+
+## Quickstart
+
+1. Install gmuse (see Installation below).
+2. Ensure your LLM provider API key is set (e.g., `OPENAI_API_KEY`).
+3. Load completions: `eval "$(gmuse completions zsh)"`
+4. Stage changes: `git add .`
+5. Test: `git commit -m <TAB>` — gmuse will suggest a message; confirm to use it.
+6. Alternatively, generate a commit message directly: `gmuse msg`
+
+See [Completions docs](https://gmuse.readthedocs.io/en/latest/getting_started/completions.html) for configuration and how to persist the completion across sessions.
 
 ## Installation
 
@@ -60,4 +76,23 @@ CLI provider override:
 gmuse --provider gemini
 gmuse --provider anthropic --model claude-3-opus-20240229
 ```
+
+## Zsh completions (experimental)
+
+Generate a Zsh completion script that provides AI-powered commit message
+suggestions for `git commit -m`.
+
+Quick install:
+
+```bash
+# Add to your ~/.zshrc so the completion is loaded on shell startup
+eval "$(gmuse completions zsh)"
 ```
+
+Configuration:
+
+- `GMUSE_COMPLETIONS_ENABLED` (default `true`) — enable/disable completions
+- `GMUSE_COMPLETIONS_TIMEOUT` (default `3.0`) — generation timeout in seconds
+- `GMUSE_COMPLETIONS_CACHE_TTL` (default `30`) — cache TTL in seconds
+
+See the documentation for details: https://gmuse.readthedocs.io/en/latest/getting_started/completions.html

@@ -43,6 +43,9 @@
     "undoc",
     "VIRTUALENV",
     "wntrblm",
+    "fpath",
+    "compinit",
+    "compadd",
     "yournewword"
   ]
 }

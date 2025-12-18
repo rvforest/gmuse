@@ -20,6 +20,7 @@ AI generated commit messages.
 
 getting_started/installation.md
 getting_started/quickstart.md
+getting_started/completions.md
 
 ```
 
@@ -43,4 +44,5 @@ apidocs/index
 :hidden:
 
 development/contributing.md
+development/shell-completions.md
 ```

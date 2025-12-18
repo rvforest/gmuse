@@ -55,6 +55,20 @@ feat: add hello.py with simple print
 A short summary of the changes with optional details following.
 ```
 
+## Try shell completions
+
+Install and load completions (Zsh example), then try a quick completions run:
+
+```bash
+# load completions into current shell
+eval "$(gmuse completions zsh)"
+```
+
+```zsh
+git commit -m <TAB>
+# gmuse will generate a suggested commit message and insert it into the -m argument
+```
+
 If you want the message copied to your clipboard automatically, either pass the
 `--copy` flag or set `copy_to_clipboard = true` in your config file:
 

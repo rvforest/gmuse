@@ -52,20 +52,24 @@ source_suffix = {
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 # html_theme = 'sphinx_rtd_theme'
-html_theme = "sphinx_book_theme"
+html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 html_theme_options = {
-    "path_to_docs": "docs/source",
-    "repository_url": "https://github.com/rvforest/gmuse",
-    "repository_branch": "main",
-    "use_repository_button": True,
-    "use_edit_page_button": True,
-    "use_issues_button": True,
-    "home_page_in_toc": True,
     "logo": {
+        "text": "gmuse",
         "image_light": "_static/logo/gmuse-logo-light.png",
         "image_dark": "_static/logo/gmuse-logo-dark.png",
     },
+    "github_url": "https://github.com/rvforest/gmuse",
+    "use_edit_page_button": True,
+    "header_links_before_dropdown": 4,
+}
+
+html_context = {
+    "github_user": "rvforest",
+    "github_repo": "gmuse",
+    "github_version": "main",
+    "doc_path": "docs/source",
 }
 
 html_css_files = [

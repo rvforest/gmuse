@@ -27,7 +27,7 @@ import typer
 from gmuse.commit import GenerationContext, generate_message
 from gmuse.config import get_env_config, load_config, merge_config
 from gmuse.exceptions import LLMError, NoStagedChangesError, NotAGitRepositoryError
-from gmuse.git import get_staged_diff
+from gmuse.git import get_commit_history, get_staged_diff, load_repository_instructions
 from gmuse.logging import get_logger
 
 logger = get_logger(__name__)
@@ -267,11 +267,18 @@ def completions_run_command(
                 env_vars=env_config,
             )
 
-            # Create context with just the diff (minimal for speed)
+            # Fetch commit history and repository instructions for context
+            history_depth = config.get("history_depth", 5)
+            history = get_commit_history(depth=history_depth)
+            repo_instructions = load_repository_instructions()
+
+            # Create context with full information
             context = GenerationContext(
                 diff=staged_diff,
-                history=None,
-                repo_instructions=None,
+                history=history if history.commits else None,
+                repo_instructions=repo_instructions
+                if repo_instructions.exists
+                else None,
                 diff_was_truncated=staged_diff.truncated,
             )
 

@@ -75,9 +75,25 @@
    or the presence of the home-specific data attribute in sphinx-book-theme */
 [data-content_root="./"] .prev-next-area,
 [data-content_root="./"] h1,
+[data-content_root="./"] .bd-sidebar-secondary,
+[data-content_root="./"] .bd-breadcrumbs,
 body.home .prev-next-area,
-body.home h1 {
+body.home h1,
+body.home .bd-sidebar-secondary,
+body.home .bd-breadcrumbs {
     display: none !important;
+}
+
+/* Expand content width on landing page */
+[data-content_root="./"] .bd-main .bd-content .bd-article-container,
+body.home .bd-main .bd-content .bd-article-container {
+    max-width: 1200px !important;
+}
+
+/* Ensure the main content area utilizes its full width capacity */
+[data-content_root="./"] .bd-content,
+body.home .bd-content {
+    max-width: 100% !important;
 }
 
 /* Neutralize the 'secondary' outline badges (MIT/Python) to a subtle gray */

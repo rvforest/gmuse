@@ -257,6 +257,8 @@ class LLMClient:
             'Hello! How can I help you today?'
         """
         logger.debug(f"Generating with model={self.model}, temperature={temperature}")
+        logger.debug(f"System prompt:\n{system_prompt}")
+        logger.debug(f"User prompt:\n{user_prompt}")
 
         messages = [
             {"role": "system", "content": system_prompt},
@@ -279,7 +281,7 @@ class LLMClient:
             if not content:
                 raise LLMError("LLM returned empty response")
 
-            logger.debug(f"Generated {len(content)} characters")
+            logger.debug(f"Generated text: {content.strip()}")
             return content.strip()
 
         except LLMError:

@@ -3,28 +3,12 @@
     overflow-y: auto !important;
 }
 
-/* Prevent logo from causing overflow issues */
-.bd-sidebar-primary .logo__image {
-    max-width: 100%;
-    height: auto;
-}
 
 /* Hide ReadTheDocs footer container if it's empty to prevent extra spacing */
 #rtd-footer-container:empty {
     display: none;
 }
 
-/* Landing Page Hero Styles */
-
-.sd-text-left-lg {
-    text-align: left !important;
-}
-
-@media (max-width: 991px) {
-    .sd-text-center-sm {
-        text-align: center !important;
-    }
-}
 
 /* Styled installation snippet */
 .terminal-window {
@@ -133,12 +117,6 @@
     /* Prevent scrollbar ghosting */
 }
 
-/* Hide navigation on the landing page only */
-/* We target the specific 'Next' button area on the home page */
-.prev-next-area {
-    margin-top: 2rem;
-}
-
 /* This selector tries to find the landing page by looking for the absence of breadcrumbs
    or the presence of the home-specific data attribute in sphinx-book-theme */
 [data-content_root="./"] .prev-next-area,
@@ -158,11 +136,6 @@ body.home .bd-main .bd-content .bd-article-container {
     max-width: 1200px !important;
 }
 
-/* Ensure the main content area utilizes its full width capacity */
-[data-content_root="./"] .bd-content,
-body.home .bd-content {
-    max-width: 100% !important;
-}
 
 /* Neutralize the 'secondary' outline badges (MIT/Python) to a subtle gray */
 .sd-outline-secondary {
@@ -175,9 +148,4 @@ body.home .bd-content {
 [data-theme="dark"] .sd-outline-secondary {
     color: rgba(255, 255, 255, 0.6) !important;
     border-color: rgba(255, 255, 255, 0.2) !important;
-}
-
-/* Grid spacing for landing page cards */
-.sd-mt-5 {
-    margin-top: 3rem !important;
 }

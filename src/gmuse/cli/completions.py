@@ -6,13 +6,13 @@ This module provides shell completion support for gmuse, including:
 - A runtime helper that generates AI suggestions for commit messages
 
 Commands:
-    generate-git-completions: Group command for completion-related subcommands
-    generate-git-completions zsh: Emit the zsh completion script to stdout
+    git-completions: Group command for completion-related subcommands
+    git-completions zsh: Emit the zsh completion script to stdout
     git-completions-run: Runtime helper called by shell completion functions
 
 Example:
     >>> # Add to ~/.zshrc:
-    >>> # eval "$(gmuse generate-git-completions zsh)"
+    >>> # eval "$(gmuse git-completions zsh)"
 """
 
 import json
@@ -144,7 +144,7 @@ def completions_zsh() -> None:
     'git commit -m'. Add to your ~/.zshrc using eval.
 
     Example:
-        eval "$(gmuse generate-git-completions zsh)"
+        eval "$(gmuse git-completions zsh)"
     """
     try:
         template = _load_zsh_template()

@@ -7,7 +7,7 @@
 #
 # Installation:
 #   Add to your ~/.zshrc:
-#     eval "$(gmuse generate-git-completions zsh)"
+#     eval "$(gmuse git-completions zsh)"
 #
 #   Then restart your shell:
 #     exec zsh

@@ -1,3 +1,10 @@
+# AI commit messages
+
+```{meta}
+:description: AI-powered git commit messages in the shell. Streamline your workflow by using LLMs to generate meaningful commit messages directly from your staged changes.
+:keywords: git, commit, messages, AI, LLM, developer tools, shell
+```
+
 :::::{grid} 1 1 2 2
 :gutter: 3
 :class-container: sd-text-center sd-mt-5

@@ -789,6 +789,7 @@ docs = [
     { name = "sphinx-book-theme" },
     { name = "sphinx-copybutton" },
     { name = "sphinx-design" },
+    { name = "sphinxcontrib-asciinema" },
 ]
 
 [package.metadata]
@@ -818,6 +819,7 @@ docs = [
     { name = "sphinx-book-theme", specifier = ">=1.1.0" },
     { name = "sphinx-copybutton", specifier = ">=0.5.2" },
     { name = "sphinx-design", specifier = ">=0.6.1" },
+    { name = "sphinxcontrib-asciinema", specifier = ">=0.1.0" },
 ]
 
 [[package]]
@@ -2448,6 +2450,16 @@ sdist = { url = "https://files.pythonhosted.org/packages/ba/6e/b837e84a1a704953c
 wheels = [
     { url = "https://files.pythonhosted.org/packages/5d/85/9ebeae2f76e9e77b952f4b274c27238156eae7979c5421fba91a28f4970d/sphinxcontrib_applehelp-2.0.0-py3-none-any.whl", hash = "sha256:4cd3f0ec4ac5dd9c17ec65e9ab272c9b867ea77425228e68ecf08d6b28ddbdb5", size = 119300, upload-time = "2024-07-29T01:08:58.99Z" },
 ]
+
+[[package]]
+name = "sphinxcontrib-asciinema"
+version = "0.4.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "sphinx", version = "8.2.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/31/23/61585345d0ad185acbd9d150d899a67d2f933c4e908c1df61a25f371e669/sphinxcontrib_asciinema-0.4.3.tar.gz", hash = "sha256:aeb480e33b3ac75edec76b8ad705487c4dff978e523a0143cc3962944dbd5d52", size = 74377, upload-time = "2025-11-04T18:28:17.483Z" }
 
 [[package]]
 name = "sphinxcontrib-devhelp"

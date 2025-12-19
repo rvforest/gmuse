@@ -24,6 +24,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx_copybutton",
     "sphinx_design",
+    "sphinxcontrib.asciinema",
 ]
 copybutton_prompt_text = "$ "
 copybutton_only_copy_prompt_lines = True

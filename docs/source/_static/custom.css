@@ -28,41 +28,75 @@
 
 /* Styled installation snippet */
 .terminal-window {
-    background: #1e1e1e !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    border-radius: 8px !important;
+    --term-header: #333;
+    --term-bg: #1e1e1e;
+    --term-dot: rgba(255, 255, 255, 0.2);
+    --term-border: rgba(255, 255, 255, 0.1);
+    --term-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+
+    background: var(--term-bg) !important;
+    /* Create a distinct header bar with a gradient */
+    background-image: linear-gradient(to bottom, var(--term-header) 32px, var(--term-bg) 32px) !important;
+
+    border: 1px solid var(--term-border) !important;
+    border-radius: 10px !important;
     margin: 1.5rem 0 !important;
     position: relative !important;
-    padding-top: 30px !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+    padding-top: 32px !important;
+    box-shadow: var(--term-shadow) !important;
     display: block !important;
+    overflow: hidden !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.terminal-window:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Light mode theme for terminal */
+[data-theme="light"] .terminal-window {
+    --term-header: #e2e8f0;
+    --term-bg: #ffffff;
+    --term-dot: rgba(0, 0, 0, 0.2);
+    --term-border: rgba(0, 0, 0, 0.1);
+    --term-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .terminal-window:hover {
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Terminal Dots (Monochrome Gray) */
 .terminal-window::before {
     content: "" !important;
     position: absolute !important;
-    top: 12px !important;
+    top: 13px !important;
     left: 15px !important;
-    width: 6px !important;
-    height: 6px !important;
-    background-color: rgba(255, 255, 255, 0.2) !important;
+    width: 7px !important;
+    height: 7px !important;
+    background-color: var(--term-dot) !important;
     border-radius: 50% !important;
-    box-shadow: 15px 0 0 rgba(255, 255, 255, 0.2), 30px 0 0 rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 16px 0 0 var(--term-dot), 32px 0 0 var(--term-dot) !important;
     z-index: 10;
 }
 
-.terminal-window .highlight-bash {
+/* Ensure code blocks inside are transparent and correctly padded */
+.terminal-window .highlight,
+.terminal-window div[class*="highlight-"] {
     background: transparent !important;
     border: none !important;
     margin: 0 !important;
 }
 
-.terminal-window .highlight-bash pre {
-    padding: 1.2rem !important;
+.terminal-window .highlight pre,
+.terminal-window div[class*="highlight-"] pre {
+    padding: 1.5rem !important;
     margin: 0 !important;
-    font-size: 0.9em !important;
+    font-size: 0.95em !important;
     background: transparent !important;
+    line-height: 1.5 !important;
+    border: none !important;
 }
 
 /* Hide navigation on the landing page only */

@@ -22,6 +22,7 @@ repos:
     rev: v5.0.0
     hooks:
       - id: check-added-large-files
+        exclude: ^docs/source/_static/logo/
       - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace

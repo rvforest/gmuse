@@ -1,8 +1,8 @@
 <!-- markdownlint-disable MD033 MD041 -->
 <div align="left">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/rvforest/gmuse/main/docs/source/_static/logo/gmuse-logo-dark.png" width="250">
-<img alt="gmuse Logo" src="https://raw.githubusercontent.com/rvforest/gmuse/main/docs/source/_static/logo/gmuse-logo-light.png" width="250">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/rvforest/gmuse/main/docs/source/_static/logo/gmuse-logo-w-text-dark.png" width="250">
+<img alt="gmuse Logo" src="https://raw.githubusercontent.com/rvforest/gmuse/main/docs/source/_static/logo/gmuse-logo-w-text-light.png" width="250">
   </picture>
 </div>
 

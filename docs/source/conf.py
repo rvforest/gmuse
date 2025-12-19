@@ -56,7 +56,7 @@ html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 html_theme_options = {
     "logo": {
-        "text": "gmuse",
+        "text": "❯_ gmuse",
         "image_light": "_static/logo/gmuse-logo-light.png",
         "image_dark": "_static/logo/gmuse-logo-dark.png",
     },

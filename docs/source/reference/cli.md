@@ -27,5 +27,5 @@ gmuse info
 Generate shell completion scripts.
 
 ```bash
-gmuse git-completions --shell zsh
+gmuse git-completions zsh
 ```

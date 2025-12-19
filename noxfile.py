@@ -98,6 +98,24 @@ def livedocs(session: nox.Session) -> None:
     )
 
 
+@nox.session(venv_backend="uv", tags=[DOCS_TAG])
+def linkcheck(session: nox.Session) -> None:
+    """Check documentation links."""
+    _run_install(session, groups=["docs"])
+    session.chdir("docs")
+    session.run(
+        "sphinx-build", "-b", "linkcheck", "source", "build/linkcheck", *session.posargs
+    )
+
+
+@nox.session(venv_backend="uv", tags=[DOCS_TAG])
+def verify_docs(session: nox.Session) -> None:
+    """Verify documentation consistency."""
+    _run_install(session, groups=["docs"])
+    session.run("uv", "pip", "install", "-e", ".")
+    session.run("python", "tools/verify_docs_consistency.py", "src", "docs")
+
+
 # ==================== CLEAN ====================
 
 

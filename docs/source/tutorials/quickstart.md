@@ -26,8 +26,8 @@ Provider credentials vary; many use a single API key environment variable. For a
 quick example (OpenAI/Anthropic):
 
 ```bash
-export OPENAI_API_KEY="sk-..."       # OpenAI
-export ANTHROPIC_API_KEY="sk-ant..." # Anthropic
+export OPENAI_API_KEY="sk-..."       # pragma: allowlist secret
+export ANTHROPIC_API_KEY="sk-ant..." # pragma: allowlist secret
 ```
 
 You can also set defaults via the configuration file at `~/.config/gmuse/config.toml`.

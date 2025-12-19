@@ -15,34 +15,40 @@ AI generated commit messages.
 
 ```{toctree}
 :maxdepth: 1
-:caption: Getting Started:
+:caption: Tutorials
 :hidden:
 
-getting_started/installation.md
-getting_started/quickstart.md
-getting_started/completions.md
-
+tutorials/index
 ```
 
 ```{toctree}
 :maxdepth: 1
-:caption: User Guide:
+:caption: How-to Guides
 :hidden:
+
+how_to/index
 ```
 
 ```{toctree}
 :maxdepth: 1
-:caption: Reference:
+:caption: Reference
 :hidden:
 
-apidocs/index
+reference/index
 ```
 
 ```{toctree}
 :maxdepth: 1
-:caption: Development:
+:caption: Explanation
 :hidden:
 
-development/contributing.md
-development/shell-completions.md
+explanation/index
+```
+
+```{toctree}
+:maxdepth: 1
+:caption: Development
+:hidden:
+
+development/index
 ```

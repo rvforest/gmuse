@@ -46,6 +46,7 @@ $ echo 'eval "$(gmuse git-completions zsh)"' >> ~/.zshrc
 :::{div} sd-mt-auto
 ```{asciinema} _static/gmuse-demo.cast
 :preload: 1
+:autoplay: 1
 :rows: 8
 :speed: 2.5
 :theme: monokai

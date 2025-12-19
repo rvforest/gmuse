@@ -98,9 +98,15 @@ body.home .bd-content {
 
 /* Neutralize the 'secondary' outline badges (MIT/Python) to a subtle gray */
 .sd-outline-secondary {
+    background-color: transparent !important;
+    color: rgba(0, 0, 0, 0.5) !important;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Dark mode override */
+[data-theme="dark"] .sd-outline-secondary {
     color: rgba(255, 255, 255, 0.6) !important;
     border-color: rgba(255, 255, 255, 0.2) !important;
-    background-color: transparent !important;
 }
 
 /* Grid spacing for landing page cards */

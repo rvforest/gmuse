@@ -117,6 +117,10 @@ As a user, I expect `--dry-run` to play nicely with other options (e.g., `--hint
 - Default output for the MVP is **plain text** that labels the two prompt sections like:
 
 ```
+MODEL: <model or none>
+FORMAT: <format>
+TRUNCATED: false
+
 SYSTEM PROMPT:
 <system_prompt>
 
@@ -127,6 +131,14 @@ USER PROMPT:
 - If the user requests machine-readable output (e.g., JSON), that will be a follow-up enhancement unless the reviewer requests otherwise (see **FR-009** clarification).
 - The dry-run is only required for `gmuse msg` and not for other CLI commands at this time.
 - The generator will not perform any hidden telemetry or token usage in dry-run mode.
+
+---
+
+## Clarifications
+
+### Session 2025-12-19
+
+- Q: Should the dry-run output include prompt metadata (model, format, truncation)? → A: Include metadata header (model, format, truncated).
 
 ---
 
@@ -144,9 +156,11 @@ Both approaches are acceptable; Option B reduces public API impact and is likely
 - **Unit**: `tests/unit/test_commit_dry_run.py`
   - Test that `build_prompt()` returns the expected prompts for sample diffs and that `generate_message(..., dry_run=True)` or CLI-level dry-run prints expected output.
   - Mock `LLMClient.generate` and assert it is NOT called when dry-run is used.
+  - Assert the printed output contains a metadata header with `MODEL`, `FORMAT`, and `TRUNCATED` fields.
 
 - **Integration**: `tests/integration/test_cli_msg_dry_run.py`
   - Create a git repo fixture with staged changes, run `gmuse msg --dry-run` and assert output and exit status.
+  - Assert the CLI output begins with the metadata header and that `TRUNCATED` accurately reflects whether the diff was truncated.
 
 - **Docs**: Update `docs/source/getting_started/quickstart.md` with an example using `--dry-run`.
 

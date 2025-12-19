@@ -30,6 +30,7 @@
     box-shadow: var(--term-shadow) !important;
     display: block !important;
     overflow: hidden !important;
+    text-align: left !important;
     transition: transform 0.2s ease, box-shadow 0.2s ease !important;
 }
 

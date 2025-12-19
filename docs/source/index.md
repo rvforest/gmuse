@@ -8,25 +8,9 @@
 :::::{grid} 1 1 2 2
 :gutter: 5
 :class-container: sd-text-center sd-mt-0
-:class-row: align-items-end
 
 ::::{grid-item}
-:class: sd-pr-lg-5
-
-:::{div} sd-mb-4 sd-mt-n4 hero-branding
-```{image} _static/logo/gmuse-logo-dark.png
-:class: only-dark sd-m-auto-sm
-:width: 350px
-```
-```{image} _static/logo/gmuse-logo-light.png
-:class: only-light sd-m-auto-sm
-:width: 350px
-```
-:::
-::::
-
-::::{grid-item}
-:class: sd-text-left-lg sd-text-center-sm sd-pl-lg-5
+:class: sd-text-left-lg sd-text-center-sm sd-pr-lg-5 sd-d-flex sd-flex-column
 
 :::{div} sd-fs-2 sd-fw-bold
 AI-powered git commit messages in the shell.
@@ -39,22 +23,11 @@ Streamline your workflow by using LLMs to generate meaningful commit messages fr
 :::{div} sd-mt-3
 {bdg-secondary-line}`MIT` {bdg-secondary-line}`Python` {bdg-info}`AI Powered`
 :::
-::::
-
-::::{grid-item}
-:class: sd-d-flex sd-flex-column sd-pr-lg-5
-
-:::{container} terminal-window
-```console
-$ uv tool install gmuse
-$ echo 'eval "$(gmuse git-completions zsh)"' >> ~/.zshrc
-```
-:::
 
 :::{button-link} tutorials/quickstart
 :color: info
 :shadow: lg
-:class: sd-mt-auto sd-rounded-pill
+:class: sd-mt-auto sd-rounded-pill sd-mt-5
 
 {octicon}`rocket;1.2em` Get Started
 :::
@@ -62,6 +35,13 @@ $ echo 'eval "$(gmuse git-completions zsh)"' >> ~/.zshrc
 
 ::::{grid-item}
 :class: sd-d-flex sd-flex-column sd-pl-lg-5
+
+:::{container} terminal-window
+```console
+$ uv tool install gmuse
+$ echo 'eval "$(gmuse git-completions zsh)"' >> ~/.zshrc
+```
+:::
 
 :::{div} sd-mt-auto
 ```{asciinema} _static/gmuse-demo.cast

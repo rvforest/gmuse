@@ -38,8 +38,9 @@ AI-powered git commit messages in the shell.
 :::
 
 :::{container} terminal-window
-```bash
-pip install gmuse
+```console
+$ uv tool install gmuse
+$ echo 'eval "$(gmuse git-completions zsh)"' >> ~/.zshrc
 ```
 :::
 

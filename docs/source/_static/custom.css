@@ -13,3 +13,80 @@
 #rtd-footer-container:empty {
     display: none;
 }
+
+/* Landing Page Hero Styles */
+
+.sd-text-left-lg {
+    text-align: left !important;
+}
+
+@media (max-width: 991px) {
+    .sd-text-center-sm {
+        text-align: center !important;
+    }
+}
+
+/* Styled installation snippet */
+.terminal-window {
+    background: #1e1e1e !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 8px !important;
+    margin: 1.5rem 0 !important;
+    position: relative !important;
+    padding-top: 30px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+    display: block !important;
+}
+
+/* Terminal Dots (Monochrome Gray) */
+.terminal-window::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 12px !important;
+    left: 15px !important;
+    width: 6px !important;
+    height: 6px !important;
+    background-color: rgba(255, 255, 255, 0.2) !important;
+    border-radius: 50% !important;
+    box-shadow: 15px 0 0 rgba(255, 255, 255, 0.2), 30px 0 0 rgba(255, 255, 255, 0.2) !important;
+    z-index: 10;
+}
+
+.terminal-window .highlight-bash {
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+}
+
+.terminal-window .highlight-bash pre {
+    padding: 1.2rem !important;
+    margin: 0 !important;
+    font-size: 0.9em !important;
+    background: transparent !important;
+}
+
+/* Hide navigation on the landing page only */
+/* We target the specific 'Next' button area on the home page */
+.prev-next-area {
+    margin-top: 2rem;
+}
+
+/* This selector tries to find the landing page by looking for the absence of breadcrumbs
+   or the presence of the home-specific data attribute in sphinx-book-theme */
+[data-content_root="./"] .prev-next-area,
+body.home .prev-next-area,
+section#gmuse .prev-next-area {
+    display: none !important;
+}
+
+/* Neutralize the 'secondary' outline badges (MIT/Python) to a subtle gray */
+.sd-outline-secondary {
+    color: rgba(255, 255, 255, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    background-color: transparent !important;
+}
+
+/* Grid spacing for landing page cards */
+.sd-mt-5 {
+    margin-top: 3rem !important;
+}

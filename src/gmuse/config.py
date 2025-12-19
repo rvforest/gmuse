@@ -67,6 +67,7 @@ DEFAULTS: Final[ConfigDict] = {
     "format": "freeform",
     "timeout": 30,
     "provider": None,
+    "log_file": None,  # Optional path to log file for debug output
 }
 """Default configuration values used when no override is provided."""
 
@@ -374,5 +375,9 @@ def get_env_config() -> ConfigDict:
     # Provider override
     if prov := os.getenv("GMUSE_PROVIDER"):
         config["provider"] = prov
+
+    # Log file override
+    if log_file := os.getenv("GMUSE_LOG_FILE"):
+        config["log_file"] = log_file
 
     return config

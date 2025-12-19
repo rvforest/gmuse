@@ -190,6 +190,11 @@ def completions_run_command(
 
     The output format is:
         {"suggestion": "...", "status": "ok|timeout|offline|no_staged_changes|error", "metadata": {...}}
+
+    Note:
+        Debug logging for completions requires log_file to be configured.
+        Set log_file in config.toml or via GMUSE_LOG_FILE environment variable.
+        Example: log_file = "~/.cache/gmuse/debug.log"
     """
     start_time = time.time()
 

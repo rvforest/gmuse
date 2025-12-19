@@ -84,7 +84,7 @@ class TestCompletionsZsh:
         assert "exec zsh" in template
         # Template should try multiple invocation strategies for the runtime helper
         assert "command -v gmuse" in template
-        assert "python3 -m gmuse.cli.main git-completions-run" in template
+        assert "python3 -m gmuse git-completions-run" in template
 
     def test_zsh_template_contains_env_var_checks(self) -> None:
         """Zsh template should check for configuration environment variables."""
@@ -106,7 +106,7 @@ class TestCompletionsZsh:
         assert file_text == _load_zsh_template()
         # Ensure we included multiple invocation strategies in the template
         assert "command -v gmuse" in file_text
-        assert "python3 -m gmuse.cli.main git-completions-run" in file_text
+        assert "python3 -m gmuse git-completions-run" in file_text
 
     def test_completions_zsh_missing_template_should_exit(
         self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]

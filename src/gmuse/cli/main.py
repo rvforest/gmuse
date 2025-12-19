@@ -369,7 +369,3 @@ def _error_exit(message: str, code: int = 1, hint: Optional[str] = None) -> None
     if hint:
         typer.echo(f"\n{hint}", err=True)
     raise typer.Exit(code=code)
-
-
-if __name__ == "__main__":
-    app()

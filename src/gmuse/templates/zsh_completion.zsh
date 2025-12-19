@@ -85,27 +85,15 @@ _gmuse_git_commit_message() {
 
         # Parse JSON output using python3 (avoiding jq dependency and handling escaped quotes)
         local parsed_json
-        parsed_json=$(printf '%s\n' "$json_output" | python3 - <<'EOF'
-import sys
-import json
-
+        parsed_json=$(printf '%s\n' "$json_output" | python3 -c 'import sys, json
 try:
     data = json.load(sys.stdin)
-    status = data.get("status", "") or ""
-    suggestion = data.get("suggestion", "") or ""
-    if not isinstance(status, str):
-        status = str(status)
-    if not isinstance(suggestion, str):
-        suggestion = str(suggestion)
-    # Normalize newlines in suggestion so we can safely handle it as a single line
+    status = str(data.get("status", "") or "")
+    suggestion = str(data.get("suggestion", "") or "")
     suggestion = suggestion.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
-    # Use ASCII unit separator (0x1F) as a delimiter between status and suggestion
     sys.stdout.write(f"{status}\x1f{suggestion}")
 except Exception:
-    # On any parse error, emit nothing so gmuse_status stays empty
-    pass
-EOF
-)
+    pass' 2>/dev/null || true)
         gmuse_status=${parsed_json%%$'\x1f'*}
         suggestion=${parsed_json#*$'\x1f'}
         # Handle non-ok statuses

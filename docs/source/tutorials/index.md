@@ -2,7 +2,7 @@
 
 Hands-on lessons to get started with gmuse.
 
-:::{grid}
+:::{grid} 1 2 2 3
 :gutter: 3
 
 ::::{grid-item}

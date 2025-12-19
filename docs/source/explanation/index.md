@@ -2,7 +2,7 @@
 
 Deep dives into the architecture, concepts, and design.
 
-:::{grid}
+::::::{grid} 1 2 2 3
 :gutter: 3
 
 ::::{grid-item}
@@ -22,7 +22,7 @@ Understand how gmuse is built and how data flows.
 Details on supported models and provider abstractions.
 :::
 ::::
-:::
+::::::
 
 ```{toctree}
 :maxdepth: 1

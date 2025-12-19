@@ -89,14 +89,48 @@
     margin: 0 !important;
 }
 
+/* Style the terminal prompt to be more subtle and completely unselectable */
+.terminal-window .highlight .gp {
+    color: var(--term-dot) !important;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+
+    display: inline-block;
+    width: 1.25rem;
+    /* Sufficient space for the prompt */
+    position: relative;
+    vertical-align: middle;
+    visibility: hidden;
+    /* Hide the actual text node from selection */
+    pointer-events: none;
+}
+
+.terminal-window .highlight .gp::before {
+    content: "$";
+    text-indent: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    color: var(--term-dot) !important;
+    visibility: visible;
+    /* Restore visibility for the visual prompt */
+    font-size: 0.95rem;
+}
+
 .terminal-window .highlight pre,
 .terminal-window div[class*="highlight-"] pre {
-    padding: 1.5rem !important;
+    padding: 1.2rem !important;
+    /* Slightly tighter padding */
     margin: 0 !important;
     font-size: 0.95em !important;
+    /* Slightly smaller for a sharper look */
     background: transparent !important;
     line-height: 1.5 !important;
     border: none !important;
+    overflow-x: hidden !important;
+    /* Prevent scrollbar ghosting */
 }
 
 /* Hide navigation on the landing page only */

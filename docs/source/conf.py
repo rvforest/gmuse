@@ -25,6 +25,8 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_design",
 ]
+copybutton_prompt_text = "$ "
+copybutton_only_copy_prompt_lines = True
 myst_enable_extensions = [
     "colon_fence",
     "deflist",

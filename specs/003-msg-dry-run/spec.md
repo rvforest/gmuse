@@ -1,6 +1,6 @@
 # Feature Specification: Dry-run for `gmuse msg` (print prompt without calling LLM)
 
-**Feature Branch**: `001-msg-dry-run`
+**Feature Branch**: `003-msg-dry-run`
 **Created**: 2025-12-19
 **Status**: Draft
 **Input**: User description: "Add a `--dry-run` flag to `gmuse msg` that doesn't send anything to the llm provider but returns what the prompt would have been."
@@ -84,14 +84,14 @@ As a user, I expect `--dry-run` to play nicely with other options (e.g., `--hint
 ### Functional Requirements
 
 - **FR-001**: The CLI `gmuse msg` MUST accept a boolean flag `--dry-run` that is documented in the help text.
-- **FR-002**: When `--dry-run` is provided, the command MUST assemble the exact `system_prompt` and `user_prompt` that would be sent to the LLM and output them to stdout in a stable, machine-parseable way (see Assumptions section for default formatting).
+- **FR-002**: When `--dry-run` is provided, the command MUST assemble the exact `system_prompt` and `user_prompt` that would be sent to the LLM and output them to stdout as labeled plain text (see Assumptions section for exact layout).
 - **FR-003**: When `--dry-run` is provided, the system MUST NOT call into the LLM provider client (no `LLMClient.generate()` or network requests must be made).
 - **FR-004**: When `--dry-run` is provided and the normal run would return an error (e.g., not a git repo, no staged changes), the command MUST return the same error messages and non-zero exit codes as the normal `gmuse msg` path.
 - **FR-005**: `--dry-run` MUST respect other flags that affect prompt construction (e.g., `--hint`, `--format`) so the printed prompt matches what would have been sent if the provider were invoked.
 - **FR-006**: Add unit and integration tests that explicitly assert no provider calls and that printed prompt equals the assembled prompt (file paths documented below).
 - **FR-007**: Update CLI help text and project documentation to include `--dry-run` usage and examples.
 - **FR-008**: Implementation MUST be covered by tests and pass existing linting/type checks.
-- **FR-009**: [NEEDS CLARIFICATION: Output format] The spec assumes plain text output combining `SYSTEM PROMPT` and `USER PROMPT` sections; confirm whether a machine-readable `--json` output is required in the MVP or should be deferred to a follow-up.
+- **FR-009**: Output format: For the MVP, `--dry-run` MUST print labeled plain text with `SYSTEM PROMPT` and `USER PROMPT` sections. Machine-readable output (e.g., JSON) may be added in a follow-up feature if requested.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -154,10 +154,8 @@ Both approaches are acceptable; Option B reduces public API impact and is likely
 
 ## Open Questions / Clarifications
 
-1. **Output format** (see **FR-009**): Should the MVP only print labeled plain text (default in this spec), or should we additionally provide a machine-readable `--json` option alongside `--dry-run`? (Options: A: Plain text only (MVP), B: Plain text + `--json` output, C: Always print JSON)
+Q1: Output format chosen — Plain text only for MVP (Option A). The spec has been updated accordingly; JSON output may be added in a follow-up if needed.
 
 
-
-"""
 
 **End of spec

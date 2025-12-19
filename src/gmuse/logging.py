@@ -24,12 +24,17 @@ _LOG_FORMAT: Final[str] = "[%(levelname)s] %(message)s"
 """Log message format (simple, no timestamps for CLI tool)."""
 
 
-def setup_logger(name: str = "gmuse", level: Optional[int] = None) -> logging.Logger:
+def setup_logger(
+    name: str = "gmuse",
+    level: Optional[int] = None,
+    log_file: Optional[str] = None,
+) -> logging.Logger:
     """Configure and return a logger with appropriate settings.
 
     Args:
         name: Logger name, defaults to "gmuse"
         level: Logging level, defaults to INFO or DEBUG based on GMUSE_DEBUG env var
+        log_file: Optional file path for log output. If provided, logs go to file instead of stderr.
 
     Returns:
         Configured logger instance
@@ -38,7 +43,11 @@ def setup_logger(name: str = "gmuse", level: Optional[int] = None) -> logging.Lo
         >>> logger = setup_logger()
         >>> logger.debug("This only shows when GMUSE_DEBUG=1")
         >>> logger.info("This always shows")
+        >>> # With file logging:
+        >>> logger = setup_logger(log_file="~/.cache/gmuse/debug.log")
     """
+    from pathlib import Path
+
     logger = logging.getLogger(name)
 
     # Don't add handlers if they already exist (avoid duplicate logs)
@@ -52,13 +61,20 @@ def setup_logger(name: str = "gmuse", level: Optional[int] = None) -> logging.Lo
 
     logger.setLevel(level)
 
-    # Create console handler with formatting
-    handler = logging.StreamHandler(sys.stderr)
+    # Create handler (file or console)
+    if log_file:
+        # Expand ~ and create parent directories
+        log_path = Path(log_file).expanduser()
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        handler = logging.FileHandler(log_path, mode="a")
+        formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] %(message)s")
+    else:
+        # Console handler
+        handler = logging.StreamHandler(sys.stderr)
+        formatter = logging.Formatter(_LOG_FORMAT)
+
     handler.setLevel(level)
-
-    formatter = logging.Formatter(_LOG_FORMAT)
     handler.setFormatter(formatter)
-
     logger.addHandler(handler)
 
     return logger
@@ -80,7 +96,9 @@ def get_logger(name: str = "gmuse") -> logging.Logger:
     """
     logger = logging.getLogger(name)
     if not logger.handlers:
-        return setup_logger(name)
+        # Check if log file is configured via environment variable
+        log_file = os.getenv("GMUSE_LOG_FILE")
+        return setup_logger(name, log_file=log_file)
     return logger
 
 

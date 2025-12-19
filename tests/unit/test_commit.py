@@ -252,3 +252,74 @@ class TestGenerateMessage:
         generate_message(config=config, hint="security fix", context=mock_context)
 
         assert captured_kwargs["user_hint"] == "security fix"
+
+    def test_generate_message_includes_commit_history_in_prompt(
+        self, monkeypatch
+    ) -> None:
+        """Test that commit history from context is included in the final prompt."""
+        from gmuse.git import CommitHistory, CommitRecord, StagedDiff
+        from datetime import datetime
+
+        # Create a real context with commit history
+        mock_context = GenerationContext(
+            diff=StagedDiff(
+                raw_diff="diff content",
+                files_changed=["test.py"],
+                lines_added=5,
+                lines_removed=2,
+                hash="abc123",
+                size_bytes=100,
+            ),
+            history=CommitHistory(
+                commits=[
+                    CommitRecord(
+                        hash="def456",
+                        message="feat: add authentication",
+                        author="Test Author",
+                        timestamp=datetime.now(),
+                    ),
+                    CommitRecord(
+                        hash="ghi789",
+                        message="fix: resolve login bug",
+                        author="Test Author",
+                        timestamp=datetime.now(),
+                    ),
+                ],
+                depth=5,
+                repository_path="/test/repo",
+            ),
+            repo_instructions=None,
+            diff_was_truncated=False,
+        )
+
+        # Capture the actual prompts sent to LLM
+        captured_prompts = {}
+        mock_client = mock.Mock()
+        mock_client.generate.return_value = "feat: new feature"
+
+        def capture_generate(system_prompt, user_prompt):
+            captured_prompts["system"] = system_prompt
+            captured_prompts["user"] = user_prompt
+            return "feat: new feature"
+
+        mock_client.generate = capture_generate
+
+        monkeypatch.setattr(
+            "gmuse.commit.gather_context", lambda **kwargs: mock_context
+        )
+        # Don't mock build_prompt - let it run for real
+        monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
+        monkeypatch.setattr("gmuse.commit.validate_message", lambda msg, format: None)
+
+        config = {
+            "format": "freeform",
+            "model": "gpt-4",
+            "timeout": 30,
+            "provider": None,
+        }
+        result = generate_message(config=config, context=mock_context)
+
+        # Verify commit history is in the user prompt
+        assert "Recent commits for style reference:" in captured_prompts["user"]
+        assert "feat: add authentication" in captured_prompts["user"]
+        assert "fix: resolve login bug" in captured_prompts["user"]

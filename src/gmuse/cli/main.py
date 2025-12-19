@@ -19,7 +19,20 @@ Example:
 """
 
 import os
+import sys
 from typing import Any, Optional
+
+# Handle debug logging for completion runtime
+# The zsh completion script redirects stderr to stdout (2>&1) to capture errors,
+# which would mix debug logs with JSON output and break parsing.
+# Solution: Debug logging for completions only works if log_file is configured via GMUSE_LOG_FILE.
+# Otherwise, debug output is suppressed to prevent JSON pollution.
+if "git-completions-run" in " ".join(sys.argv) and not os.getenv("GMUSE_LOG_FILE"):
+    # No log file configured - suppress debug to keep JSON clean
+    if "GMUSE_DEBUG" in os.environ:
+        del os.environ["GMUSE_DEBUG"]
+    if "GMUSE_LOG_LEVEL" in os.environ:
+        del os.environ["GMUSE_LOG_LEVEL"]
 
 import typer
 

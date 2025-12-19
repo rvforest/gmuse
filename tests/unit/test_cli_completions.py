@@ -186,6 +186,21 @@ class TestCompletionsRun:
             lambda: mock_diff,
         )
 
+        # Mock git functions for commit history and instructions
+        from gmuse.git import CommitHistory, RepositoryInstructions
+        from unittest import mock
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_commit_history",
+            lambda depth: CommitHistory(
+                commits=[], depth=depth, repository_path="/test"
+            ),
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.load_repository_instructions",
+            lambda: RepositoryInstructions(content="", file_path="", exists=False),
+        )
+
         # Mock config loading
         monkeypatch.setattr(
             "gmuse.cli.completions.load_config",
@@ -197,7 +212,7 @@ class TestCompletionsRun:
         )
         monkeypatch.setattr(
             "gmuse.cli.completions.merge_config",
-            lambda **kwargs: {"timeout": 3.0},
+            lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
         )
 
         # Mock generate_message
@@ -240,6 +255,21 @@ class TestCompletionsRun:
             "gmuse.cli.completions.get_staged_diff",
             lambda: mock_diff,
         )
+
+        # Mock git functions for commit history and instructions
+        from gmuse.git import CommitHistory, RepositoryInstructions
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_commit_history",
+            lambda depth: CommitHistory(
+                commits=[], depth=depth, repository_path="/test"
+            ),
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.load_repository_instructions",
+            lambda: RepositoryInstructions(content="", file_path="", exists=False),
+        )
+
         monkeypatch.setattr(
             "gmuse.cli.completions.load_config",
             lambda: {},
@@ -250,7 +280,7 @@ class TestCompletionsRun:
         )
         monkeypatch.setattr(
             "gmuse.cli.completions.merge_config",
-            lambda **kwargs: {"timeout": 3.0},
+            lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
         )
 
         def mock_generate_message(**kwargs: object) -> None:

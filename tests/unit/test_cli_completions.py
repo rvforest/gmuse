@@ -60,12 +60,12 @@ class TestDataStructures:
 
 
 class TestCompletionsZsh:
-    """Tests for the 'gmuse generate-git-completions zsh' command."""
+    """Tests for the 'gmuse git-completions zsh' command."""
 
     def test_completions_zsh_outputs_template(
         self, capsys: pytest.CaptureFixture[str]
     ) -> None:
-        """gmuse generate-git-completions zsh should print the zsh completion template."""
+        """gmuse git-completions zsh should print the zsh completion template."""
         completions_zsh()
 
         captured = capsys.readouterr()
@@ -80,7 +80,7 @@ class TestCompletionsZsh:
         """Zsh template should contain installation instructions."""
         template = _load_zsh_template()
         assert "Installation:" in template
-        assert 'eval "$(gmuse generate-git-completions zsh)"' in template
+        assert 'eval "$(gmuse git-completions zsh)"' in template
         assert "exec zsh" in template
         # Template should try multiple invocation strategies for the runtime helper
         assert "command -v gmuse" in template

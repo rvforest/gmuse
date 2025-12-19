@@ -98,9 +98,9 @@ class TestCompletionsRunIntegration:
         assert output["suggestion"] == ""
 
     def test_completions_zsh_command(self) -> None:
-        """gmuse generate-git-completions zsh should emit the completion script."""
+        """gmuse git-completions zsh should emit the completion script."""
         result = subprocess.run(
-            [sys.executable, "-m", "gmuse", "generate-git-completions", "zsh"],
+            [sys.executable, "-m", "gmuse", "git-completions", "zsh"],
             capture_output=True,
             text=True,
         )
@@ -111,9 +111,9 @@ class TestCompletionsRunIntegration:
         assert "gmuse git-completions-run" in result.stdout
 
     def test_completions_help(self) -> None:
-        """gmuse generate-git-completions --help should show subcommands."""
+        """gmuse git-completions --help should show subcommands."""
         result = subprocess.run(
-            [sys.executable, "-m", "gmuse", "generate-git-completions", "--help"],
+            [sys.executable, "-m", "gmuse", "git-completions", "--help"],
             capture_output=True,
             text=True,
         )

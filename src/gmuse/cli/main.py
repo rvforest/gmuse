@@ -10,7 +10,7 @@ This module provides the command-line interface using Typer. It handles:
 Commands:
     msg: Generate a commit message from staged changes.
     info: Display resolved configuration for debugging.
-    generate-git-completions: Shell completion utilities.
+    git-completions: Shell completion utilities.
     git-completions-run: Runtime helper for shell completions.
 
 Example:
@@ -53,8 +53,8 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 
-# Register generate-git-completions subcommand group
-app.add_typer(completions_app, name="generate-git-completions")
+# Register git-completions subcommand group
+app.add_typer(completions_app, name="git-completions")
 
 # Register git-completions-run as a top-level command
 app.command(name="git-completions-run")(completions_run_command)

@@ -101,14 +101,14 @@ project_includes = ["src"]
 
 [tool.coverage.run]
 source = ["src"]
+omit = [
+    "*/gmuse/__main__.py",
+]
 
 [tool.coverage.report]
 exclude_lines = [
     "pragma: no cover",
-    "if __name__ == \"__main__\":",
-]
-omit = [
-    "*/gmuse/__main__.py",
+    "if __name__ == .__main__.:",
 ]
 
 [tool.hatch.version]

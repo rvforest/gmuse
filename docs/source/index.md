@@ -6,36 +6,43 @@
 ```
 
 :::::{grid} 1 1 2 2
-:gutter: 3
-:class-container: sd-text-center sd-mt-5
+:gutter: 5
+:class-container: sd-text-center sd-mt-0
+:class-row: align-items-end
 
 ::::{grid-item}
-:::{image} _static/logo/gmuse-hero-light.png
-:align: center
-:width: 250px
-:class: sd-m-auto only-light
-:::
-:::{image} _static/logo/gmuse-hero-dark.png
-:align: center
-:width: 250px
-:class: sd-m-auto only-dark
+:class: sd-pr-lg-5
+
+:::{div} sd-mb-4 sd-mt-n4 hero-branding
+```{image} _static/logo/gmuse-logo-dark.png
+:class: only-dark sd-m-auto-sm
+:width: 350px
+```
+```{image} _static/logo/gmuse-logo-light.png
+:class: only-light sd-m-auto-sm
+:width: 350px
+```
 :::
 ::::
 
 ::::{grid-item}
-:class: sd-d-flex sd-flex-column sd-justify-content-center sd-text-left-lg sd-text-center-sm
+:class: sd-text-left-lg sd-text-center-sm sd-pl-lg-5
 
 :::{div} sd-fs-2 sd-fw-bold
 AI-powered git commit messages in the shell.
 :::
 
 :::{div} sd-fs-5 sd-mt-2 sd-text-muted
-**gmuse** streamlines your workflow by using LLMs to generate meaningful commit messages directly from your staged changes.
+Streamline your workflow by using LLMs to generate meaningful commit messages from staged changes.
 :::
 
 :::{div} sd-mt-3
 {bdg-secondary-line}`MIT` {bdg-secondary-line}`Python` {bdg-info}`AI Powered`
 :::
+::::
+
+::::{grid-item}
+:class: sd-d-flex sd-flex-column sd-pr-lg-5
 
 :::{container} terminal-window
 ```console
@@ -47,9 +54,23 @@ $ echo 'eval "$(gmuse git-completions zsh)"' >> ~/.zshrc
 :::{button-link} tutorials/quickstart
 :color: info
 :shadow: lg
-:class: sd-mt-3 sd-rounded-pill
+:class: sd-mt-auto sd-rounded-pill
 
 {octicon}`rocket;1.2em` Get Started
+:::
+::::
+
+::::{grid-item}
+:class: sd-d-flex sd-flex-column sd-pl-lg-5
+
+:::{div} sd-mt-auto
+```{asciinema} _static/gmuse-demo.cast
+:preload: 1
+:rows: 8
+:speed: 2.5
+:theme: monokai
+:font_size: 12px
+```
 :::
 ::::
 :::::

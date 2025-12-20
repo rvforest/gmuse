@@ -1,8 +1,6 @@
 """Integration tests for gmuse msg --dry-run (T006)."""
 
-import os
 import subprocess
-import tempfile
 from pathlib import Path
 
 import pytest

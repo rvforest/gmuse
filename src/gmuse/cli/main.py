@@ -454,7 +454,7 @@ def _format_dry_run_output(
         USER PROMPT:
         Diff: ...
     """
-    model_str = model if model else "none"
+    model_str = model or "none"
     truncated_str = "true" if truncated else "false"
     return (
         f"MODEL: {model_str}\n"

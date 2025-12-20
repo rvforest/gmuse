@@ -34,6 +34,7 @@ AI generated git commit messages in the shell using LLMs.
 4. Stage changes: `git add .`
 5. Test: `git commit -m <TAB>` — gmuse will suggest a message; confirm to use it.
 6. Alternatively, generate a commit message directly: `gmuse msg`
+7. Preview the prompt without calling LLM: `gmuse msg --dry-run`
 
 See [Completions docs](https://gmuse.readthedocs.io/en/latest/getting_started/completions.html) for configuration and how to persist the completion across sessions.
 

@@ -53,6 +53,7 @@ from gmuse.exceptions import (
 )
 from gmuse.commit import generate_message, gather_context
 from gmuse.logging import get_logger
+from gmuse.prompts import build_prompt
 from gmuse.cli.completions import completions_app, completions_run_command
 
 logger = get_logger(__name__)
@@ -198,6 +199,11 @@ def msg(
         "--provider",
         help="Explicit provider override (e.g., 'openai', 'gemini', 'anthropic')",
     ),
+    dry_run: bool = typer.Option(
+        False,
+        "--dry-run",
+        help="Print the assembled prompt without calling the LLM provider",
+    ),
 ) -> None:
     """Generate a commit message from staged changes.
 
@@ -211,6 +217,7 @@ def msg(
         gmuse msg --format conventional  # Use conventional commits format
         gmuse msg --copy                 # Auto-copy to clipboard
         gmuse msg --model claude-3-opus  # Use specific model
+        gmuse msg --dry-run              # Preview prompt without calling LLM
     """
     try:
         # Load and merge configuration
@@ -232,6 +239,27 @@ def msg(
                 fg=typer.colors.YELLOW,
                 err=True,
             )
+
+        # --dry-run path: build prompt and print it, then exit
+        if dry_run:
+            effective_format = config.get("format", "freeform")
+            system_prompt, user_prompt = build_prompt(
+                diff=context.diff,
+                format=effective_format,
+                commit_history=context.history,
+                repo_instructions=context.repo_instructions,
+                user_hint=hint,
+                learning_examples=None,  # learning not implemented yet
+            )
+            output = _format_dry_run_output(
+                model=config.get("model"),
+                format=effective_format,
+                truncated=context.diff_was_truncated,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+            )
+            typer.echo(output)
+            raise typer.Exit(code=0)
 
         # Generate the commit message
         result = generate_message(config=config, hint=hint, context=context)
@@ -382,3 +410,61 @@ def _error_exit(message: str, code: int = 1, hint: Optional[str] = None) -> None
     if hint:
         typer.echo(f"\n{hint}", err=True)
     raise typer.Exit(code=code)
+
+
+def _format_dry_run_output(
+    model: Optional[str],
+    format: str,
+    truncated: bool,
+    system_prompt: str,
+    user_prompt: str,
+) -> str:
+    """Format the dry-run output for CLI display.
+
+    Produces a plain-text block containing a metadata header and labeled
+    SYSTEM PROMPT / USER PROMPT sections so the user can inspect what
+    would be sent to the LLM provider.
+
+    Args:
+        model: Resolved model name (or None if not configured).
+        format: Message format (freeform, conventional, gitmoji).
+        truncated: Whether the staged diff was truncated.
+        system_prompt: The system prompt that would be sent.
+        user_prompt: The user prompt that would be sent.
+
+    Returns:
+        Formatted string suitable for printing to stdout.
+
+    Example:
+        >>> output = _format_dry_run_output(
+        ...     model="gpt-4",
+        ...     format="conventional",
+        ...     truncated=False,
+        ...     system_prompt="You are a commit helper.",
+        ...     user_prompt="Diff: ...",
+        ... )
+        >>> print(output)
+        MODEL: gpt-4
+        FORMAT: conventional
+        TRUNCATED: false
+        <BLANKLINE>
+        SYSTEM PROMPT:
+        You are a commit helper.
+        <BLANKLINE>
+        USER PROMPT:
+        Diff: ...
+    """
+    model_str = model or "none"
+    truncated_str = "true" if truncated else "false"
+    return (
+        f"MODEL: {model_str}\n"
+        f"FORMAT: {format}\n"
+        f"TRUNCATED: {truncated_str}\n"
+        "\n"
+        "SYSTEM PROMPT:\n```\n"
+        f"{system_prompt}\n"
+        "\n```\n\n"
+        "USER PROMPT:\n```\n"
+        f"{user_prompt}"
+        "\n```"
+    )

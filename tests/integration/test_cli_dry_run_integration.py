@@ -102,8 +102,8 @@ class TestDryRunIntegration:
         result = runner.invoke(app, ["msg", "--dry-run", "--hint", "security fix"])
 
         assert result.exit_code == 0
-        # Hint is embedded by build_prompt in user prompt
-        assert "security fix" in result.output.lower() or "User hint" in result.output
+        # Hint is embedded by build_prompt in user prompt as "User hint: <hint>"
+        assert "User hint: security fix" in result.output
 
 
 class TestDryRunErrorCases:

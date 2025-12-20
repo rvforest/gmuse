@@ -461,9 +461,10 @@ def _format_dry_run_output(
         f"FORMAT: {format}\n"
         f"TRUNCATED: {truncated_str}\n"
         "\n"
-        "SYSTEM PROMPT:\n"
+        "SYSTEM PROMPT:\n```\n"
         f"{system_prompt}\n"
-        "\n"
-        "USER PROMPT:\n"
+        "\n```\n\n"
+        "USER PROMPT:\n```\n"
         f"{user_prompt}"
+        "\n```"
     )

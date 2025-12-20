@@ -83,6 +83,7 @@ gmuse msg --copy
 - `--model` / `-m`: Use a specific model for this invocation (overrides env/config)
 - `--provider`: Explicit provider override for edge cases
 - `--history-depth`: Number of prior commits to use for style context (0–50)
+- `--dry-run`: Preview the assembled prompt without calling the LLM
 
 Examples:
 
@@ -90,6 +91,7 @@ Examples:
 gmuse msg --hint "fix security bug" --format conventional
 gmuse msg --model "claude-3-opus-20240229" --provider anthropic
 gmuse msg --history-depth 10
+gmuse msg --dry-run  # See the prompt that would be sent
 ```
 
 ## ️Troubleshooting & Debugging

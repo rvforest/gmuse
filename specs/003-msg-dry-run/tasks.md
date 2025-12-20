@@ -14,9 +14,9 @@ description: "Task list for implementing `gmuse msg --dry-run`"
 
 **Purpose**: Confirm existing code paths and test harness patterns to keep changes minimal.
 
-- [ ] T001 [P] Review current `gmuse msg` flow in src/gmuse/cli/main.py and src/gmuse/commit.py
-- [ ] T002 [P] Review prompt construction API in src/gmuse/prompts.py and confirm output layout in specs/003-msg-dry-run/contracts/cli.md
-- [ ] T003 [P] Review existing CLI test patterns in tests/integration/test_cli.py and tests/unit/test_cli_main.py
+- [X] T001 [P] Review current `gmuse msg` flow in src/gmuse/cli/main.py and src/gmuse/commit.py
+- [X] T002 [P] Review prompt construction API in src/gmuse/prompts.py and confirm output layout in specs/003-msg-dry-run/contracts/cli.md
+- [X] T003 [P] Review existing CLI test patterns in tests/integration/test_cli.py and tests/unit/test_cli_main.py
 
 ---
 
@@ -24,7 +24,7 @@ description: "Task list for implementing `gmuse msg --dry-run`"
 
 **Purpose**: Create a single reusable formatter so behavior + tests share one source of truth.
 
-- [ ] T004 Create `_format_dry_run_output(model, format, truncated, system_prompt, user_prompt)` helper in src/gmuse/cli/main.py
+- [X] T004 Create `_format_dry_run_output(model, format, truncated, system_prompt, user_prompt)` helper in src/gmuse/cli/main.py
 
 **Checkpoint**: Foundation ready — user story implementation can begin.
 
@@ -38,18 +38,18 @@ description: "Task list for implementing `gmuse msg --dry-run`"
 
 ### Tests for User Story 1 (write first; ensure they FAIL before implementation)
 
-- [ ] T005 [P] [US1] Add unit tests for `_format_dry_run_output` in tests/unit/test_cli_msg_dry_run.py
-- [ ] T006 [P] [US1] Add integration test for `gmuse msg --dry-run` stdout layout in tests/integration/test_cli_msg_dry_run.py
-- [ ] T007 [P] [US1] Add unit test asserting `gmuse.llm.LLMClient.generate` is NOT called during dry-run in tests/unit/test_cli_msg_dry_run.py
+- [X] T005 [P] [US1] Add unit tests for `_format_dry_run_output` in tests/unit/test_cli_msg_dry_run.py
+- [X] T006 [P] [US1] Add integration test for `gmuse msg --dry-run` stdout layout in tests/integration/test_cli_dry_run_integration.py
+- [X] T007 [P] [US1] Add unit test asserting `gmuse.llm.LLMClient.generate` is NOT called during dry-run in tests/unit/test_cli_msg_dry_run.py
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Add `--dry-run` option to `msg` command signature/help in src/gmuse/cli/main.py
-- [ ] T009 [US1] Implement dry-run execution path in src/gmuse/cli/main.py (call `gather_context()`, `build_prompt()`, print metadata + prompts, exit 0)
-- [ ] T010 [US1] Ensure dry-run path does NOT call `generate_message()` (and therefore never initializes `LLMClient`) in src/gmuse/cli/main.py
-- [ ] T011 [US1] Ensure `TRUNCATED: true|false` reflects `context.diff_was_truncated` and truncation warning still goes to stderr in src/gmuse/cli/main.py
-- [ ] T012 [US1] Add CLI docstring example including `gmuse msg --dry-run` in src/gmuse/cli/main.py
-- [ ] T013 [US1] Run tests for MVP story via `uv run nox -s test` (see noxfile.py)
+- [X] T008 [US1] Add `--dry-run` option to `msg` command signature/help in src/gmuse/cli/main.py
+- [X] T009 [US1] Implement dry-run execution path in src/gmuse/cli/main.py (call `gather_context()`, `build_prompt()`, print metadata + prompts, exit 0)
+- [X] T010 [US1] Ensure dry-run path does NOT call `generate_message()` (and therefore never initializes `LLMClient`) in src/gmuse/cli/main.py
+- [X] T011 [US1] Ensure `TRUNCATED: true|false` reflects `context.diff_was_truncated` and truncation warning still goes to stderr in src/gmuse/cli/main.py
+- [X] T012 [US1] Add CLI docstring example including `gmuse msg --dry-run` in src/gmuse/cli/main.py
+- [X] T013 [US1] Run tests for MVP story via `uv run nox -s test` (see noxfile.py)
 
 **Checkpoint**: US1 complete — dry-run works and is independently testable.
 
@@ -63,10 +63,10 @@ description: "Task list for implementing `gmuse msg --dry-run`"
 
 ### Implementation for User Story 2
 
-- [ ] T014 [P] [US2] Update docs usage example in docs/source/getting_started/quickstart.md
-- [ ] T015 [P] [US2] Document `--dry-run` flag and output layout in docs/source/reference/cli.md
-- [ ] T016 [P] [US2] Add a short mention of `gmuse msg --dry-run` in README.md
-- [ ] T017 [US2] Build docs via `uv run nox -s docs` (see noxfile.py)
+- [X] T014 [P] [US2] Update docs usage example in docs/source/getting_started/quickstart.md
+- [X] T015 [P] [US2] Document `--dry-run` flag and output layout in docs/source/reference/cli.md
+- [X] T016 [P] [US2] Add a short mention of `gmuse msg --dry-run` in README.md
+- [X] T017 [US2] Build docs via `uv run nox -s docs` (see noxfile.py)
 
 **Checkpoint**: US2 complete — help + docs are updated.
 
@@ -80,14 +80,14 @@ description: "Task list for implementing `gmuse msg --dry-run`"
 
 ### Tests for User Story 3
 
-- [ ] T018 [P] [US3] Add unit tests covering combinations (`--hint`, `--format`, `--model`) in tests/unit/test_cli_msg_dry_run.py
-- [ ] T019 [P] [US3] Add unit test ensuring `--copy` does not copy anything during dry-run in tests/unit/test_cli_msg_dry_run.py
-- [ ] T020 [P] [US3] Add unit test verifying `TRUNCATED: true` when `context.diff_was_truncated=True` (monkeypatch `gather_context`) in tests/unit/test_cli_msg_dry_run.py
+- [X] T018 [P] [US3] Add unit tests covering combinations (`--hint`, `--format`, `--model`, `--history-depth`) in tests/unit/test_cli_msg_dry_run.py
+- [X] T019 [P] [US3] Add unit test ensuring `--copy` does not copy anything during dry-run in tests/unit/test_cli_msg_dry_run.py
+- [X] T020 [P] [US3] Add unit test verifying `TRUNCATED: true` when `context.diff_was_truncated=True` (monkeypatch `gather_context`) in tests/unit/test_cli_msg_dry_run.py
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Ensure dry-run passes `--history-depth` through to `gather_context()` and prompt builder inputs in src/gmuse/cli/main.py
-- [ ] T022 [US3] Run focused tests via `uv run nox -s test` (see noxfile.py)
+- [X] T021 [US3] Ensure dry-run passes `--history-depth` through to `gather_context()` and prompt builder inputs in src/gmuse/cli/main.py
+- [X] T022 [US3] Run focused tests via `uv run nox -s test` (see noxfile.py)
 
 **Checkpoint**: US3 complete — dry-run is robust with flag combinations.
 
@@ -97,7 +97,7 @@ description: "Task list for implementing `gmuse msg --dry-run`"
 
 **Purpose**: Keep quality gates green and ensure docs/examples stay consistent.
 
-- [ ] T023 [P] Run lint/format/type gates via `uv run nox -s check` (see noxfile.py)
+- [X] T023 [P] Run lint/format/type gates via `uv run nox -s check` (see noxfile.py)
 
 ---
 

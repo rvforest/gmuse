@@ -68,6 +68,43 @@ def test_generate_handles_llm_auth_error(
     assert "Authentication failed" in captured.err
 
 
+def test_dry_run_skips_llm_errors(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Dry-run should skip generate_message and thus avoid LLM-related errors."""
+    # Mock _load_config to return a config that might otherwise cause issues
+    monkeypatch.setattr(
+        main,
+        "_load_config",
+        lambda **kwargs: {
+            "model": "gpt-4",
+            "format": "freeform",
+            "history_depth": 5,
+            "copy_to_clipboard": False,
+            "timeout": 30,
+            "provider": "invalid-provider",
+        },
+    )
+
+    # Mock gather_context
+    monkeypatch.setattr(main, "gather_context", lambda **kwargs: fake_context())
+
+    # Mock generate_message to raise LLMError (it should NOT be called)
+    mock_gen = mock.Mock(side_effect=LLMError("Should not be called"))
+    monkeypatch.setattr(main, "generate_message", mock_gen)
+
+    # Mock build_prompt and _format_dry_run_output to avoid actual logic
+    monkeypatch.setattr(main, "build_prompt", lambda **kwargs: ("sys", "user"))
+    monkeypatch.setattr(
+        main, "_format_dry_run_output", lambda **kwargs: "dry run output"
+    )
+
+    # Should exit with 0, not raise LLMError or exit with code 2
+    with pytest.raises(typer.Exit) as excinfo:
+        main.msg(dry_run=True)
+
+    assert excinfo.value.exit_code == 0
+    mock_gen.assert_not_called()
+
+
 def test_generate_provider_passed_to_config(monkeypatch: pytest.MonkeyPatch) -> None:
     """The --provider flag should be passed through to config loading."""
     captured_config_kwargs: dict[str, Any] = {}

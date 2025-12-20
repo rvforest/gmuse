@@ -2,12 +2,11 @@
 
 from unittest.mock import MagicMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from gmuse.cli.main import _format_dry_run_output, app
 from gmuse.commit import GenerationContext
-from gmuse.git import CommitHistory, RepositoryInstructions, StagedDiff
+from gmuse.git import StagedDiff
 
 
 runner: CliRunner = CliRunner()

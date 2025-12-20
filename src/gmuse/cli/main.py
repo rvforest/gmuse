@@ -249,7 +249,7 @@ def msg(
                 commit_history=context.history,
                 repo_instructions=context.repo_instructions,
                 user_hint=hint,
-                learning_examples=None,
+                learning_examples=None,  # learning not implemented yet
             )
             output = _format_dry_run_output(
                 model=config.get("model"),

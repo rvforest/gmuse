@@ -56,11 +56,10 @@ The "magic" of `gmuse` isn't just sending a diff to an AI; it's about providing 
 ### Style Matching (Few-Shot Learning)
 By default, `gmuse` pulls the last 5 commit messages from your current branch and **explicitly includes them in the prompt** as style examples. The LLM is given these concrete examples so it can:
 *   Identify preferred terminology.
-*   Provide a vocabulary for scopes and domain terms (e.g., `db`, `api`, `cli`) so generated messages use meaningful scopes.
 *   Match the verbosity of existing messages.
 *   Reproduce prefix or tagging conventions (like `PROJ-123:`) already in use.
 
-> **Note:** The model doesn't magically "infer" your style—it's given your recent commits as explicit examples via `build_context()` in the prompt assembly, and those commits supply scope vocabulary and domain wording the model should follow.
+> **Note:** The model doesn't magically "infer" your style—it's given your recent commits as explicit examples via `build_context()` in the prompt assembly.
 
 ### Repository Instructions
 If a `.gmuse` file (or a `[tool.gmuse.instructions]` block in `pyproject.toml`) is found, its contents are injected directly into the prompt. This is perfect for team-wide rules like *"Always reference a Jira ticket"* or *"Keep descriptions under 50 characters."* See the [Configuration Guide](../how_to/configuration.md) for details.
@@ -99,60 +98,29 @@ For common provider errors, sample messages, and recovery steps, see the [Troubl
 
 ## Example: Tracing a Generation
 
-To see how these layers come together, imagine you are adding a database column and the accompanying migration.
+To see how these layers come together, imagine you are fixing a security vulnerability.
 
 ### 1. The Ingredients
 *   **Staged Diff**:
     ```diff
-    diff --git a/migrations/0002_add_user_email.sql b/migrations/0002_add_user_email.sql
-    new file mode 100644
-    +CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, user_email VARCHAR(255));
-    +ALTER TABLE users ADD COLUMN user_email VARCHAR(255);
-    diff --git a/models/user.py b/models/user.py
-    @@
-     class User(Base):
-    -    pass
-    +    email = Column(String, nullable=True)
+    - cursor.execute("SELECT * FROM users WHERE id = " + user_id)
+    + cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
     ```
-*   **Style Reference**
-
-    `gmuse` scans your history and sees messages like:
+*   **Style Reference**: `gmuse` scans your history and sees messages like
     ```text
-    feat(db): add connection pooling
-    fix(api): handle invalid auth token
-    chore(release): prepare v1.3.2 release
-    perf(cache): reduce session serialization overhead
-    fix(auth): validate token expiry in middleware
+    PROJ-123: Add login endpoint
+    PROJ-456: Fix logout redirect
     ```
-*   **User Hint** (optional)
-
-    `--hint "add user email"` can be provided. This ensures the required migration details are available to the model even if it does not infer them from the diff. For migration-specific instructions you can include an explicit `MIGRATION:` note in the hint, for example:
-    ```bash
-    gmuse msg --hint "migrate with 'psql -f migrations/0002_add_user_email.sql'; no downtime expected"
-    ```
-
-*   **Repository instructions (optional)**
-
-    `gmuse` injects these instructions directly into the model prompt so the LLM knows to include required metadata when the diff indicates it's needed. For example, in `pyproject.toml`:
-    ```toml
-    [tool.gmuse.instructions]
-    instructions = [
-      "When migration files change, include: MIGRATION: <short note> in the commit body.",
-      "For user-visible changes, include: changelog: <one-line summary>.",
-      "Tag integration-test commits with: integration-test: true"
-    ]
-    ```
-
-*   **Task template** (default freeform):
-
-    The format's task prompt (Conventional/Gitmoji/Freeform) — selected via `--format` or your config — is **included in the constructed prompt** by `gmuse`. You do not need to provide a separate template.
+*   **User Hint**: You run `gmuse msg --hint "PROJ-789"`.
+*   **Repository instructions**: A `.gmuse` file or `[tool.gmuse.instructions]` block in `pyproject.toml` (e.g., `Always reference a Jira ticket`).
+*   **Task template**: The format's task prompt (Conventional/Gitmoji/Freeform) — selected via `--format` or your config — is **automatically appended** to the user prompt by `gmuse` and enforces structure and constraints (for example, Conventional requires `type(scope): description` and a concise one-line message). You do not need to provide a separate template.
 
 ### 2. The Context Assembly
 `gmuse` constructs a structured prompt using three distinct layers:
 
 1.  **Instructions (System Prompt)**: The "Expert Developer" persona and guidelines (use imperative mood, focus on WHAT and WHY, etc.). See `SYSTEM_PROMPT` in `src/gmuse/prompts.py`.
-2.  **Evidence (Context in User Prompt)**: The LLM is **explicitly given** your recent commits as style examples, your `--hint`, and any repository instructions. It doesn't infer patterns from nothing—it has concrete examples like `feat(db): add connection pooling` to reproduce.
-3.  **Task Template**: The format-specific instructions (Conventional/Gitmoji/Freeform) are included in the constructed prompt. For Conventional, this includes the allowed types (`feat`, `fix`, etc.) and format rules.
+2.  **Evidence (Context in User Prompt)**: The LLM is **explicitly given** your recent commits as style examples, your `--hint`, and any repository instructions. It doesn't infer patterns from nothing—it has concrete examples like `PROJ-123: Add login endpoint` to reproduce.
+3.  **Task Template**: The format-specific instructions (Conventional/Gitmoji/Freeform) are appended to the user prompt. For Conventional, this includes the allowed types (`feat`, `fix`, etc.) and format rules.
 
 This assembly happens in `build_prompt()` (see `src/gmuse/prompts.py`), which returns the `(system_prompt, user_prompt)` tuple sent to the LLM.
 
@@ -167,49 +135,38 @@ and produce clear, informative commit messages...
 ```
 
 **User Prompt:**
-````text
+```text
 Recent commits for style reference:
-- feat(db): add connection pooling
-- fix(api): handle invalid auth token
-- chore(release): prepare v1.3.2 release
-- perf(cache): reduce session serialization overhead
-- fix(auth): validate token expiry in middleware
+- PROJ-456: Fix logout redirect
+- PROJ-123: Add login endpoint
 
 Repository instructions:
-```
-When migration files change, include: MIGRATION: <short note> in the commit body.
-For user-visible changes, include: changelog: <one-line summary>.
-Tag integration-test commits with: integration-test: true
-```
+Always reference a Jira ticket in the format PROJ-NNN.
+
+User hint: PROJ-789
 
 Staged changes summary:
 - Files changed: 1
-- Lines added: 2
-- Lines removed: 0
+- Lines added: 1
+- Lines removed: 1
 
 Diff:
-```
-diff --git a/migrations/0002_add_user_email.sql b/migrations/0002_add_user_email.sql
-new file mode 100644
-+CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, user_email VARCHAR(255));
-+ALTER TABLE users ADD COLUMN user_email VARCHAR(255);
-```
-
----
+diff --git a/database.py b/database.py
+...
+- cursor.execute("SELECT * FROM users WHERE id = " + user_id)
++ cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
 
 Generate a commit message following Conventional Commits specification.
 Format: type(scope): description
-
-````
+...
+```
 
 ### 4. The LLM Response
 
-Because the prompt explicitly mentions migration files and the repository instruction requires a `MIGRATION:` note, the LLM should produce both the Conventional subject and a short migration instruction in the body:
+The LLM combines the technical change (parameterized query), the style examples (`PROJ-NNN` prefix pattern), the repository instruction ("Always reference a Jira ticket"), and your hint (`PROJ-789`) to produce:
 
 ```text
-feat(db): add user_email column to users table
-
-MIGRATION: run `psql -f migrations/0002_add_user_email.sql`; no downtime expected.
+fix(database): PROJ-789: use parameterized query to prevent SQL injection
 ```
 
 ### 5. Validation
@@ -217,11 +174,10 @@ MIGRATION: run `psql -f migrations/0002_add_user_email.sql`; no downtime expecte
 Before returning the message, `gmuse` runs `validate_message()` (see `src/gmuse/prompts.py`):
 
 - ✅ **Not empty**: Message has content
-- ✅ **Length check**: under the configured max (default 1000 characters)
-- ✅ **Conventional format**: Matches `^(feat|fix|docs|...)(\(.+\))?: .+`
-- ✅ **Migration note required**: Since migration files were detected, the body must include a `MIGRATION:` line. If missing, `gmuse` will request a retry or fail with a clear error prompting the user to add migration details.
+- ✅ **Length check**: 68 characters < 1000 max
+- ✅ **Conventional format**: Matches `^(feat|fix|docs|...)\(.*\)?: .+`
 
-Validation passes when all checks succeed, and the message is displayed (or copied to clipboard if `--copy` was used).
+Validation passes, and the message is displayed (or copied to clipboard if `--copy` was used).
 
 ## See Also
 

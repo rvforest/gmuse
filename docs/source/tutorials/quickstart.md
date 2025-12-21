@@ -11,7 +11,7 @@ and generate an AI-powered commit message from staged git changes.
 
 ## Install
 
-Install gmuse with pip (the simplest option):
+Install gmuse with pip:
 
 ```bash
 pip install gmuse
@@ -22,19 +22,9 @@ For optional extras (clipboard support), see the
 
 ## Configure Provider Credentials
 
-Provider credentials vary; many use a single API key environment variable. For a
-quick example (OpenAI/Anthropic):
+Set your provider API key in the environment (for example, `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`), or configure defaults in `~/.config/gmuse/config.toml`. See the [LiteLLM](https://docs.litellm.ai/docs/providers) documentation for the complete list of supported providers and authentication requirements.
 
-```bash
-export OPENAI_API_KEY="sk-..."       # pragma: allowlist secret
-export ANTHROPIC_API_KEY="sk-ant..." # pragma: allowlist secret
-```
-
-You can also set defaults via the configuration file at `~/.config/gmuse/config.toml`.
-See the [Installation](installation.md) page for provider-specific setup and additional
-credentials required by some providers.
-
-## 🧪 Generate Your First Commit Message
+## Generate Your First Commit Message
 
 Create a git repository and some changes, stage them, then run `gmuse msg`:
 
@@ -55,58 +45,34 @@ feat: add hello.py with simple print
 A short summary of the changes with optional details following.
 ```
 
+### Copy to Clipboard
+To copy automatically for a single invocation, pass `--copy` to `gmuse msg`; to enable persistent copying, set `copy_to_clipboard = true` in your config file (see the [Configuration guide](../how_to/configuration.md#copy-to-clipboard)). Clipboard support requires the optional `gmuse[clipboard]` extra.
+
 ## Try shell completions
 
-Install and load completions (Zsh example), then try a quick completions run:
+Load completions into your shell (Zsh example):
 
 ```bash
 # load completions into current shell
-eval "$(gmuse completions zsh)"
+eval "$(gmuse git-completions zsh)"
 ```
 
-```zsh
-git commit -m <TAB>
-# gmuse will generate a suggested commit message and insert it into the -m argument
-```
+Then use completion during `git commit -m <TAB>` to insert a suggested message. For more shells and installation instructions, see the Completions guide in the docs. Completions insert the suggestion directly into `git commit -m`.
 
-If you want the message copied to your clipboard automatically, either pass the
-`--copy` flag or set `copy_to_clipboard = true` in your config file:
+## Common Options
 
-```bash
-gmuse msg --copy
-```
+Quick examples used in this guide:
 
-## ✨ Common Options
+- `--dry-run`: Preview the assembled prompt without contacting a provider
+- `--format <freeform|conventional|gitmoji>`: Choose an output format
+- `--copy`: Copy the generated message to your clipboard
 
-- `--hint` / `-h`: Give extra guidance for the generated message
-- `--format` / `-f`: Output format: `freeform`, `conventional`, or `gitmoji`
-- `--model` / `-m`: Use a specific model for this invocation (overrides env/config)
-- `--provider`: Explicit provider override for edge cases
-- `--history-depth`: Number of prior commits to use for style context (0–50)
-- `--dry-run`: Preview the assembled prompt without calling the LLM
 
-Examples:
+See the CLI Reference for the full list of options and examples (`../reference/cli.md`).
 
-```bash
-gmuse msg --hint "fix security bug" --format conventional
-gmuse msg --model "claude-3-opus-20240229" --provider anthropic
-gmuse msg --history-depth 10
-gmuse msg --dry-run  # See the prompt that would be sent
-```
+## Troubleshooting & Debugging
 
-## ️Troubleshooting & Debugging
-
-- If gmuse can't detect your provider or model, run `gmuse info` to view
-	resolved environment values and merged configuration:
-
-```bash
-gmuse info
-```
-
-- If gmuse reports "No staged changes", remember to `git add` the files you want
-	to commit.
-- If your diff is large, gmuse may truncate the diffs to fit model token limits;
-	it will warn you and still produce a concise message.
+If gmuse can't detect your provider or model, run `gmuse info` to inspect resolved configuration. If you see `No staged changes`, run `git add` to stage files; see the Troubleshooting guide for more diagnostic tips (`../how_to/troubleshooting.md`).
 
 ## Tips
 

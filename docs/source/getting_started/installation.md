@@ -8,8 +8,6 @@ gmuse requires Python 3.10 or higher.
 pip install gmuse
 ```
 
-This installs gmuse with support for all LLM providers via LiteLLM.
-
 ## Optional Dependencies
 
 ```bash

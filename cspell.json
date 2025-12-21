@@ -7,6 +7,8 @@
     "automodule",
     "autosummary",
     "autouse",
+    "compadd",
+    "compinit",
     "conftest",
     "docstrings",
     "doctest",
@@ -14,9 +16,11 @@
     "endfor",
     "endswith",
     "fnames",
+    "fpath",
     "fract",
     "furo",
     "generativeai",
+    "Gitmoji",
     "gmuse",
     "huggingface",
     "junitxml",
@@ -43,9 +47,6 @@
     "undoc",
     "VIRTUALENV",
     "wntrblm",
-    "fpath",
-    "compinit",
-    "compadd",
     "yournewword"
   ]
 }

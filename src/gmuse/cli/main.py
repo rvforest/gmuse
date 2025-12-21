@@ -197,7 +197,7 @@ def msg(
     provider: Optional[str] = typer.Option(
         None,
         "--provider",
-        help="Explicit provider override (e.g., 'openai', 'gemini', 'anthropic')",
+        help="Explicit provider override (e.g., 'openai', 'anthropic')",
     ),
     dry_run: bool = typer.Option(
         False,

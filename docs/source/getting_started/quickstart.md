@@ -17,8 +17,8 @@ Install gmuse with pip (the simplest option):
 pip install gmuse
 ```
 
-For optional extras (clipboard, provider-specific integrations, etc.), see the
-[Installation](installation.md) guide for details and the provider support matrix.
+For optional extras (clipboard support), see the
+[Installation](installation.md) guide for details.
 
 ## Configure Provider Credentials
 
@@ -31,8 +31,8 @@ export ANTHROPIC_API_KEY="sk-ant..." # Anthropic
 ```
 
 You can also set defaults via the configuration file at `~/.config/gmuse/config.toml`.
-See the [Installation](installation.md) page for provider-specific setup (Gemini,
-Vertex, Bedrock, etc.) and additional credentials required by some providers.
+See the [Installation](installation.md) page for provider-specific setup and additional
+credentials required by some providers.
 
 ## 🧪 Generate Your First Commit Message
 

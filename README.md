@@ -41,40 +41,29 @@ See [Completions docs](https://gmuse.readthedocs.io/en/latest/getting_started/co
 ## Installation
 
 ```bash
-# Basic installation (works with OpenAI, Anthropic, Azure, Cohere out of the box)
+# Basic installation
 pip install gmuse
 
 # With clipboard support
 pip install gmuse[clipboard]
-
-# With Gemini support
-pip install gmuse[gemini]
-
-# With all provider support
-pip install gmuse[all]
 ```
 
 ## Provider Setup
 
-gmuse supports 100+ LLM providers via LiteLLM. Most providers work out of the box, but some require additional packages:
+gmuse supports 100+ LLM providers via LiteLLM. Set your API key:
 
-- **OpenAI, Anthropic, Azure, Cohere**: Work immediately (no extra packages)
-- **Google Gemini**: Requires `pip install gmuse[gemini]`
-- **AWS Bedrock**: Requires `pip install gmuse[bedrock]`
-- **HuggingFace**: Requires `pip install gmuse[huggingface]`
-
-Set your API key:
 ```bash
 export OPENAI_API_KEY="sk-..."          # For OpenAI
 export ANTHROPIC_API_KEY="sk-ant-..."  # For Anthropic
-export GOOGLE_API_KEY="..."             # For Gemini
+export GOOGLE_API_KEY="..."             # For Google
 # Or configure in ~/.config/gmuse/config.toml
+```
 
 CLI provider override:
 
 ```bash
 # Explicitly select provider for a single command invocation
-gmuse --provider gemini
+gmuse --provider openai
 gmuse --provider anthropic --model claude-3-opus-20240229
 ```
 

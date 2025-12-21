@@ -10,12 +10,7 @@ Public API:
     - LLMClient: Client for generating text
 
 Note:
-    Provider-specific packages may be required:
-
-    - Gemini: pip install google-generativeai  (or pip install gmuse[gemini])
-    - Bedrock: pip install boto3  (or pip install gmuse[bedrock])
-    - HuggingFace: pip install transformers torch  (or pip install gmuse[huggingface])
-    - OpenAI/Anthropic/Azure/Cohere: Work out of the box
+    All providers are supported out of the box via LiteLLM.
 """
 
 import contextlib

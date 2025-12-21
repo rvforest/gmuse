@@ -29,9 +29,6 @@ pip install gmuse[vertex]
 
 # HuggingFace models
 pip install gmuse[huggingface]
-
-# All providers + clipboard
-pip install gmuse[all]
 ```
 
 ## Provider Support Matrix

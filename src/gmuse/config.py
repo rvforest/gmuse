@@ -120,7 +120,7 @@ def load_config(config_path: Optional[Path] = None) -> ConfigDict:
     if tomllib is None:
         raise ConfigError(
             "tomli package is required for Python 3.10. "
-            "Install with: pip install gmuse[all]"
+            "Reinstall gmuse: pip install --force-reinstall gmuse"
         )
 
     try:

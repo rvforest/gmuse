@@ -49,9 +49,6 @@ pip install gmuse[clipboard]
 
 # With Gemini support
 pip install gmuse[gemini]
-
-# With all provider support
-pip install gmuse[all]
 ```
 
 ## Provider Setup

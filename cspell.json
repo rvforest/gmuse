@@ -32,6 +32,7 @@
     "noxfile",
     "pipx",
     "posargs",
+    "pyperclip",
     "pypi",
     "pyproject",
     "pytest",
@@ -47,6 +48,7 @@
     "undoc",
     "VIRTUALENV",
     "wntrblm",
+    "xclip",
     "yournewword"
   ]
 }

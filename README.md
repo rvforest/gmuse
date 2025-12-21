@@ -59,10 +59,9 @@ export GOOGLE_API_KEY="..."             # For Google
 # Or configure in ~/.config/gmuse/config.toml
 ```
 
-CLI provider override:
+You can explicitly select a provider for a single command:
 
 ```bash
-# Explicitly select provider for a single command invocation
 gmuse --provider openai
 gmuse --provider anthropic --model claude-3-opus-20240229
 ```

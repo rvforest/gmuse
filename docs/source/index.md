@@ -99,7 +99,7 @@ Technical reference for APIs, CLI, and configuration.
 
 tutorials/index
 how_to/index
-reference/index
 explanation/index
+reference/index
 development/index
 ```

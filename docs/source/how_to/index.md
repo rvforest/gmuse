@@ -31,6 +31,15 @@ Set up API keys, customize prompts, and tune behavior.
 Enable context-aware AI completions in your favorite shell.
 :::
 ::::
+
+::::{grid-item}
+:::{card} {octicon}`bug;1.2em;sd-text-primary` Troubleshooting
+:link: troubleshooting
+:link-type: doc
+
+Common errors, diagnostics, and debugging tips.
+:::
+::::
 :::::
 
 ```{toctree}
@@ -40,4 +49,5 @@ Enable context-aware AI completions in your favorite shell.
 installation
 configuration
 completions
+troubleshooting
 ```

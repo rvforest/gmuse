@@ -77,4 +77,4 @@ html_css_files = [
 ]
 
 # Favicon configuration
-# html_favicon = "_static/logo/favicon.png"
+html_favicon = "_static/gmuse-favicon.png"

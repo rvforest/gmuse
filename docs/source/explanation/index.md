@@ -6,20 +6,22 @@ Deep dives into the architecture, concepts, and design.
 :gutter: 3
 
 ::::{grid-item}
-:::{card} {octicon}`cpu;1.2em;sd-text-primary` Architecture
-:link: architecture
+:::{card} {octicon}`tools;1.2em;sd-text-primary` How it Works
+:link: how_it_works
 :link-type: doc
 
-Understand how gmuse is built and how data flows.
+Overview of gmuse's architecture and how messages are generated.
 :::
 ::::
 
 ::::{grid-item}
-:::{card} {octicon}`container;1.2em;sd-text-primary` LLM Providers
-:link: llm_providers
+:::{card} {octicon}`shield;1.2em;sd-text-primary` Privacy & Security
+:link: privacy
 :link-type: doc
 
-Details on supported models and provider abstractions.
+Privacy guarantees and security considerations.
+
+<div style="height:0.6em" aria-hidden="true"></div>
 :::
 ::::
 ::::::
@@ -28,6 +30,6 @@ Details on supported models and provider abstractions.
 :maxdepth: 1
 :hidden:
 
-architecture
-llm_providers
+how_it_works
+privacy
 ```

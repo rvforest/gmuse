@@ -7,4 +7,6 @@ Technical reference for APIs and configuration.
 
 ../apidocs/index
 cli
+configuration
+validation
 ```

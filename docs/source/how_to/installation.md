@@ -10,7 +10,7 @@ gmuse requires Python 3.10 or higher.
 :sync: uv
 
 ```console
-uv tool install gmuse
+$ uv tool install gmuse
 ```
 
 :::
@@ -19,7 +19,7 @@ uv tool install gmuse
 :sync: pipx
 
 ```console
-pipx install gmuse
+$ pipx install gmuse
 ```
 
 :::
@@ -28,7 +28,7 @@ pipx install gmuse
 :sync: pip
 
 ```console
-pip install gmuse
+$ pip install gmuse
 ```
 
 :::
@@ -41,8 +41,8 @@ pip install gmuse
   -----     | ------- |
 | clipboard | Automatically copy gmuse suggestions to clipboard |
 
-```bash
-pip install gmuse[clipboard]
+```console
+$ pip install gmuse[clipboard]
 ```
 
 ## Provider Support

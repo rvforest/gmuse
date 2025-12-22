@@ -56,7 +56,7 @@ Completion scripts must:
   JSON fields. Other shells may choose different strategies.
 - For local testing of the runtime helper, run:
 
-```sh
+```console
 GMUSE_DEBUG=1 gmuse completions-run --shell zsh --for "git commit -m" --timeout 3.0
 ```
 

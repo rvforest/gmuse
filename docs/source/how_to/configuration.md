@@ -30,21 +30,21 @@ You should see your configured model and settings displayed.
 To use a different provider, set the appropriate API key and optionally specify the provider:
 
 **For OpenAI:**
-```bash
-export OPENAI_API_KEY="sk-..."
-gmuse msg
+```console
+$ export OPENAI_API_KEY="sk-..."
+$ gmuse msg
 ```
 
 **For Anthropic Claude:**
-```bash
-export ANTHROPIC_API_KEY="sk-ant-..."
-gmuse msg --provider anthropic --model claude-3-5-sonnet-20241022
+```console
+$ export ANTHROPIC_API_KEY="sk-ant-..."
+$ gmuse msg --provider anthropic --model claude-3-5-sonnet-20241022
 ```
 
 **For Google Gemini:**
-```bash
-export GEMINI_API_KEY="..."
-gmuse msg --provider gemini
+```console
+$ export GEMINI_API_KEY="..."
+$ gmuse msg --provider gemini
 ```
 
 To make a provider your default, add it to your config file:
@@ -58,8 +58,8 @@ model = "claude-3-5-sonnet-20241022"
 To use Conventional Commits format:
 
 **For one commit:**
-```bash
-gmuse msg --format conventional
+```console
+$ gmuse msg --format conventional
 ```
 
 **Persistently:**
@@ -88,8 +88,8 @@ history_depth = 0
 ```
 
 **Override for a single command:**
-```bash
-gmuse msg --history-depth 20
+```console
+$ gmuse msg --history-depth 20
 ```
 
 ## Enable clipboard copying
@@ -97,8 +97,8 @@ gmuse msg --history-depth 20
 To automatically copy messages to your clipboard:
 
 1. Install the clipboard extra:
-   ```bash
-   pip install 'gmuse[clipboard]'
+   ```console
+   $ pip install 'gmuse[clipboard]'
    ```
 
 2. Enable in config:
@@ -107,8 +107,8 @@ To automatically copy messages to your clipboard:
    ```
 
 Or use the `--copy` flag for one-time copying:
-```bash
-gmuse msg --copy
+```console
+$ gmuse msg --copy
 ```
 
 ## Set project-specific instructions
@@ -116,8 +116,8 @@ gmuse msg --copy
 For team-wide commit message conventions, create a `.gmuse` file in your repository root:
 
 1. Create `.gmuse` in your project:
-   ```bash
-   cat > .gmuse << 'EOF'
+   ```console
+   $ cat > .gmuse << 'EOF'
    All commit messages must reference a Jira ticket in the format [PROJ-123].
    Keep subject lines under 50 characters.
    Use present tense for all messages.
@@ -125,9 +125,9 @@ For team-wide commit message conventions, create a `.gmuse` file in your reposit
    ```
 
 2. Commit the file so the team can use it:
-   ```bash
-   git add .gmuse
-   git commit -m "docs: add commit message guidelines"
+   ```console
+   $ git add .gmuse
+   $ git commit -m "docs: add commit message guidelines"
    ```
 
 Now gmuse will include these instructions in every prompt for this repository.
@@ -142,14 +142,14 @@ timeout = 120
 ```
 
 **For one command:**
-```bash
-gmuse msg  # Uses GMUSE_TIMEOUT if set
+```console
+$ gmuse msg  # Uses GMUSE_TIMEOUT if set
 ```
 
 Or set via environment:
-```bash
-export GMUSE_TIMEOUT=120
-gmuse msg
+```console
+$ export GMUSE_TIMEOUT=120
+$ gmuse msg
 ```
 
 ## Enable debug logging
@@ -157,15 +157,15 @@ gmuse msg
 To troubleshoot issues:
 
 **Temporary debug mode:**
-```bash
-GMUSE_DEBUG=1 gmuse msg
+```console
+$ GMUSE_DEBUG=1 gmuse msg
 ```
 
 **Debug to file:**
-```bash
-export GMUSE_LOG_FILE=~/.cache/gmuse/debug.log
-export GMUSE_DEBUG=1
-gmuse msg
+```console
+$ export GMUSE_LOG_FILE=~/.cache/gmuse/debug.log
+$ export GMUSE_DEBUG=1
+$ gmuse msg
 ```
 
 > **Warning:** Debug logs may contain your code diffs and prompts. Don't enable in sensitive environments.
@@ -174,15 +174,14 @@ gmuse msg
 
 Test different settings without changing your config file:
 
-```bash
+```console
 # Try a different model
-gmuse msg --model gpt-4o --dry-run
+$ gmuse msg --model gpt-4o --dry-run
 
 # Test conventional format
-gmuse msg --format conventional --dry-run
-
+$ gmuse msg --format conventional --dry-run
 # Try with no history
-gmuse msg --history-depth 0 --dry-run
+$ gmuse msg --history-depth 0 --dry-run
 ```
 
 The `--dry-run` flag shows you the prompt without calling the LLM.
@@ -191,8 +190,8 @@ The `--dry-run` flag shows you the prompt without calling the LLM.
 
 To see what settings are active:
 
-```bash
-gmuse info
+```console
+$ gmuse info
 ```
 
 This shows:

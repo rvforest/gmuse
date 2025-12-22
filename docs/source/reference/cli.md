@@ -4,8 +4,8 @@
 
 Generate a commit message from staged changes.
 
-```bash
-gmuse msg [OPTIONS]
+```console
+$ gmuse msg [OPTIONS]
 ```
 
 ### Options
@@ -20,8 +20,8 @@ gmuse msg [OPTIONS]
 
 ### Dry-run example
 
-```bash
-gmuse msg --dry-run
+```console
+$ gmuse msg --dry-run
 ```
 
 Output:
@@ -44,14 +44,14 @@ Useful for debugging, auditing, or inspecting the prompt before calling the LLM.
 
 Display resolved configuration for debugging.
 
-```bash
-gmuse info
+```console
+$ gmuse info
 ```
 
 ## gmuse git-completions
 
 Generate shell completion scripts.
 
-```bash
-gmuse git-completions zsh
+```console
+$ gmuse git-completions zsh
 ```

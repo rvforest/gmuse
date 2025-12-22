@@ -13,8 +13,8 @@ and generate an AI-powered commit message from staged git changes.
 
 Install gmuse with pip:
 
-```bash
-pip install gmuse
+```console
+$ pip install gmuse
 ```
 
 For optional extras (clipboard support), see the
@@ -28,12 +28,12 @@ Set your provider API key in the environment (for example, `OPENAI_API_KEY` or `
 
 Create a git repository and some changes, stage them, then run `gmuse msg`:
 
-```bash
-git init example
-cd example
-echo "print('hello world')" > hello.py
-git add hello.py
-gmuse msg
+```console
+$ git init example
+$ cd example
+$ echo "print('hello world')" > hello.py
+$ git add hello.py
+$ gmuse msg
 ```
 
 You should see a generated commit message printed to stdout. Example output (your
@@ -52,7 +52,7 @@ To copy automatically for a single invocation, pass `--copy` to `gmuse msg`; to 
 
 Load completions into your shell (Zsh example):
 
-```bash
+```console
 # load completions into current shell
 eval "$(gmuse git-completions zsh)"
 ```

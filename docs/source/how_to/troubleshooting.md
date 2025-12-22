@@ -41,7 +41,7 @@ If a generated message fails validation (empty, too long, format mismatch), try 
 3. Adjust your `--hint` to guide the model toward a valid format (e.g., include an example or required prefix).
 4. Check if your `.gmuse` instructions (or `[tool.gmuse.instructions]`) conflict with the selected format.
 
-For the exact validation rules and canonical error messages, see the [Validation reference](../reference/validation.md#validation-rules).
+For the exact validation rules and canonical error messages, see the [Validation reference](../reference/validation.md).
 
 ### Examples & fixes
 

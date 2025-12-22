@@ -18,7 +18,7 @@ $ pip install gmuse
 ```
 
 For optional extras (clipboard support), see the
-[Installation](installation.md) guide for details.
+[Installation](../how_to/installation.md) guide for details.
 
 ## Configure Provider Credentials
 
@@ -46,7 +46,7 @@ A short summary of the changes with optional details following.
 ```
 
 ### Copy to Clipboard
-To copy automatically for a single invocation, pass `--copy` to `gmuse msg`; to enable persistent copying, set `copy_to_clipboard = true` in your config file (see the [Configuration guide](../how_to/configuration.md#copy-to-clipboard)). Clipboard support requires the optional `gmuse[clipboard]` extra.
+To copy automatically for a single invocation, pass `--copy` to `gmuse msg`; to enable persistent copying, set `copy_to_clipboard = true` in your config file (see the [Configuration guide](../how_to/configuration.md)). Clipboard support requires the optional `gmuse[clipboard]` extra.
 
 ## Try shell completions
 

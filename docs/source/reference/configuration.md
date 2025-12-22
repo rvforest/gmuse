@@ -30,7 +30,7 @@ copy_to_clipboard = false
 timeout = 60
 ```
 
-> **Note:** This is separate from repository-level instructions (see [Repository Instructions](#repository-instructions) below).
+> **Note:** This is separate from repository-level instructions (see [Repository Instructions] below).
 
 ## Configuration Options
 
@@ -206,5 +206,5 @@ Keep subject lines under 50 characters.
 ## See also
 
 * How‑to: [Configure gmuse](../how_to/configuration.md)
-* How it Works: [Generation parameters](../explanation/how_it_works.md#generation-parameters)
+* How it Works: [Generation parameters](../explanation/how_it_works.md)
 * Troubleshooting: [Troubleshooting guide](../how_to/troubleshooting.md)

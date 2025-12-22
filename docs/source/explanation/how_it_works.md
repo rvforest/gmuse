@@ -10,7 +10,7 @@ When you run `gmuse msg`, the following sequence occurs:
 
 1.  **Extraction**: `gmuse` queries your local Git repository to extract the currently staged diff and the last few commit messages for style reference. See **What is sent to the provider** below for details about what is included and provider handling.
 2.  **Context Assembly**: It merges your diff with project-specific instructions (from `.gmuse` or `pyproject.toml`) and your optional `--hint`.
-3.  **Prompting**: A two-part prompt (System + User) is constructed and sent to your chosen LLM provider via [LiteLLM](https://github.com/BerriAI/litellm), which provides a unified interface to many providers (see [LLM Providers](llm_providers.md) for provider-specific details). Prompts are constructed locally and sent directly to the configured provider (gmuse does not proxy prompts through a gmuse-hosted server); see **What is sent to the provider** and [Privacy & Security](privacy.md) for provider retention details.
+3.  **Prompting**: A two-part prompt (System + User) is constructed and sent to your chosen LLM provider via [LiteLLM](https://github.com/BerriAI/litellm), which provides a unified interface to many providers. Prompts are constructed locally and sent directly to the configured provider (gmuse does not proxy prompts through a gmuse-hosted server); see **What is sent to the provider** and [Privacy & Security](privacy.md) for provider retention details.
 4.  **Validation**: The generated message is checked against the requested format and length constraints. If validation fails, `gmuse` will display a clear error and prevent the commit from proceeding; common error examples include:
     * "Generated message is empty"
     * "Message too long: 1200 characters (max 1000)"
@@ -32,7 +32,7 @@ When `gmuse` calls the LLM provider it sends the assembled prompts (System + Use
 * The CLI `--hint` value (if provided)
 * Format/task instructions and any examples or templates
 
-**Note:** gmuse does **not** send unstaged changes, your API keys, files outside the repository, or environment variables — see [Privacy & Security → What is NEVER sent](privacy.md#what-is-never-sent) for full details on what is never sent and provider retention policies.
+**Note:** gmuse does **not** send unstaged changes, your API keys, files outside the repository, or environment variables — see [Privacy & Security](privacy.md) for full details on what is never sent and provider retention policies.
 
 ## Truncation Policy
 
@@ -86,15 +86,15 @@ Depending on your chosen format, a specific task template is appended to the pro
 
 ## Generation Parameters
 
-For default generation settings and guidance on configuring them, see the [Configuration guide](../how_to/configuration.md#generation-parameters).
+For default generation settings and guidance on configuring them, see the [Configuration guide](../how_to/configuration.md) and [LLM Generation Parameters](../reference/configuration.md).
 
 ## Validation Rules
 
-For exact validation rules, canonical error messages, examples, and minimal failing/passing examples, see the [Validation reference](../reference/validation.md#validation-rules).
+For exact validation rules, canonical error messages, examples, and minimal failing/passing examples, see the [Validation reference](../reference/validation.md).
 
 ## Error Handling
 
-For common provider errors, sample messages, and recovery steps, see the [Troubleshooting guide — Error handling](../how_to/troubleshooting.md#error-handling).
+For common provider errors, sample messages, and recovery steps, see the [Troubleshooting guide](../how_to/troubleshooting.md).
 
 ## Example: Tracing a Generation
 
@@ -182,5 +182,4 @@ Validation passes, and the message is displayed (or copied to clipboard if `--co
 ## See Also
 
 *   [Privacy & Security](privacy.md): Learn how we keep your code safe.
-*   [LLM Providers](llm_providers.md): Supported models and how to configure them.
 *   [Configuration](../how_to/configuration.md): Customize how `gmuse` behaves in your project.

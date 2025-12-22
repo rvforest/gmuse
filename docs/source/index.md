@@ -1,8 +1,9 @@
 # AI commit messages
 
-```{meta}
-:description: AI-powered git commit messages in the shell. Streamline your workflow by using LLMs to generate meaningful commit messages directly from your staged changes.
-:keywords: git, commit, messages, AI, LLM, developer tools, shell
+```{eval-rst}
+.. meta::
+   :description: AI-powered git commit messages in the shell. Streamline your workflow by using LLMs to generate meaningful commit messages directly from your staged changes.
+   :keywords: git, commit, messages, AI, LLM, developer tools, shell
 ```
 
 :::::{grid} 1 1 2 2
@@ -50,7 +51,7 @@ $ echo 'eval "$(gmuse git-completions zsh)"' >> ~/.zshrc
 :rows: 8
 :speed: 2.5
 :theme: monokai
-:font_size: 12px
+:terminalfontsize: 12px
 ```
 :::
 ::::

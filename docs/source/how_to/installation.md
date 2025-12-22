@@ -4,9 +4,36 @@
 
 gmuse requires Python 3.10 or higher.
 
-```bash
+::::{tab-set}
+
+:::{tab-item} uv
+:sync: uv
+
+```console
+uv tool install gmuse
+```
+
+:::
+
+:::{tab-item} pipx
+:sync: pipx
+
+```console
+pipx install gmuse
+```
+
+:::
+
+:::{tab-item} pip
+:sync: pip
+
+```console
 pip install gmuse
 ```
+
+:::
+
+::::
 
 ## Optional Dependencies
 

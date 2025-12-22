@@ -35,10 +35,13 @@ pip install gmuse
 
 ::::
 
-## Optional Dependencies
+## Extras
+
+| Extra     | Purpose |
+  -----     | ------- |
+| clipboard | Automatically copy gmuse suggestions to clipboard |
 
 ```bash
-# Clipboard support (copy generated messages)
 pip install gmuse[clipboard]
 ```
 

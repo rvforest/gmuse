@@ -47,6 +47,7 @@ pip install gmuse[clipboard]
 gmuse supports 100+ LLM providers via [LiteLLM](https://docs.litellm.ai/docs/providers). All providers work with the base installation - no additional packages are required.
 
 Popular providers include:
+
 - OpenAI
 - Anthropic (Claude)
 - Azure OpenAI
@@ -57,13 +58,3 @@ Popular providers include:
 - And many more
 
 See the LiteLLM documentation for the complete list of supported providers.
-
-## Development Installation
-
-For contributing to gmuse:
-
-```bash
-git clone https://github.com/rvforest/gmuse.git
-cd gmuse
-uv sync  # Installs all dependencies including dev tools
-```

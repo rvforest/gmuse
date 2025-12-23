@@ -59,7 +59,7 @@ export GOOGLE_API_KEY="..."             # For Google
 # Or configure in ~/.config/gmuse/config.toml
 ```
 
-Provider selection is auto-detected from API keys (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`). To override, set the `GMUSE_PROVIDER` environment variable or add `provider = "<provider>"` to `~/.config/gmuse/config.toml`.
+Provider selection is auto-detected from API keys (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`). To override, add `provider = "<provider>"` to `~/.config/gmuse/config.toml`.
 
 Default model choices (cost-efficient variants):
 

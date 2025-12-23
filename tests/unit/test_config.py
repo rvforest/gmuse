@@ -8,11 +8,14 @@ from unittest import mock
 import pytest
 
 from gmuse.config import (
+    ALLOWED_CONFIG_KEYS,
     DEFAULTS,
     get_config_path,
     get_env_config,
     load_config,
+    load_config_raw,
     merge_config,
+    parse_config_value,
     validate_config,
 )
 from gmuse.exceptions import ConfigError
@@ -156,13 +159,13 @@ class TestMergeConfig:
         )
         assert result["model"] == "cli-model"
 
-    def test_merge_config_file_overrides_env(self) -> None:
-        """Test config file overrides environment variables."""
+    def test_merge_env_overrides_config_file(self) -> None:
+        """Test environment variables override config file."""
         config_file = {"model": "file-model", "provider": "gemini"}
         env_vars = {"model": "env-model"}
 
         result = merge_config(config_file=config_file, env_vars=env_vars)
-        assert result["model"] == "file-model"
+        assert result["model"] == "env-model"
 
     def test_merge_env_overrides_defaults(self) -> None:
         """Test environment variables override defaults."""
@@ -257,6 +260,26 @@ class TestNewConfigParameters:
         validate_config({"temperature": 0.5})
         validate_config({"temperature": 0.0})
         validate_config({"temperature": 2.0})
+
+
+class TestConfigHelpers:
+    """Tests for new helper utilities used by the global config CLI."""
+
+    def test_allowed_config_keys_contains_defaults(self) -> None:
+        assert set(ALLOWED_CONFIG_KEYS) == set(DEFAULTS.keys())
+
+    def test_load_config_raw_nonexistent_returns_none(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            missing = Path(tmpdir) / "missing.toml"
+            assert load_config_raw(missing) is None
+
+    def test_parse_config_value_bool(self) -> None:
+        assert parse_config_value("copy_to_clipboard", "true") is True
+        assert parse_config_value("copy_to_clipboard", "no") is False
+
+    def test_parse_config_value_int_error(self) -> None:
+        with pytest.raises(ConfigError, match="Cannot parse 'abc' as integer"):
+            parse_config_value("history_depth", "abc")
 
     def test_validate_temperature_out_of_range(self) -> None:
         """Test validation fails for temperature out of range."""

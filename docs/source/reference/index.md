@@ -8,5 +8,6 @@ Technical reference for APIs and configuration.
 cli
 configuration
 validation
+default_models
 ../apidocs/index
 ```

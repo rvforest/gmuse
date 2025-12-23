@@ -66,6 +66,16 @@ gmuse --provider openai
 gmuse --provider anthropic --model claude-3-opus-20240229
 ```
 
+Default model choices (cost-efficient variants):
+
+- `openai`: `gpt-4o-mini`
+- `anthropic`: `claude-haiku-4-5`
+- `cohere`: `command-light`
+- `azure`: `gpt-4o-mini`
+- `gemini`: `gemini/gemini-flash-lite-latest`
+
+These defaults are chosen to prioritize lower cost and latency for short, high-throughput tasks like commit-message generation. You can override via `GMUSE_MODEL` env var or the `--model` CLI option.
+
 ## Zsh completions (experimental)
 
 Generate a Zsh completion script that provides AI-powered commit message

@@ -51,7 +51,6 @@ $ echo 'eval "$(gmuse git-completions zsh)"' >> ~/.zshrc
 :rows: 8
 :speed: 2.5
 :theme: monokai
-:terminalfontsize: 12px
 ```
 :::
 ::::

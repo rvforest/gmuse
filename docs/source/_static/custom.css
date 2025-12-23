@@ -150,3 +150,17 @@ body.home .bd-main .bd-content .bd-article-container {
     color: rgba(255, 255, 255, 0.6) !important;
     border-color: rgba(255, 255, 255, 0.2) !important;
 }
+
+/* Make asciinema player text match the terminal window font size */
+/* Target any embedded asciicast (ids start with "asciicast-") and force a matching
+   font-size/line-height to match `.terminal-window .highlight pre` above. */
+div[id^="asciicast-"] .ap-terminal,
+.ap-player .ap-terminal {
+    font-size: 1.0em !important;
+    /* Set the player variable that controls per-line height so the player places
+       each line taller and prevents glyph clipping. Use an `em` value so the
+       spacing scales with the terminal font-size. */
+    --term-line-height: 1.6em !important;
+    /* Fallback for user agents that read `line-height` directly */
+    line-height: 1.6em !important;
+}

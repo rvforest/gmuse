@@ -3,6 +3,7 @@
 import os
 from unittest import mock
 
+import io
 import pytest
 
 from gmuse.exceptions import LLMError
@@ -305,3 +306,27 @@ class TestLLMClient:
                 )
                 captured = capsys.readouterr()
                 assert "Provider List" in captured.out
+
+    def test_suppress_litellm_output_respects_gmuse_debug(self) -> None:
+        """When GMUSE_DEBUG is set, the context manager should not suppress output."""
+        from gmuse.llm import _suppress_litellm_output
+
+        # Ensure GMUSE_DEBUG set
+        import os
+
+        os.environ["GMUSE_DEBUG"] = "1"
+        try:
+            import sys
+
+            # Capture stdout while inside the context manager
+            old_stdout = sys.stdout
+            try:
+                sys.stdout = io.StringIO()
+                with _suppress_litellm_output():
+                    print("visible")
+                out = sys.stdout.getvalue()
+                assert "visible" in out
+            finally:
+                sys.stdout = old_stdout
+        finally:
+            os.environ.pop("GMUSE_DEBUG", None)

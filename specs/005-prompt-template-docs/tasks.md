@@ -5,7 +5,7 @@ description: "Task list for implementing prompt template documentation reference
 
 # Tasks: Prompt Template Documentation Reference
 
-**Input**: Design documents from `/specs/001-prompt-template-docs/`
+**Input**: Design documents from `/specs/005-prompt-template-docs/`
 **Prerequisites**: `plan.md` (required), `spec.md` (required), plus `research.md`, `data-model.md`, `contracts/`, `quickstart.md`
 
 **Tests**: Included (explicitly requested in `spec.md`).

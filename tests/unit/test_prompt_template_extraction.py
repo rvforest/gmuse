@@ -75,11 +75,51 @@ class TestTemplateExtraction:
         def _empty() -> str:
             return "   "
 
-        monkeypatch.setitem(
-            template_extractor._TEMPLATE_SPECS,  # type: ignore[attr-defined]
-            "system",
-            ("SYSTEM_PROMPT", _empty, "Base system prompt used for all generations"),
+        # Create a modified copy of the template specs where the system template
+        # uses an "empty" provider, then patch the module attribute via its
+        # full import path.
+        modified_specs = dict(template_extractor._TEMPLATE_SPECS)
+        modified_specs["system"] = (
+            "SYSTEM_PROMPT",
+            _empty,
+            "Base system prompt used for all generations",
+        )
+
+        monkeypatch.setattr(
+            "gmuse._docs.template_extractor._TEMPLATE_SPECS",
+            modified_specs,
         )
 
         with pytest.raises(RuntimeError, match=r"system"):
             template_extractor.validate_templates()
+
+    def test_extract_unknown_template_raises(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Extraction fails with an actionable message for unknown templates."""
+        with pytest.raises(ValueError, match=r"Unknown template 'nonexistent'"):
+            template_extractor._extract_template("nonexistent")
+
+    def test_extract_template_getter_failure(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Extraction fails with an actionable message when getter raises."""
+
+        def _failing_getter() -> str:
+            raise RuntimeError("Simulated getter failure")
+
+        # Patch the template specs with a failing getter
+        modified_specs = dict(template_extractor._TEMPLATE_SPECS)
+        modified_specs["system"] = (
+            "SYSTEM_PROMPT",
+            _failing_getter,
+            "Base system prompt used for all generations",
+        )
+
+        monkeypatch.setattr(
+            "gmuse._docs.template_extractor._TEMPLATE_SPECS",
+            modified_specs,
+        )
+
+        with pytest.raises(RuntimeError, match=r"Failed to extract template 'system'"):
+            template_extractor._extract_template("system")

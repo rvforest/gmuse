@@ -9,7 +9,6 @@ from __future__ import annotations
 import os
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Dict, List
 
 from gmuse.prompts import (
     PROMPT_VERSION,
@@ -43,7 +42,7 @@ TemplateGetter = Callable[[], str]
 TemplateSpec = tuple[str, TemplateGetter, str]
 
 
-_TEMPLATE_SPECS: Dict[str, TemplateSpec] = {
+_TEMPLATE_SPECS: dict[str, TemplateSpec] = {
     "system": (
         "SYSTEM_PROMPT",
         lambda: SYSTEM_PROMPT,
@@ -79,14 +78,14 @@ def get_prompt_version() -> str:
 def _extract_template(name: str) -> ExtractedTemplate:
     try:
         source_name, getter, description = _TEMPLATE_SPECS[name]
-    except KeyError as exc:  # pragma: no cover
+    except KeyError as exc:
         raise ValueError(
             f"Unknown template '{name}'. Known templates: {sorted(_TEMPLATE_SPECS.keys())}"
         ) from exc
 
     try:
         content = getter()
-    except Exception as exc:  # pragma: no cover
+    except Exception as exc:
         raise RuntimeError(
             f"Failed to extract template '{name}' from {source_name}: {exc}"
         ) from exc
@@ -120,13 +119,13 @@ def extract_format_task(format_name: str) -> ExtractedTemplate:
     return _extract_template(format_name)
 
 
-def extract_all_templates() -> Dict[str, ExtractedTemplate]:
+def extract_all_templates() -> dict[str, ExtractedTemplate]:
     """Extract all canonical templates used in documentation."""
 
     return {name: _extract_template(name) for name in _TEMPLATE_SPECS}
 
 
-def get_context_inputs() -> List[ContextInputInfo]:
+def get_context_inputs() -> list[ContextInputInfo]:
     """Return the canonical list of context inputs used for documentation.
 
     This is intentionally a small, explicit list rather than trying to introspect
@@ -181,6 +180,8 @@ def validate_templates() -> None:
     actionable and point at the missing or empty template.
     """
 
+    # Check for forced failure flag used in integration tests to verify
+    # that the documentation build properly fails when templates are invalid.
     if os.environ.get("GMUSE_DOCS_FORCE_TEMPLATE_VALIDATION_ERROR"):
         raise RuntimeError(
             "Prompt template validation failed: forced failure via GMUSE_DOCS_FORCE_TEMPLATE_VALIDATION_ERROR"

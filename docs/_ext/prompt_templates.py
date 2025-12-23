@@ -24,6 +24,9 @@ class PromptTemplateDirective(SphinxDirective):
     required_arguments = 1
     has_content = False
 
+    # Sphinx's SphinxDirective.run() expects list[nodes.Node] but the base
+    # Directive class (from docutils) has a more general sequence type.
+    # The type ignore is needed to satisfy both type checkers.
     def run(self) -> list[nodes.Node]:  # type: ignore[bad-override] # noqa: D102
         template_name = self.arguments[0]
         templates = extract_all_templates()
@@ -44,6 +47,9 @@ class ContextInputsTableDirective(SphinxDirective):
 
     has_content = False
 
+    # Sphinx's SphinxDirective.run() expects list[nodes.Node] but the base
+    # Directive class (from docutils) has a more general sequence type.
+    # The type ignore is needed to satisfy both type checkers.
     def run(self) -> list[nodes.Node]:  # type: ignore[bad-override] # noqa: D102
         inputs = get_context_inputs()
 

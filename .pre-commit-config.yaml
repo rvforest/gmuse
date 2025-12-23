@@ -14,9 +14,20 @@ repos:
         types: [python]
       - id: types
         name: check types
-        entry: uv run --frozen --group=docs pyrefly check
+        entry: uv run --frozen pyrefly check
         language: system
         types: [python]
+        # Exclude docs module here; it is checked by a separate docs-specific hook.
+        exclude: ^src/gmuse/_docs/
+      - id: types-docs
+        name: check docs types
+        entry: uv run --frozen --group=docs pyrefly check src/gmuse/_docs
+        language: system
+        types: [python]
+        # Only run this hook for files under the docs module.
+        files: ^src/gmuse/_docs/.*\.py$
+        # Run once for the docs tree rather than per-file.
+        pass_filenames: false
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

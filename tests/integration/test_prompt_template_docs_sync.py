@@ -29,7 +29,7 @@ def _run_nox_docs(
     )
 
 
-def test_docs_build_succeeds_and_contains_templates(tmp_path: Path) -> None:
+def test_docs_build_succeeds_and_contains_templates() -> None:
     repo_root = Path(__file__).resolve().parents[2]
 
     result = _run_nox_docs(repo_root)
@@ -46,7 +46,7 @@ def test_docs_build_succeeds_and_contains_templates(tmp_path: Path) -> None:
     assert "Conventional Commits" in html
 
 
-def test_docs_build_fails_on_template_validation_failure(tmp_path: Path) -> None:
+def test_docs_build_fails_on_template_validation_failure() -> None:
     repo_root = Path(__file__).resolve().parents[2]
 
     result = _run_nox_docs(
@@ -55,5 +55,5 @@ def test_docs_build_fails_on_template_validation_failure(tmp_path: Path) -> None
     )
 
     assert result.returncode != 0
-    combined = (result.stdout + "\n" + result.stderr).lower()
-    assert "prompt template validation failed" in combined
+    combined = result.stdout + "\n" + result.stderr
+    assert "Prompt template validation failed" in combined

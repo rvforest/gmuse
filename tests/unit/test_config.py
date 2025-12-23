@@ -266,10 +266,14 @@ class TestNewConfigParameters:
 
     def test_validate_temperature_out_of_range(self) -> None:
         """Test validation fails for temperature out of range."""
-        with pytest.raises(ConfigError, match="temperature must be between 0.0 and 2.0"):
+        with pytest.raises(
+            ConfigError, match="temperature must be between 0.0 and 2.0"
+        ):
             validate_config({"temperature": -0.1})
 
-        with pytest.raises(ConfigError, match="temperature must be between 0.0 and 2.0"):
+        with pytest.raises(
+            ConfigError, match="temperature must be between 0.0 and 2.0"
+        ):
             validate_config({"temperature": 2.5})
 
     def test_validate_temperature_wrong_type(self) -> None:

@@ -143,7 +143,9 @@ class TestGenerateMessage:
             "gmuse.commit.build_prompt", lambda **kwargs: ("system", "user")
         )
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
-        monkeypatch.setattr("gmuse.commit.validate_message", lambda msg, format, max_length: None)
+        monkeypatch.setattr(
+            "gmuse.commit.validate_message", lambda msg, format, max_length: None
+        )
 
         config = {
             "format": "freeform",
@@ -181,7 +183,9 @@ class TestGenerateMessage:
             "gmuse.commit.build_prompt", lambda **kwargs: ("system", "user")
         )
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
-        monkeypatch.setattr("gmuse.commit.validate_message", lambda msg, format, max_length: None)
+        monkeypatch.setattr(
+            "gmuse.commit.validate_message", lambda msg, format, max_length: None
+        )
 
         config = {
             "format": "freeform",
@@ -247,7 +251,9 @@ class TestGenerateMessage:
         )
         monkeypatch.setattr("gmuse.commit.build_prompt", capture_build_prompt)
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
-        monkeypatch.setattr("gmuse.commit.validate_message", lambda msg, format, max_length: None)
+        monkeypatch.setattr(
+            "gmuse.commit.validate_message", lambda msg, format, max_length: None
+        )
 
         config = {
             "format": "freeform",
@@ -318,7 +324,9 @@ class TestGenerateMessage:
         )
         # Don't mock build_prompt - let it run for real
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
-        monkeypatch.setattr("gmuse.commit.validate_message", lambda msg, format, max_length: None)
+        monkeypatch.setattr(
+            "gmuse.commit.validate_message", lambda msg, format, max_length: None
+        )
 
         config = {
             "format": "freeform",

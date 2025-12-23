@@ -59,3 +59,5 @@ Policies evolve, so check the current privacy documentation for your chosen prov
 *   Keep API keys in environment variables, never commit them, and store them in secrets managers if available.
 *   Use `gmuse --dry-run` to inspect the prompt that would be sent to the provider before actually calling it.
 *   Reserve `GMUSE_DEBUG` or DEBUG-level logging for troubleshooting and disable it in classified or shared environments.
+
+See also: {doc}`/reference/prompt-templates`.

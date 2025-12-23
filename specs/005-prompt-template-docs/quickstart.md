@@ -135,17 +135,17 @@ from gmuse._docs.template_extractor import (
 
 class PromptTemplateDirective(SphinxDirective):
     """Include a prompt template as a code block."""
-    
+
     required_arguments = 1
     has_content = False
-    
+
     def run(self):
         template_name = self.arguments[0]
         templates = extract_all_templates()
-        
+
         if template_name not in templates:
             raise self.error(f"Unknown template: {template_name}")
-        
+
         template = templates[template_name]
         code = nodes.literal_block(template.content, template.content)
         code["language"] = "text"
@@ -154,21 +154,21 @@ class PromptTemplateDirective(SphinxDirective):
 
 class ContextInputsTableDirective(SphinxDirective):
     """Render context inputs as a table."""
-    
+
     has_content = False
-    
+
     def run(self):
         inputs = get_context_inputs()
-        
+
         # Build table structure
         table = nodes.table()
         tgroup = nodes.tgroup(cols=4)
         table += tgroup
-        
+
         # Column specs
         for _ in range(4):
             tgroup += nodes.colspec(colwidth=1)
-        
+
         # Header
         thead = nodes.thead()
         tgroup += thead
@@ -178,7 +178,7 @@ class ContextInputsTableDirective(SphinxDirective):
             entry += nodes.paragraph(text=text)
             header_row += entry
         thead += header_row
-        
+
         # Body
         tbody = nodes.tbody()
         tgroup += tbody
@@ -189,7 +189,7 @@ class ContextInputsTableDirective(SphinxDirective):
                 entry += nodes.paragraph(text=text)
                 row += entry
             tbody += row
-        
+
         return [table]
 
 
@@ -203,7 +203,7 @@ def setup(app: Sphinx):
     app.add_directive("prompt-template", PromptTemplateDirective)
     app.add_directive("context-inputs-table", ContextInputsTableDirective)
     app.connect("env-check-consistency", _validate_on_build)
-    
+
     return {"version": "1.0.0", "parallel_read_safe": True}
 ```
 
@@ -384,7 +384,7 @@ def test_docs_contain_template_content():
     """Built docs contain template content."""
     # First build docs
     subprocess.run(["uv", "run", "nox", "-s", "docs"], capture_output=True)
-    
+
     html_path = Path("docs/build/html/reference/prompt-templates.html")
     if html_path.exists():
         content = html_path.read_text()

@@ -69,9 +69,9 @@ from sphinx.util.docutils import SphinxDirective
 
 class PromptTemplateDirective(SphinxDirective):
     """Include prompt template content in documentation."""
-    
+
     required_arguments = 1  # template name
-    
+
     def run(self):
         template_name = self.arguments[0]
         content = extract_template(template_name)
@@ -113,7 +113,7 @@ class PromptTemplateDirective(SphinxDirective):
 def validate_templates(app, env):
     """Validate all expected templates are extractable."""
     REQUIRED_TEMPLATES = ["system", "freeform", "conventional", "gitmoji"]
-    
+
     for name in REQUIRED_TEMPLATES:
         try:
             content = extract_template(name)

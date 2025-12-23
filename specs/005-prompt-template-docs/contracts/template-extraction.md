@@ -32,13 +32,13 @@ from typing import Dict, List, Optional
 @dataclass(frozen=True)
 class ExtractedTemplate:
     """An extracted prompt template."""
-    
+
     name: str
     """Template identifier (e.g., 'system', 'freeform')."""
-    
+
     content: str
     """The template text content."""
-    
+
     description: str
     """Human-readable description of the template."""
 
@@ -46,30 +46,30 @@ class ExtractedTemplate:
 @dataclass(frozen=True)
 class ContextInputInfo:
     """Information about a context input."""
-    
+
     name: str
     """Human-readable name."""
-    
+
     description: str
     """What this input contains."""
-    
+
     condition: str
     """When this input is included."""
-    
+
     is_optional: bool
     """Whether this is an opt-in input."""
 
 
 def get_prompt_version() -> str:
     """Get the current prompt template version.
-    
+
     Returns:
         Version string (e.g., '1.0.0')
-    
+
     Raises:
         ImportError: If gmuse.prompts cannot be imported.
         AttributeError: If PROMPT_VERSION is not defined.
-    
+
     Example:
         >>> version = get_prompt_version()
         >>> print(version)
@@ -80,15 +80,15 @@ def get_prompt_version() -> str:
 
 def extract_system_prompt() -> ExtractedTemplate:
     """Extract the base system prompt.
-    
+
     Returns:
         ExtractedTemplate with system prompt content.
-    
+
     Raises:
         ImportError: If gmuse.prompts cannot be imported.
         AttributeError: If SYSTEM_PROMPT is not defined.
         ValueError: If the extracted content is empty.
-    
+
     Example:
         >>> template = extract_system_prompt()
         >>> print(template.name)
@@ -99,18 +99,18 @@ def extract_system_prompt() -> ExtractedTemplate:
 
 def extract_format_task(format_name: str) -> ExtractedTemplate:
     """Extract a format-specific task prompt.
-    
+
     Args:
         format_name: One of 'freeform', 'conventional', 'gitmoji'.
-    
+
     Returns:
         ExtractedTemplate with task prompt content.
-    
+
     Raises:
         ImportError: If gmuse.prompts cannot be imported.
         ValueError: If format_name is not recognized.
         ValueError: If the extracted content is empty.
-    
+
     Example:
         >>> template = extract_format_task('conventional')
         >>> print(template.name)
@@ -123,15 +123,15 @@ def extract_format_task(format_name: str) -> ExtractedTemplate:
 
 def extract_all_templates() -> Dict[str, ExtractedTemplate]:
     """Extract all prompt templates.
-    
+
     Returns:
         Dict mapping template name to ExtractedTemplate.
         Keys: 'system', 'freeform', 'conventional', 'gitmoji'
-    
+
     Raises:
         ImportError: If gmuse.prompts cannot be imported.
         ValueError: If any template is empty or missing.
-    
+
     Example:
         >>> templates = extract_all_templates()
         >>> list(templates.keys())
@@ -142,14 +142,14 @@ def extract_all_templates() -> Dict[str, ExtractedTemplate]:
 
 def get_context_inputs() -> List[ContextInputInfo]:
     """Get information about all context inputs.
-    
+
     Returns:
         List of ContextInputInfo for each possible input.
-    
+
     Example:
         >>> inputs = get_context_inputs()
         >>> [i.name for i in inputs]
-        ['Staged Diff', 'Commit History', 'Repository Instructions', 
+        ['Staged Diff', 'Commit History', 'Repository Instructions',
          'Branch Context', 'User Hint', 'Learning Examples']
     """
     ...
@@ -157,11 +157,11 @@ def get_context_inputs() -> List[ContextInputInfo]:
 
 def validate_templates() -> None:
     """Validate all templates are extractable and non-empty.
-    
+
     Raises:
         RuntimeError: If any template cannot be extracted or is empty.
             Error message includes which template failed and why.
-    
+
     Example:
         >>> validate_templates()  # No error if valid
         >>> # Raises RuntimeError if templates invalid
@@ -218,19 +218,19 @@ Renders a table of all context inputs with their descriptions and conditions.
 ```python
 def setup(app: Sphinx) -> Dict[str, Any]:
     """Set up the prompt templates extension.
-    
+
     Registers:
         - prompt-template directive
         - context-inputs-table directive
         - env-check-consistency event handler for validation
-    
+
     Returns:
         Extension metadata dict.
     """
     app.add_directive("prompt-template", PromptTemplateDirective)
     app.add_directive("context-inputs-table", ContextInputsTableDirective)
     app.connect("env-check-consistency", _validate_templates_on_build)
-    
+
     return {
         "version": "1.0.0",
         "parallel_read_safe": True,
@@ -317,7 +317,7 @@ def test_docs_build_includes_templates():
     """Built documentation contains template content."""
     result = subprocess.run(["uv", "run", "nox", "-s", "docs"], capture_output=True)
     assert result.returncode == 0
-    
+
     html_path = Path("docs/build/html/reference/prompt-templates.html")
     content = html_path.read_text()
     assert "You are an expert commit message generator" in content

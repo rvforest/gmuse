@@ -52,7 +52,7 @@ We assume you are familiar with basic git workflows (forking, cloning, branching
 
 ### Code Style
 
-We use [Ruff](https://github.com/charliermarsh/ruff) for both code formatting (Black-compatible rules) and linting.
+We use [Ruff](https://docs.astral.sh/ruff/) for both code formatting (Black-compatible rules) and linting.
 Format your code with:
 
 ```bash

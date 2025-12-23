@@ -96,6 +96,44 @@ class TestResolveModel:
         with mock.patch.dict(os.environ, {}, clear=True):
             assert resolve_model("gemini") == "gemini/gemini-flash-lite-latest"
 
+    def test_resolve_unmapped_provider_raises_error(self) -> None:
+        """Test that providers without default models raise an error."""
+        with mock.patch.dict(os.environ, {}, clear=True):
+            # bedrock is a valid provider but not in _DEFAULT_MODELS
+            with pytest.raises(
+                LLMError, match="No default model configured for provider 'bedrock'"
+            ):
+                resolve_model("bedrock")
+
+            # huggingface is a valid provider but not in _DEFAULT_MODELS
+            with pytest.raises(
+                LLMError,
+                match="No default model configured for provider 'huggingface'",
+            ):
+                resolve_model("huggingface")
+
+    def test_resolve_unmapped_provider_with_explicit_model(self) -> None:
+        """Test that unmapped providers work with explicit model."""
+        with mock.patch.dict(os.environ, {}, clear=True):
+            # Should work when model is explicitly provided
+            assert (
+                resolve_model("bedrock", "anthropic.claude-v2")
+                == "anthropic.claude-v2"
+            )
+            assert (
+                resolve_model("huggingface", "meta-llama/Llama-2-7b-hf")
+                == "meta-llama/Llama-2-7b-hf"
+            )
+
+    def test_resolve_unmapped_provider_with_env_model(self) -> None:
+        """Test that unmapped providers work with GMUSE_MODEL env var."""
+        with mock.patch.dict(
+            os.environ, {"GMUSE_MODEL": "my-custom-model"}, clear=True
+        ):
+            # Should work when GMUSE_MODEL is set
+            assert resolve_model("bedrock") == "my-custom-model"
+            assert resolve_model("huggingface") == "my-custom-model"
+
 
 class TestLLMClient:
     """Tests for LLMClient class."""

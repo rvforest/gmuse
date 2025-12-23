@@ -169,7 +169,19 @@ def resolve_model(provider: str, model: Optional[str] = None) -> str:
         logger.debug(f"Using model from GMUSE_MODEL: {env_model}")
         return env_model
 
-    default_model = _DEFAULT_MODELS.get(provider, "gpt-4o-mini")
+    # 3. Try to get default model for provider
+    if provider not in _DEFAULT_MODELS:
+        raise LLMError(
+            f"No default model configured for provider '{provider}'.\n\n"
+            "Please specify a model explicitly:\n"
+            f"  export GMUSE_MODEL='<model-name>'\n"
+            f"  gmuse msg --model '<model-name>'\n\n"
+            "Or configure in config.toml:\n"
+            f"  model = '<model-name>'\n\n"
+            "Config location: ~/.config/gmuse/config.toml"
+        )
+
+    default_model = _DEFAULT_MODELS[provider]
     logger.debug(f"Auto-detected provider: {provider}, using model: {default_model}")
     return default_model
 

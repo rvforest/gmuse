@@ -14,7 +14,7 @@ repos:
         types: [python]
       - id: types
         name: check types
-        entry: uv run --frozen pyrefly check
+        entry: uv run --frozen --group=docs pyrefly check
         language: system
         types: [python]
 

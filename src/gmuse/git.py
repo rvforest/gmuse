@@ -8,6 +8,7 @@ Public API:
     - get_repo_root: Get repository root path
     - get_staged_diff: Extract staged changes
     - get_commit_history: Fetch recent commits
+    - get_current_branch: Get current branch information
     - truncate_diff: Truncate large diffs
     - load_repository_instructions: Load .gmuse file
 
@@ -16,6 +17,7 @@ Data Classes:
     - CommitRecord: Single commit data
     - CommitHistory: Collection of commits
     - RepositoryInstructions: Content from .gmuse file
+    - BranchInfo: Current branch information
 """
 
 import hashlib
@@ -125,6 +127,26 @@ class RepositoryInstructions:
     exists: bool
 
 
+@dataclass(slots=True)
+class BranchInfo:
+    """Information about the current git branch.
+
+    Used to provide context about the branch when generating commit messages.
+    Branch names are sanitized to protect privacy and improve LLM understanding.
+
+    Attributes:
+        raw_name: Original branch name from git
+        branch_type: Extracted branch type (e.g., 'feature', 'fix', 'hotfix')
+        branch_summary: Sanitized summary of branch purpose (truncated, tickets masked)
+        is_default: Whether this is a default branch (main, master, develop)
+    """
+
+    raw_name: str
+    branch_type: Optional[str]
+    branch_summary: Optional[str]
+    is_default: bool = False
+
+
 # -----------------------------------------------------------------------------
 # Internal Helpers
 # -----------------------------------------------------------------------------
@@ -215,6 +237,97 @@ def _parse_commit_line(line: str) -> Optional[CommitRecord]:
         author=author,
         timestamp=timestamp,
     )
+
+
+def _sanitize_branch_name(branch_name: str, max_length: int = 60) -> str:
+    """Sanitize branch name for prompt context.
+
+    Normalizes separators, converts to lowercase, removes usernames and long hashes.
+    Masks potential ticket IDs (e.g., JIRA-123 -> TICKET-XXX).
+
+    Args:
+        branch_name: Raw branch name from git
+        max_length: Maximum length for sanitized name (default: 60)
+
+    Returns:
+        Sanitized branch name suitable for LLM context
+
+    Example:
+        >>> _sanitize_branch_name("feature/USER-123-add-auth")
+        'feature/ticket-xxx-add-auth'
+        >>> _sanitize_branch_name("fix/PROJ-456/update-api")
+        'fix/ticket-xxx/update-api'
+    """
+    import re
+
+    # Convert to lowercase
+    sanitized = branch_name.lower()
+
+    # Normalize separators (replace multiple slashes/hyphens/underscores)
+    sanitized = re.sub(r"[/_-]+", "/", sanitized)
+
+    # Remove common username patterns (user/*, username/*)
+    sanitized = re.sub(r"^(user|username)/", "", sanitized)
+
+    # Mask ticket IDs: PROJ-123, ABC-456, TICKET-789 -> ticket-xxx
+    # Match uppercase letters followed by hyphen and digits
+    sanitized = re.sub(r"\b[A-Z]{2,}-\d+\b", "ticket-xxx", sanitized, flags=re.IGNORECASE)
+
+    # Remove long hex hashes (8+ hex characters)
+    sanitized = re.sub(r"\b[0-9a-f]{8,}\b", "", sanitized)
+
+    # Clean up multiple separators created by removals
+    sanitized = re.sub(r"/+", "/", sanitized)
+    sanitized = sanitized.strip("/")
+
+    # Truncate to max length
+    if len(sanitized) > max_length:
+        sanitized = sanitized[:max_length].rsplit("/", 1)[0]
+
+    return sanitized
+
+
+def _parse_branch_info(branch_name: str, max_length: int = 60) -> tuple[Optional[str], Optional[str]]:
+    """Parse branch name into type and summary.
+
+    Extracts branch type (feature, fix, hotfix, etc.) and summary from common
+    branch naming patterns like 'type/description' or 'type-description'.
+
+    Args:
+        branch_name: Raw branch name from git
+        max_length: Maximum length for branch summary (default: 60)
+
+    Returns:
+        Tuple of (branch_type, branch_summary), both can be None
+
+    Example:
+        >>> _parse_branch_info("feature/add-authentication")
+        ('feature', 'add-authentication')
+        >>> _parse_branch_info("fix/PROJ-123-bug-in-api")
+        ('fix', 'ticket-xxx-bug-in-api')
+    """
+    # Sanitize first
+    sanitized = _sanitize_branch_name(branch_name, max_length=max_length)
+
+    if not sanitized:
+        return None, None
+
+    # Common branch type patterns
+    branch_types = ["feature", "feat", "fix", "hotfix", "bugfix", "bug", "docs", "chore", "refactor", "test", "style"]
+
+    # Try to extract type from common patterns: type/description or type-description
+    parts = sanitized.split("/", 1)
+    if len(parts) == 2 and parts[0] in branch_types:
+        return parts[0], parts[1]
+
+    # Check if it starts with a type followed by hyphen
+    for branch_type in branch_types:
+        if sanitized.startswith(f"{branch_type}-"):
+            summary = sanitized[len(branch_type) + 1:]
+            return branch_type, summary
+
+    # No recognized type pattern, treat entire sanitized name as summary
+    return None, sanitized
 
 
 # -----------------------------------------------------------------------------
@@ -522,3 +635,66 @@ def load_repository_instructions() -> RepositoryInstructions:
             file_path=str(gmuse_path),
             exists=False,
         )
+
+
+def get_current_branch(max_length: int = 60) -> Optional[BranchInfo]:
+    """Get information about the current git branch.
+
+    Extracts the current branch name and parses it into structured information
+    for use as context in commit message generation. Returns None if the
+    repository is in a detached HEAD state or if branch detection fails.
+
+    Args:
+        max_length: Maximum length for branch summary (default: 60)
+
+    Returns:
+        BranchInfo object with parsed branch information, or None if unavailable
+
+    Raises:
+        NotAGitRepositoryError: If not in a git repository
+
+    Example:
+        >>> branch = get_current_branch()
+        >>> if branch and not branch.is_default:
+        ...     print(f"Type: {branch.branch_type}, Summary: {branch.branch_summary}")
+    """
+    if not is_git_repository():
+        raise NotAGitRepositoryError(
+            "Not a git repository. Run gmuse from within a git repository."
+        )
+
+    try:
+        # Get current branch name
+        result = _run_git("rev-parse", "--abbrev-ref", "HEAD", timeout=_GIT_TIMEOUT_SHORT)
+        raw_branch = result.stdout.strip()
+
+        # Check for detached HEAD state
+        if raw_branch == "HEAD":
+            logger.debug("Repository is in detached HEAD state")
+            return None
+
+        # Check if it's a default branch
+        default_branches = {"main", "master", "develop", "development"}
+        is_default = raw_branch.lower() in default_branches
+
+        # Parse branch info
+        branch_type, branch_summary = _parse_branch_info(raw_branch, max_length=max_length)
+
+        logger.debug(
+            f"Extracted branch: raw='{raw_branch}', type={branch_type}, "
+            f"summary={branch_summary}, is_default={is_default}"
+        )
+
+        return BranchInfo(
+            raw_name=raw_branch,
+            branch_type=branch_type,
+            branch_summary=branch_summary,
+            is_default=is_default,
+        )
+
+    except subprocess.CalledProcessError as e:
+        logger.warning(f"Failed to get current branch: {e.stderr}")
+        return None
+    except subprocess.TimeoutExpired:
+        logger.warning("Git branch command timed out")
+        return None

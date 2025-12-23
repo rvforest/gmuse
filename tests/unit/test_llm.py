@@ -78,12 +78,18 @@ class TestResolveModel:
             os.environ, {"ANTHROPIC_API_KEY": "sk-ant-test"}, clear=True
         ):
             model = resolve_model("anthropic")
-            assert model == "claude-3-5-sonnet-20241022"
+            assert model == "claude-haiku-4-5"
 
     def test_resolve_explicit_overrides_env(self) -> None:
         """Test explicit model parameter overrides environment."""
         with mock.patch.dict(os.environ, {"GMUSE_MODEL": "gpt-3.5-turbo"}):
             assert resolve_model("anthropic", "claude-3-opus") == "claude-3-opus"
+
+    def test_resolve_auto_detect_cohere(self) -> None:
+        """Test auto-detecting Cohere model."""
+        with mock.patch.dict(os.environ, {"COHERE_API_KEY": "test"}, clear=True):
+            model = resolve_model("cohere")
+            assert model == "command-light"
 
     def test_resolve_from_provider(self) -> None:
         """Test resolving model from explicit provider."""

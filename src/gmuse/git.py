@@ -291,10 +291,10 @@ def _sanitize_branch_name(branch_name: str, max_length: int = 60) -> str:
             # Keep first segment and as much of the rest as possible
             remaining_length = max_length - len(first_segment) - 1  # -1 for the /
             if remaining_length > 0:
-                rest = sanitized[len(first_segment) + 1:]
+                rest = sanitized[len(first_segment) + 1 :]
                 sanitized = first_segment + "/" + rest[:remaining_length]
                 # Clean up if we cut in the middle of a word
-                if "/" in sanitized[len(first_segment) + 1:]:
+                if "/" in sanitized[len(first_segment) + 1 :]:
                     sanitized = sanitized.rsplit("/", 1)[0]
             else:
                 sanitized = first_segment
@@ -305,7 +305,9 @@ def _sanitize_branch_name(branch_name: str, max_length: int = 60) -> str:
     return sanitized
 
 
-def _parse_branch_info(branch_name: str, max_length: int = 60) -> tuple[Optional[str], Optional[str]]:
+def _parse_branch_info(
+    branch_name: str, max_length: int = 60
+) -> tuple[Optional[str], Optional[str]]:
     """Parse branch name into type and summary.
 
     Extracts branch type (feature, fix, hotfix, etc.) and summary from common
@@ -331,7 +333,19 @@ def _parse_branch_info(branch_name: str, max_length: int = 60) -> tuple[Optional
         return None, None
 
     # Common branch type patterns
-    branch_types = ["feature", "feat", "fix", "hotfix", "bugfix", "bug", "docs", "chore", "refactor", "test", "style"]
+    branch_types = [
+        "feature",
+        "feat",
+        "fix",
+        "hotfix",
+        "bugfix",
+        "bug",
+        "docs",
+        "chore",
+        "refactor",
+        "test",
+        "style",
+    ]
 
     # Try to extract type from common patterns: type/description or type-description
     parts = sanitized.split("/", 1)
@@ -341,7 +355,7 @@ def _parse_branch_info(branch_name: str, max_length: int = 60) -> tuple[Optional
     # Check if it starts with a type followed by hyphen
     for branch_type in branch_types:
         if sanitized.startswith(f"{branch_type}-"):
-            summary = sanitized[len(branch_type) + 1:]
+            summary = sanitized[len(branch_type) + 1 :]
             return branch_type, summary
 
     # No recognized type pattern, treat entire sanitized name as summary
@@ -683,7 +697,9 @@ def get_current_branch(max_length: int = 60) -> Optional[BranchInfo]:
 
     try:
         # Get current branch name
-        result = _run_git("rev-parse", "--abbrev-ref", "HEAD", timeout=_GIT_TIMEOUT_SHORT)
+        result = _run_git(
+            "rev-parse", "--abbrev-ref", "HEAD", timeout=_GIT_TIMEOUT_SHORT
+        )
         raw_branch = result.stdout.strip()
 
         # Check for detached HEAD state
@@ -696,7 +712,9 @@ def get_current_branch(max_length: int = 60) -> Optional[BranchInfo]:
         is_default = raw_branch.lower() in default_branches
 
         # Parse branch info
-        branch_type, branch_summary = _parse_branch_info(raw_branch, max_length=max_length)
+        branch_type, branch_summary = _parse_branch_info(
+            raw_branch, max_length=max_length
+        )
 
         logger.debug(
             f"Extracted branch: raw='{raw_branch}', type={branch_type}, "

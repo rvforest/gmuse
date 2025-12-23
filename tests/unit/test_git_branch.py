@@ -7,7 +7,6 @@ import pytest
 
 from gmuse.exceptions import NotAGitRepositoryError
 from gmuse.git import (
-    BranchInfo,
     _parse_branch_info,
     _sanitize_branch_name,
     get_current_branch,
@@ -33,7 +32,10 @@ class TestSanitizeBranchName:
 
     def test_sanitize_mask_ticket_ids(self) -> None:
         """Test that ticket IDs are masked."""
-        assert _sanitize_branch_name("feature/PROJ-123-add-auth") == "feature/ticket-xxx/add/auth"
+        assert (
+            _sanitize_branch_name("feature/PROJ-123-add-auth")
+            == "feature/ticket-xxx/add/auth"
+        )
         assert _sanitize_branch_name("fix/ABC-456-bug") == "fix/ticket-xxx/bug"
         assert _sanitize_branch_name("JIRA-789/update-api") == "ticket-xxx/update/api"
 
@@ -146,7 +148,7 @@ class TestGetCurrentBranch:
                     stderr="",
                 )
                 branch = get_current_branch()
-                
+
                 assert branch is not None
                 assert branch.raw_name == "feature/add-authentication"
                 assert branch.branch_type == "feature"
@@ -163,10 +165,11 @@ class TestGetCurrentBranch:
                     stderr="",
                 )
                 branch = get_current_branch()
-                
+
                 assert branch is not None
                 assert branch.raw_name == "fix/PROJ-123-bug"
                 assert branch.branch_type == "fix"
+                assert isinstance(branch.branch_summary, str)
                 assert "ticket-xxx" in branch.branch_summary.lower()
                 assert branch.is_default is False
 
@@ -180,7 +183,7 @@ class TestGetCurrentBranch:
                     stderr="",
                 )
                 branch = get_current_branch()
-                
+
                 assert branch is not None
                 assert branch.raw_name == "main"
                 assert branch.is_default is True
@@ -195,7 +198,7 @@ class TestGetCurrentBranch:
                     stderr="",
                 )
                 branch = get_current_branch()
-                
+
                 assert branch is not None
                 assert branch.raw_name == "master"
                 assert branch.is_default is True
@@ -210,7 +213,7 @@ class TestGetCurrentBranch:
                     stderr="",
                 )
                 branch = get_current_branch()
-                
+
                 assert branch is not None
                 assert branch.raw_name == "develop"
                 assert branch.is_default is True
@@ -225,7 +228,7 @@ class TestGetCurrentBranch:
                     stderr="",
                 )
                 branch = get_current_branch()
-                
+
                 assert branch is None
 
     def test_get_current_branch_not_a_repository(self) -> None:
@@ -265,7 +268,7 @@ class TestGetCurrentBranch:
                     stderr="",
                 )
                 branch = get_current_branch(max_length=30)
-                
+
                 assert branch is not None
                 assert branch.branch_summary is not None
                 assert len(branch.branch_summary) <= 30

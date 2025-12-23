@@ -15,7 +15,7 @@ $ gmuse msg [OPTIONS]
 - `--model TEXT` / `-m TEXT`: LLM model to use (overrides env/config).
 - `--history-depth INTEGER`: Number of recent commits to use for style context (0–50).
 
-**Note:** Provider selection is auto-detected from configured API keys (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`). To override, set the `GMUSE_PROVIDER` environment variable or add `provider = "<provider>"` to your config file.
+**Note:** Provider selection is auto-detected from configured API keys (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
 - `--copy` / `-c`: Copy the generated message to clipboard.
 - `--dry-run`: Print the assembled prompt without calling the LLM provider.
 

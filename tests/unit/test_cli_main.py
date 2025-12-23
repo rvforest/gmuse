@@ -58,7 +58,7 @@ def test_generate_handles_llm_auth_error(
     monkeypatch.setattr(main, "generate_message", mock_generate_message)
 
     with pytest.raises(typer.Exit) as excinfo:
-        main.msg(provider="openai", dry_run=False)
+        main.msg(dry_run=False)
 
     # LLMError should result in exit code 2
     assert excinfo.value.exit_code == 2
@@ -103,37 +103,6 @@ def test_dry_run_skips_llm_errors(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert excinfo.value.exit_code == 0
     mock_gen.assert_not_called()
-
-
-def test_generate_provider_passed_to_config(monkeypatch: pytest.MonkeyPatch) -> None:
-    """The --provider flag should be passed through to config loading."""
-    captured_config_kwargs: dict[str, Any] = {}
-
-    def mock_load_config(**kwargs: Any) -> dict[str, Any]:
-        captured_config_kwargs.update(kwargs)
-        return {
-            "model": "gpt-4",
-            "format": "freeform",
-            "history_depth": 5,
-            "copy_to_clipboard": False,
-            "timeout": 30,
-            "provider": kwargs.get("provider"),
-        }
-
-    monkeypatch.setattr(main, "_load_config", mock_load_config)
-    monkeypatch.setattr(main, "gather_context", lambda **kwargs: fake_context())
-    monkeypatch.setattr(
-        main,
-        "generate_message",
-        lambda **kwargs: commit.GenerationResult(
-            message="feat: add feature",
-            context=fake_context(),
-        ),
-    )
-
-    main.msg(provider="anthropic", dry_run=False)
-
-    assert captured_config_kwargs["provider"] == "anthropic"
 
 
 def test_generate_hint_passed_to_generator(monkeypatch: pytest.MonkeyPatch) -> None:

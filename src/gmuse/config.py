@@ -372,10 +372,6 @@ def get_env_config() -> ConfigDict:
     if learning := os.getenv("GMUSE_LEARNING"):
         config["learning_enabled"] = learning.lower() in ("1", "true", "yes")
 
-    # Provider override
-    if prov := os.getenv("GMUSE_PROVIDER"):
-        config["provider"] = prov
-
     # Log file override
     if log_file := os.getenv("GMUSE_LOG_FILE"):
         config["log_file"] = log_file

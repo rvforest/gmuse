@@ -56,6 +56,18 @@ class TestSanitizeBranchName:
         assert _sanitize_branch_name("feature/test/") == "feature/test"
         assert _sanitize_branch_name("/feature/test") == "feature/test"
 
+    def test_sanitize_truncation_cleans_mid_segment(self) -> None:
+        """Truncation should not leave partial path segments.
+
+        This hits the branch where we truncate inside a multi-segment summary and
+        then drop the incomplete tail segment.
+        """
+        # Many segments so truncation likely cuts in the middle of one.
+        branch = "feature/one/two/three/four"
+        # With max_length=20: first segment is "feature" (7 chars), leaving 12 for rest.
+        # rest[:12] => "one/two/three" contains '/', so the code rsplit()s to "one/two".
+        assert _sanitize_branch_name(branch, max_length=20) == "feature/one/two"
+
 
 class TestParseBranchInfo:
     """Tests for _parse_branch_info function."""

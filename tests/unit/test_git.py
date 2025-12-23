@@ -183,6 +183,12 @@ class TestGetStagedDiff:
 class TestGetCommitHistory:
     """Tests for get_commit_history function."""
 
+    def test_get_commit_history_not_a_repository(self) -> None:
+        """Test error when not in a git repository."""
+        with mock.patch("gmuse.git.is_git_repository", return_value=False):
+            with pytest.raises(NotAGitRepositoryError, match="Not a git repository"):
+                get_commit_history()
+
     def test_get_commit_history_success(self) -> None:
         """Test fetching commit history successfully."""
         mock_log = """abc123|John Doe|2025-11-28T10:00:00+00:00|feat: add feature
@@ -239,6 +245,17 @@ def456|Jane Smith|2025-11-27T09:00:00+00:00|fix: fix bug
                 ):
                     with pytest.raises(
                         NotAGitRepositoryError, match="Git log command timed out"
+                    ):
+                        get_commit_history()
+
+    def test_get_commit_history_command_fails_raises(self) -> None:
+        """Test that unknown git log failures raise NotAGitRepositoryError."""
+        error = subprocess.CalledProcessError(128, "git", stderr="fatal: bad revision")
+        with mock.patch("gmuse.git.is_git_repository", return_value=True):
+            with mock.patch("gmuse.git.get_repo_root", return_value=Path("/repo")):
+                with mock.patch("subprocess.run", side_effect=error):
+                    with pytest.raises(
+                        NotAGitRepositoryError, match="Failed to fetch commit history"
                     ):
                         get_commit_history()
 

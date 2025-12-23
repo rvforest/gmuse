@@ -7,8 +7,8 @@ Comprehensive reference of all configuration options and environment variables t
 gmuse loads configuration from multiple sources with the following priority (highest to lowest):
 
 1. **CLI flags** — Command-line options passed to `gmuse msg`
-2. **User configuration file** — Persistent user preferences
-3. **Environment variables** — `GMUSE_*` variables
+2. **Environment variables** — `GMUSE_*` variables
+3. **User configuration file** — Persistent user preferences
 4. **Defaults** — Built-in fallback values
 
 ## User Configuration File
@@ -31,6 +31,21 @@ timeout = 60
 ```
 
 > **Note:** This is separate from repository-level instructions (see [](#repository-instructions) below).
+
+## Manage Configuration via CLI
+
+gmuse provides commands to view and update the global config file:
+
+```console
+$ gmuse config view
+$ gmuse config set <key> <value>
+```
+
+`gmuse config view` prints:
+
+- the resolved global config file path
+- raw file contents (if the file exists)
+- an effective configuration table, including warnings when environment variables override file values
 
 ## Configuration Options
 

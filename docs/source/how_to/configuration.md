@@ -25,6 +25,24 @@ Create a configuration file to set persistent preferences:
 
 You should see your configured model and settings displayed.
 
+## Manage config from the CLI
+
+You can also view and update your global configuration without manually editing files:
+
+```console
+$ gmuse config view
+```
+
+```console
+$ gmuse config set format conventional
+$ gmuse config set history_depth 10
+```
+
+Notes:
+
+- `gmuse config view` shows the config file location, the file contents (if present), and an effective configuration table.
+- Environment variables (for example `GMUSE_FORMAT`) can override values stored in the config file.
+
 ## Switch between LLM providers
 
 To use a different provider, set the appropriate API key; gmuse will auto-detect the provider from the environment.

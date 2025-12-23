@@ -328,6 +328,9 @@ def build_prompt(
             f"Unknown format: {format}. Must be one of: {list(task_prompt_map.keys())}"
         )
 
+    # Only conventional format needs max_chars parameter to conditionally suppress
+    # its default "100 characters" guidance. Freeform and gitmoji have no specific
+    # numeric length constraints, so they work fine with the universal constraint below.
     task_prompt = task_prompt_map[format](
         **({"max_chars": max_chars} if format == "conventional" else {})
     )

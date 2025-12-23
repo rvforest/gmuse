@@ -463,7 +463,7 @@ def get_env_config() -> ConfigDict:
         - GMUSE_MAX_TOKENS: Maximum tokens in response
         - GMUSE_MAX_DIFF_BYTES: Maximum diff size before truncation
         - GMUSE_MAX_MESSAGE_LENGTH: Maximum commit message length
-    - GMUSE_MAX_CHARS: Optional maximum characters for generated message
+        - GMUSE_MAX_CHARS: Optional maximum characters for generated message
         - GMUSE_INCLUDE_BRANCH: Include branch name as context (1/true/yes)
         - GMUSE_BRANCH_MAX_LENGTH: Maximum length for branch summary
 

@@ -39,7 +39,7 @@ If a generated message fails validation (empty, too long, format mismatch), try 
 1. Run `gmuse msg --dry-run` to inspect the prompts being sent.
 2. Try a different `--format` (for example, `--format freeform` is the most permissive).
 3. Adjust your `--hint` to guide the model toward a valid format (e.g., include an example or required prefix).
-4. Check if your `.gmuse` instructions (or `[tool.gmuse.instructions]`) conflict with the selected format.
+4. Check if your `.gmuse` instructions conflict with the selected format.
 
 For the exact validation rules and canonical error messages, see [](../reference/validation.md).
 

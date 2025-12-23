@@ -20,7 +20,7 @@ To generate a commit message, the following data is sent to the configured LLM p
 | :--- | :--- |
 | **Staged Diff** | The literal code changes you have added to the git index. |
 | **Commit History** | The text of the last ~5 commit messages (to match your style). |
-| **Project Context** | Content from your `.gmuse` file or `pyproject.toml`. |
+| **Project Context** | Content from your `.gmuse` file (if present). |
 | **User Hint** | Any text you provide via the `--hint` flag. |
 
 Remote providers receive exactly those pieces of data. When LiteLLM or any other locally hosted backend is configured, the same inputs are prepared locally and never traverse the network outside your machine.

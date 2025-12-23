@@ -9,7 +9,7 @@ It is for users who want to understand what gmuse sends to an LLM, how prompts a
 When you run `gmuse msg`, the following sequence occurs:
 
 1.  **Extraction**: `gmuse` queries your local Git repository to extract the currently staged diff and the last few commit messages for style reference. See **What is sent to the provider** below for details about what is included and provider handling.
-2.  **Context Assembly**: It merges your diff with project-specific instructions (from `.gmuse` or `pyproject.toml`) and your optional `--hint`.
+2.  **Context Assembly**: It merges your diff with project-specific instructions from a `.gmuse` file (if present) and your optional `--hint`.
 3.  **Prompting**: A two-part prompt (System + User) is constructed and sent to your chosen LLM provider via [LiteLLM](https://github.com/BerriAI/litellm), which provides a unified interface to many providers. Prompts are constructed locally and sent directly to the configured provider (gmuse does not proxy prompts through a gmuse-hosted server); see **What is sent to the provider** and [Privacy & Security](privacy.md) for provider retention details.
 4.  **Validation**: The generated message is checked against the requested format and length constraints. If validation fails, `gmuse` will display a clear error and prevent the commit from proceeding; common error examples include:
     * "Generated message is empty"
@@ -28,7 +28,7 @@ When `gmuse` calls the LLM provider it sends the assembled prompts (System + Use
 * Staged diff (raw diff; may be truncated to fit token limits)
 * A short staged changes summary (files changed, lines added/removed)
 * Recent commit messages for style reference (default 5, configurable via `--history-depth`)
-* Repository instructions from `.gmuse` or `[tool.gmuse.instructions]` in `pyproject.toml` (if present)
+* Repository instructions from a `.gmuse` file (if present)
 * The CLI `--hint` value (if provided)
 * Format/task instructions and any examples or templates
 
@@ -62,7 +62,7 @@ By default, `gmuse` pulls the last 5 commit messages from your current branch an
 > **Note:** The model doesn't magically "infer" your style—it's given your recent commits as explicit examples via `build_context()` in the prompt assembly.
 
 ### Repository Instructions
-If a `.gmuse` file (or a `[tool.gmuse.instructions]` block in `pyproject.toml`) is found, its contents are injected directly into the prompt. This is perfect for team-wide rules like *"Always reference a Jira ticket"* or *"Keep descriptions under 50 characters."* See the [Configuration Guide](../how_to/configuration.md) for details.
+If a `.gmuse` file is found, its contents are injected directly into the prompt. This is perfect for team-wide rules like *"Always reference a Jira ticket"* or *"Keep descriptions under 50 characters."* See the [Configuration Guide](../how_to/configuration.md) for details.
 
 ## Prompting Strategy
 
@@ -112,7 +112,7 @@ To see how these layers come together, imagine you are fixing a security vulnera
     PROJ-456: Fix logout redirect
     ```
 *   **User Hint**: You run `gmuse msg --hint "PROJ-789"`.
-*   **Repository instructions**: A `.gmuse` file or `[tool.gmuse.instructions]` block in `pyproject.toml` (e.g., `Always reference a Jira ticket`).
+*   **Repository instructions**: A `.gmuse` file (e.g., `Always reference a Jira ticket`).
 *   **Task template**: The format's task prompt (Conventional/Gitmoji/Freeform) — selected via `--format` or your config — is **automatically appended** to the user prompt by `gmuse` and enforces structure and constraints (for example, Conventional requires `type(scope): description` and a concise one-line message). You do not need to provide a separate template.
 
 ### 2. The Context Assembly

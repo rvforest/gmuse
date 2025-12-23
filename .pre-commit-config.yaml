@@ -18,10 +18,10 @@ repos:
         language: system
         types: [python]
         # Exclude docs module here; it is checked by a separate docs-specific hook.
-        exclude: ^src/gmuse/_docs/
+        exclude: ^docs/_ext/
       - id: types-docs
         name: check docs types
-        entry: uv run --frozen --group=docs pyrefly check src/gmuse/_docs
+        entry: uv run --frozen --group=docs pyrefly check docs/_ext
         language: system
         types: [python]
         # Only run this hook for files under the docs module.

@@ -59,6 +59,26 @@ TIMEOUT_MIN: Final[int] = 5
 TIMEOUT_MAX: Final[int] = 300
 """Valid range for timeout configuration (in seconds)."""
 
+TEMPERATURE_MIN: Final[float] = 0.0
+TEMPERATURE_MAX: Final[float] = 2.0
+"""Valid range for temperature configuration."""
+
+MAX_TOKENS_MIN: Final[int] = 1
+MAX_TOKENS_MAX: Final[int] = 100000
+"""Valid range for max_tokens configuration."""
+
+MAX_DIFF_BYTES_MIN: Final[int] = 1000
+MAX_DIFF_BYTES_MAX: Final[int] = 10000000
+"""Valid range for max_diff_bytes configuration."""
+
+MAX_MESSAGE_LENGTH_MIN: Final[int] = 10
+MAX_MESSAGE_LENGTH_MAX: Final[int] = 10000
+"""Valid range for max_message_length configuration."""
+
+CHARS_PER_TOKEN_MIN: Final[int] = 1
+CHARS_PER_TOKEN_MAX: Final[int] = 10
+"""Valid range for chars_per_token configuration."""
+
 DEFAULTS: Final[ConfigDict] = {
     "model": None,  # Auto-detect from environment
     "copy_to_clipboard": False,
@@ -68,6 +88,11 @@ DEFAULTS: Final[ConfigDict] = {
     "timeout": 30,
     "provider": None,
     "log_file": None,  # Optional path to log file for debug output
+    "temperature": 0.7,  # LLM sampling temperature
+    "max_tokens": 500,  # Maximum tokens in LLM response
+    "max_diff_bytes": 20000,  # Maximum diff size before truncation (~5000 tokens)
+    "max_message_length": 1000,  # Maximum commit message length
+    "chars_per_token": 4,  # Characters per token heuristic for estimation
 }
 """Default configuration values used when no override is provided."""
 
@@ -158,6 +183,33 @@ def _validate_integer_range(
     value = config[key]
     if not isinstance(value, int):
         raise ConfigError(f"{key} must be an integer, got {type(value).__name__}")
+    if not (min_val <= value <= max_val):
+        raise ConfigError(f"{key} must be between {min_val} and {max_val}, got {value}")
+
+
+def _validate_float_range(
+    config: ConfigDict,
+    key: str,
+    min_val: float,
+    max_val: float,
+) -> None:
+    """Validate a float config value is within the allowed range.
+
+    Args:
+        config: Configuration dictionary
+        key: Configuration key to validate
+        min_val: Minimum allowed value (inclusive)
+        max_val: Maximum allowed value (inclusive)
+
+    Raises:
+        ConfigError: If value is not a number or out of range
+    """
+    if key not in config:
+        return
+
+    value = config[key]
+    if not isinstance(value, (int, float)):
+        raise ConfigError(f"{key} must be a number, got {type(value).__name__}")
     if not (min_val <= value <= max_val):
         raise ConfigError(f"{key} must be between {min_val} and {max_val}, got {value}")
 
@@ -253,6 +305,19 @@ def validate_config(config: ConfigDict) -> None:
         config, "history_depth", HISTORY_DEPTH_MIN, HISTORY_DEPTH_MAX
     )
     _validate_integer_range(config, "timeout", TIMEOUT_MIN, TIMEOUT_MAX)
+    _validate_integer_range(config, "max_tokens", MAX_TOKENS_MIN, MAX_TOKENS_MAX)
+    _validate_integer_range(
+        config, "max_diff_bytes", MAX_DIFF_BYTES_MIN, MAX_DIFF_BYTES_MAX
+    )
+    _validate_integer_range(
+        config, "max_message_length", MAX_MESSAGE_LENGTH_MIN, MAX_MESSAGE_LENGTH_MAX
+    )
+    _validate_integer_range(
+        config, "chars_per_token", CHARS_PER_TOKEN_MIN, CHARS_PER_TOKEN_MAX
+    )
+
+    # Validate float ranges
+    _validate_float_range(config, "temperature", TEMPERATURE_MIN, TEMPERATURE_MAX)
 
     # Validate string choices
     _validate_string_choice(config, "format", VALID_FORMATS)
@@ -333,6 +398,16 @@ def get_env_config() -> ConfigDict:
         - GMUSE_MODEL: Model name
         - GMUSE_FORMAT: Message format
         - GMUSE_HISTORY_DEPTH: Number of commits for context
+        - GMUSE_TIMEOUT: Request timeout in seconds
+        - GMUSE_COPY: Copy to clipboard (true/false)
+        - GMUSE_LEARNING: Enable learning mode (true/false)
+        - GMUSE_PROVIDER: LLM provider
+        - GMUSE_LOG_FILE: Log file path
+        - GMUSE_TEMPERATURE: LLM sampling temperature
+        - GMUSE_MAX_TOKENS: Maximum tokens in response
+        - GMUSE_MAX_DIFF_BYTES: Maximum diff size before truncation
+        - GMUSE_MAX_MESSAGE_LENGTH: Maximum commit message length
+        - GMUSE_CHARS_PER_TOKEN: Characters per token heuristic
 
     Returns:
         Configuration dictionary from environment variables
@@ -364,6 +439,37 @@ def get_env_config() -> ConfigDict:
             config["timeout"] = int(timeout)
         except ValueError:
             logger.warning(f"Invalid GMUSE_TIMEOUT: {timeout}")
+
+    if max_tokens := os.getenv("GMUSE_MAX_TOKENS"):
+        try:
+            config["max_tokens"] = int(max_tokens)
+        except ValueError:
+            logger.warning(f"Invalid GMUSE_MAX_TOKENS: {max_tokens}")
+
+    if max_diff_bytes := os.getenv("GMUSE_MAX_DIFF_BYTES"):
+        try:
+            config["max_diff_bytes"] = int(max_diff_bytes)
+        except ValueError:
+            logger.warning(f"Invalid GMUSE_MAX_DIFF_BYTES: {max_diff_bytes}")
+
+    if max_message_length := os.getenv("GMUSE_MAX_MESSAGE_LENGTH"):
+        try:
+            config["max_message_length"] = int(max_message_length)
+        except ValueError:
+            logger.warning(f"Invalid GMUSE_MAX_MESSAGE_LENGTH: {max_message_length}")
+
+    if chars_per_token := os.getenv("GMUSE_CHARS_PER_TOKEN"):
+        try:
+            config["chars_per_token"] = int(chars_per_token)
+        except ValueError:
+            logger.warning(f"Invalid GMUSE_CHARS_PER_TOKEN: {chars_per_token}")
+
+    # Float values
+    if temperature := os.getenv("GMUSE_TEMPERATURE"):
+        try:
+            config["temperature"] = float(temperature)
+        except ValueError:
+            logger.warning(f"Invalid GMUSE_TEMPERATURE: {temperature}")
 
     # Boolean values
     if copy := os.getenv("GMUSE_COPY"):

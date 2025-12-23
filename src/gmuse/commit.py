@@ -35,6 +35,8 @@ logger = get_logger(__name__)
 # Constants
 # -----------------------------------------------------------------------------
 
+# Note: DEFAULT_MAX_DIFF_BYTES is kept for backward compatibility but can be
+# overridden via configuration
 DEFAULT_MAX_DIFF_BYTES: Final[int] = 20000
 """Default maximum diff size in bytes (~5000 tokens)."""
 
@@ -187,11 +189,17 @@ def generate_message(
     message = client.generate(
         system_prompt=system_prompt,
         user_prompt=user_prompt,
+        temperature=float(config.get("temperature", 0.7)),
+        max_tokens=int(config.get("max_tokens", 500)),
     )
 
     # Validate message
     logger.debug("Validating generated message...")
-    validate_message(message, format=config.get("format", "freeform"))
+    validate_message(
+        message,
+        format=config.get("format", "freeform"),
+        max_length=int(config.get("max_message_length", 1000)),
+    )
 
     logger.debug("Generation complete")
 

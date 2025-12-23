@@ -253,3 +253,153 @@ class TestGetEnvConfig:
         with mock.patch.dict(os.environ, {"GMUSE_COPY": "no"}):
             config = get_env_config()
             assert config["copy_to_clipboard"] is False
+
+
+class TestNewConfigParameters:
+    """Tests for new LLM and prompt configuration parameters."""
+
+    def test_validate_temperature_valid(self) -> None:
+        """Test validation succeeds for valid temperature."""
+        validate_config({"temperature": 0.5})
+        validate_config({"temperature": 0.0})
+        validate_config({"temperature": 2.0})
+
+    def test_validate_temperature_out_of_range(self) -> None:
+        """Test validation fails for temperature out of range."""
+        with pytest.raises(ConfigError, match="temperature must be between 0.0 and 2.0"):
+            validate_config({"temperature": -0.1})
+
+        with pytest.raises(ConfigError, match="temperature must be between 0.0 and 2.0"):
+            validate_config({"temperature": 2.5})
+
+    def test_validate_temperature_wrong_type(self) -> None:
+        """Test validation fails for non-numeric temperature."""
+        with pytest.raises(ConfigError, match="temperature must be a number"):
+            validate_config({"temperature": "0.7"})
+
+    def test_validate_max_tokens_valid(self) -> None:
+        """Test validation succeeds for valid max_tokens."""
+        validate_config({"max_tokens": 100})
+        validate_config({"max_tokens": 1})
+        validate_config({"max_tokens": 10000})
+
+    def test_validate_max_tokens_out_of_range(self) -> None:
+        """Test validation fails for max_tokens out of range."""
+        with pytest.raises(ConfigError, match="max_tokens must be between"):
+            validate_config({"max_tokens": 0})
+
+        with pytest.raises(ConfigError, match="max_tokens must be between"):
+            validate_config({"max_tokens": 10000001})
+
+    def test_validate_max_tokens_wrong_type(self) -> None:
+        """Test validation fails for non-integer max_tokens."""
+        with pytest.raises(ConfigError, match="max_tokens must be an integer"):
+            validate_config({"max_tokens": "500"})
+
+    def test_validate_max_diff_bytes_valid(self) -> None:
+        """Test validation succeeds for valid max_diff_bytes."""
+        validate_config({"max_diff_bytes": 20000})
+        validate_config({"max_diff_bytes": 1000})
+
+    def test_validate_max_diff_bytes_out_of_range(self) -> None:
+        """Test validation fails for max_diff_bytes out of range."""
+        with pytest.raises(ConfigError, match="max_diff_bytes must be between"):
+            validate_config({"max_diff_bytes": 100})
+
+        with pytest.raises(ConfigError, match="max_diff_bytes must be between"):
+            validate_config({"max_diff_bytes": 20000000})
+
+    def test_validate_max_message_length_valid(self) -> None:
+        """Test validation succeeds for valid max_message_length."""
+        validate_config({"max_message_length": 1000})
+        validate_config({"max_message_length": 10})
+
+    def test_validate_max_message_length_out_of_range(self) -> None:
+        """Test validation fails for max_message_length out of range."""
+        with pytest.raises(ConfigError, match="max_message_length must be between"):
+            validate_config({"max_message_length": 5})
+
+        with pytest.raises(ConfigError, match="max_message_length must be between"):
+            validate_config({"max_message_length": 15000})
+
+    def test_validate_chars_per_token_valid(self) -> None:
+        """Test validation succeeds for valid chars_per_token."""
+        validate_config({"chars_per_token": 4})
+        validate_config({"chars_per_token": 1})
+        validate_config({"chars_per_token": 10})
+
+    def test_validate_chars_per_token_out_of_range(self) -> None:
+        """Test validation fails for chars_per_token out of range."""
+        with pytest.raises(ConfigError, match="chars_per_token must be between"):
+            validate_config({"chars_per_token": 0})
+
+        with pytest.raises(ConfigError, match="chars_per_token must be between"):
+            validate_config({"chars_per_token": 11})
+
+    def test_get_env_config_temperature(self) -> None:
+        """Test getting temperature from GMUSE_TEMPERATURE."""
+        with mock.patch.dict(os.environ, {"GMUSE_TEMPERATURE": "0.3"}):
+            config = get_env_config()
+            assert config["temperature"] == 0.3
+
+    def test_get_env_config_invalid_temperature(self) -> None:
+        """Test invalid temperature in env var is ignored."""
+        with mock.patch.dict(os.environ, {"GMUSE_TEMPERATURE": "invalid"}):
+            config = get_env_config()
+            assert "temperature" not in config
+
+    def test_get_env_config_max_tokens(self) -> None:
+        """Test getting max_tokens from GMUSE_MAX_TOKENS."""
+        with mock.patch.dict(os.environ, {"GMUSE_MAX_TOKENS": "200"}):
+            config = get_env_config()
+            assert config["max_tokens"] == 200
+
+    def test_get_env_config_max_diff_bytes(self) -> None:
+        """Test getting max_diff_bytes from GMUSE_MAX_DIFF_BYTES."""
+        with mock.patch.dict(os.environ, {"GMUSE_MAX_DIFF_BYTES": "30000"}):
+            config = get_env_config()
+            assert config["max_diff_bytes"] == 30000
+
+    def test_get_env_config_max_message_length(self) -> None:
+        """Test getting max_message_length from GMUSE_MAX_MESSAGE_LENGTH."""
+        with mock.patch.dict(os.environ, {"GMUSE_MAX_MESSAGE_LENGTH": "500"}):
+            config = get_env_config()
+            assert config["max_message_length"] == 500
+
+    def test_get_env_config_chars_per_token(self) -> None:
+        """Test getting chars_per_token from GMUSE_CHARS_PER_TOKEN."""
+        with mock.patch.dict(os.environ, {"GMUSE_CHARS_PER_TOKEN": "3"}):
+            config = get_env_config()
+            assert config["chars_per_token"] == 3
+
+    def test_defaults_include_new_parameters(self) -> None:
+        """Test that DEFAULTS dict includes new parameters."""
+        assert "temperature" in DEFAULTS
+        assert "max_tokens" in DEFAULTS
+        assert "max_diff_bytes" in DEFAULTS
+        assert "max_message_length" in DEFAULTS
+        assert "chars_per_token" in DEFAULTS
+        assert DEFAULTS["temperature"] == 0.7
+        assert DEFAULTS["max_tokens"] == 500
+        assert DEFAULTS["max_diff_bytes"] == 20000
+        assert DEFAULTS["max_message_length"] == 1000
+        assert DEFAULTS["chars_per_token"] == 4
+
+    def test_merge_config_with_new_parameters(self) -> None:
+        """Test merging configuration with new parameters."""
+        cli_args = {"temperature": 0.3, "max_tokens": 200}
+        config_file = {"temperature": 0.5, "max_diff_bytes": 30000}
+        env_vars = {"temperature": 0.9, "max_tokens": 300, "max_message_length": 500}
+
+        result = merge_config(
+            cli_args=cli_args, config_file=config_file, env_vars=env_vars
+        )
+        # CLI should win
+        assert result["temperature"] == 0.3
+        assert result["max_tokens"] == 200
+        # Config file should override env
+        assert result["max_diff_bytes"] == 30000
+        # Env should override default
+        assert result["max_message_length"] == 500
+        # Default should be used
+        assert result["chars_per_token"] == 4

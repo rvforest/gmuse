@@ -199,6 +199,21 @@ def msg(
         "--provider",
         help="Explicit provider override (e.g., 'openai', 'anthropic')",
     ),
+    temperature: Optional[float] = typer.Option(
+        None,
+        "--temperature",
+        help="LLM sampling temperature (0.0-2.0, default: 0.7)",
+    ),
+    max_tokens: Optional[int] = typer.Option(
+        None,
+        "--max-tokens",
+        help="Maximum tokens in LLM response (default: 500)",
+    ),
+    max_diff_bytes: Optional[int] = typer.Option(
+        None,
+        "--max-diff-bytes",
+        help="Maximum diff size in bytes before truncation (default: 20000)",
+    ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
@@ -217,6 +232,8 @@ def msg(
         gmuse msg --format conventional  # Use conventional commits format
         gmuse msg --copy                 # Auto-copy to clipboard
         gmuse msg --model claude-3-opus  # Use specific model
+        gmuse msg --temperature 0.3      # Lower temperature for more deterministic output
+        gmuse msg --max-tokens 200       # Limit response length
         gmuse msg --dry-run              # Preview prompt without calling LLM
     """
     try:
@@ -227,10 +244,16 @@ def msg(
             format=format,
             history_depth=history_depth,
             provider=provider,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            max_diff_bytes=max_diff_bytes,
         )
 
         # Gather context and generate message
-        context = gather_context(history_depth=config.get("history_depth", 5))
+        context = gather_context(
+            history_depth=config.get("history_depth", 5),
+            max_diff_bytes=config.get("max_diff_bytes", 20000),
+        )
 
         # Warn if diff was truncated
         if context.diff_was_truncated:
@@ -314,6 +337,9 @@ def _load_config(
     format: Optional[str] = None,
     history_depth: Optional[int] = None,
     provider: Optional[str] = None,
+    temperature: Optional[float] = None,
+    max_tokens: Optional[int] = None,
+    max_diff_bytes: Optional[int] = None,
 ) -> ConfigDict:
     """Load and merge configuration from all sources.
 
@@ -331,6 +357,9 @@ def _load_config(
         format: CLI format override.
         history_depth: CLI history depth override.
         provider: CLI provider override.
+        temperature: CLI temperature override.
+        max_tokens: CLI max_tokens override.
+        max_diff_bytes: CLI max_diff_bytes override.
 
     Returns:
         Merged and validated configuration dictionary.
@@ -350,6 +379,12 @@ def _load_config(
         cli_args["history_depth"] = history_depth
     if provider is not None:
         cli_args["provider"] = provider
+    if temperature is not None:
+        cli_args["temperature"] = temperature
+    if max_tokens is not None:
+        cli_args["max_tokens"] = max_tokens
+    if max_diff_bytes is not None:
+        cli_args["max_diff_bytes"] = max_diff_bytes
 
     # Load and merge from all sources
     config_file = load_config()

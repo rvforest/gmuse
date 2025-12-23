@@ -172,16 +172,87 @@ log_file = "~/.cache/gmuse/debug.log"
 
 ## LLM Generation Parameters
 
-The following parameters control LLM behavior but are **not directly configurable** through gmuse configuration. They are internal defaults used by the LLM client:
+### temperature
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| `temperature` | `0.7` | Controls randomness (0.0 = deterministic, 1.0 = creative) |
-| `max_tokens` | `500` | Maximum response length |
+**Type:** float
+**Default:** `0.7`
+**Valid range:** `0.0` to `2.0`
+**CLI flag:** `--temperature`
+**Environment variable:** `GMUSE_TEMPERATURE`
 
-These values are hardcoded in `gmuse.llm.LLMClient.generate()`. To adjust them, you would need to modify provider-specific settings or the gmuse source code.
+Controls randomness in LLM output. Lower values (closer to 0.0) produce more deterministic, focused responses. Higher values (closer to 2.0) produce more creative, varied responses.
 
-> **Tip:** For more deterministic outputs, choose models known for consistent behavior (e.g., `gpt-4o-mini`) rather than creative models.
+```toml
+temperature = 0.3  # More deterministic
+```
+
+**Use cases:**
+- `0.0-0.3`: Deterministic CI/CD environments, reproducible messages
+- `0.5-0.9`: Balanced creativity and consistency (default: 0.7)
+- `1.0-2.0`: More creative, varied messages
+
+### max_tokens
+
+**Type:** integer
+**Default:** `500`
+**Valid range:** `1` to `100000`
+**CLI flag:** `--max-tokens`
+**Environment variable:** `GMUSE_MAX_TOKENS`
+
+Maximum number of tokens the LLM can generate in its response. Shorter values produce more concise messages.
+
+```toml
+max_tokens = 200  # Shorter messages
+```
+
+**Note:** Most commit messages use 20-100 tokens. The default of 500 provides plenty of room.
+
+### max_diff_bytes
+
+**Type:** integer
+**Default:** `20000` (approximately 5000 tokens)
+**Valid range:** `1000` to `10000000`
+**CLI flag:** `--max-diff-bytes`
+**Environment variable:** `GMUSE_MAX_DIFF_BYTES`
+
+Maximum size of the diff (in bytes) to include in the prompt. If the staged diff exceeds this limit, it will be truncated.
+
+```toml
+max_diff_bytes = 50000  # Allow larger diffs
+```
+
+**Use cases:**
+- Large refactorings may need higher limits
+- API rate limits or costs may require lower limits
+- You'll see a warning if truncation occurs
+
+### max_message_length
+
+**Type:** integer
+**Default:** `1000`
+**Valid range:** `10` to `10000`
+**Environment variable:** `GMUSE_MAX_MESSAGE_LENGTH`
+
+Maximum allowed length for generated commit messages (in characters). Messages exceeding this length will be rejected with a validation error.
+
+```toml
+max_message_length = 500  # Shorter maximum
+```
+
+### chars_per_token
+
+**Type:** integer
+**Default:** `4`
+**Valid range:** `1` to `10`
+**Environment variable:** `GMUSE_CHARS_PER_TOKEN`
+
+Heuristic used for token estimation (approximately 4 characters per token for GPT models). Adjust this if using models with different tokenization.
+
+```toml
+chars_per_token = 3  # For models with denser tokenization
+```
+
+**Note:** This is a rough approximation. Actual token counts vary by model and text content.
 
 ## Repository Instructions
 

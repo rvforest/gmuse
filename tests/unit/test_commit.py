@@ -143,13 +143,18 @@ class TestGenerateMessage:
             "gmuse.commit.build_prompt", lambda **kwargs: ("system", "user")
         )
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
-        monkeypatch.setattr("gmuse.commit.validate_message", lambda msg, format: None)
+        monkeypatch.setattr(
+            "gmuse.commit.validate_message", lambda msg, format, max_length: None
+        )
 
         config = {
             "format": "freeform",
             "model": "gpt-4",
             "timeout": 30,
             "provider": None,
+            "temperature": 0.7,
+            "max_tokens": 500,
+            "max_message_length": 1000,
         }
         result = generate_message(config=config, hint="test hint")
 
@@ -178,13 +183,18 @@ class TestGenerateMessage:
             "gmuse.commit.build_prompt", lambda **kwargs: ("system", "user")
         )
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
-        monkeypatch.setattr("gmuse.commit.validate_message", lambda msg, format: None)
+        monkeypatch.setattr(
+            "gmuse.commit.validate_message", lambda msg, format, max_length: None
+        )
 
         config = {
             "format": "freeform",
             "model": "gpt-4",
             "timeout": 30,
             "provider": None,
+            "temperature": 0.7,
+            "max_tokens": 500,
+            "max_message_length": 1000,
         }
         result = generate_message(config=config, context=mock_context)
 
@@ -241,13 +251,18 @@ class TestGenerateMessage:
         )
         monkeypatch.setattr("gmuse.commit.build_prompt", capture_build_prompt)
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
-        monkeypatch.setattr("gmuse.commit.validate_message", lambda msg, format: None)
+        monkeypatch.setattr(
+            "gmuse.commit.validate_message", lambda msg, format, max_length: None
+        )
 
         config = {
             "format": "freeform",
             "model": "gpt-4",
             "timeout": 30,
             "provider": None,
+            "temperature": 0.7,
+            "max_tokens": 500,
+            "max_message_length": 1000,
         }
         generate_message(config=config, hint="security fix", context=mock_context)
 
@@ -297,7 +312,7 @@ class TestGenerateMessage:
         mock_client = mock.Mock()
         mock_client.generate.return_value = "feat: new feature"
 
-        def capture_generate(system_prompt, user_prompt):
+        def capture_generate(system_prompt, user_prompt, temperature, max_tokens):
             captured_prompts["system"] = system_prompt
             captured_prompts["user"] = user_prompt
             return "feat: new feature"
@@ -309,13 +324,18 @@ class TestGenerateMessage:
         )
         # Don't mock build_prompt - let it run for real
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
-        monkeypatch.setattr("gmuse.commit.validate_message", lambda msg, format: None)
+        monkeypatch.setattr(
+            "gmuse.commit.validate_message", lambda msg, format, max_length: None
+        )
 
         config = {
             "format": "freeform",
             "model": "gpt-4",
             "timeout": 30,
             "provider": None,
+            "temperature": 0.7,
+            "max_tokens": 500,
+            "max_message_length": 1000,
         }
         result = generate_message(config=config, context=mock_context)
 

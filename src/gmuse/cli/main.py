@@ -194,6 +194,21 @@ def msg(
         "--history-depth",
         help="Number of recent commits to use for style context (0-50)",
     ),
+    temperature: Optional[float] = typer.Option(
+        None,
+        "--temperature",
+        help="LLM sampling temperature (0.0-2.0, default: 0.7)",
+    ),
+    max_tokens: Optional[int] = typer.Option(
+        None,
+        "--max-tokens",
+        help="Maximum tokens in LLM response (default: 500)",
+    ),
+    max_diff_bytes: Optional[int] = typer.Option(
+        None,
+        "--max-diff-bytes",
+        help="Maximum diff size in bytes before truncation (default: 20000)",
+    ),
     include_branch: bool = typer.Option(
         False,
         "--include-branch",
@@ -217,6 +232,8 @@ def msg(
         gmuse msg --format conventional  # Use conventional commits format
         gmuse msg --copy                 # Auto-copy to clipboard
         gmuse msg --model claude-3-opus  # Use specific model
+        gmuse msg --temperature 0.3      # Lower temperature for more deterministic output
+        gmuse msg --max-tokens 200       # Limit response length
         gmuse msg --include-branch       # Include branch context
         gmuse msg --dry-run              # Preview prompt without calling LLM
     """
@@ -227,12 +244,16 @@ def msg(
             copy=copy,
             format=format,
             history_depth=history_depth,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            max_diff_bytes=max_diff_bytes,
             include_branch=include_branch,
         )
 
         # Gather context and generate message
         context = gather_context(
             history_depth=config.get("history_depth", 5),
+            max_diff_bytes=config.get("max_diff_bytes", 20000),
             include_branch=config.get("include_branch", False),
             branch_max_length=config.get("branch_max_length", 60),
         )
@@ -319,6 +340,9 @@ def _load_config(
     copy: bool = False,
     format: Optional[str] = None,
     history_depth: Optional[int] = None,
+    temperature: Optional[float] = None,
+    max_tokens: Optional[int] = None,
+    max_diff_bytes: Optional[int] = None,
     include_branch: bool = False,
 ) -> ConfigDict:
     """Load and merge configuration from all sources.
@@ -336,6 +360,9 @@ def _load_config(
         copy: CLI copy to clipboard flag.
         format: CLI format override.
         history_depth: CLI history depth override.
+        temperature: CLI temperature override.
+        max_tokens: CLI max_tokens override.
+        max_diff_bytes: CLI max_diff_bytes override.
         include_branch: CLI include branch flag.
 
     Returns:
@@ -354,6 +381,12 @@ def _load_config(
         cli_args["format"] = format
     if history_depth is not None:
         cli_args["history_depth"] = history_depth
+    if temperature is not None:
+        cli_args["temperature"] = temperature
+    if max_tokens is not None:
+        cli_args["max_tokens"] = max_tokens
+    if max_diff_bytes is not None:
+        cli_args["max_diff_bytes"] = max_diff_bytes
     if include_branch:
         cli_args["include_branch"] = include_branch
 

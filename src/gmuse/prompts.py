@@ -44,7 +44,11 @@ Guidelines:
 """Base system prompt used for all commit message generations."""
 
 MAX_MESSAGE_LENGTH: Final[int] = 1000
-"""Maximum allowed length for generated commit messages."""
+"""Default maximum allowed length for generated commit messages.
+
+This serves as the default value used by validate_message() when no max_length
+parameter is provided. Can be overridden per-call or via configuration.
+"""
 
 # -----------------------------------------------------------------------------
 # Format-Specific Task Prompts
@@ -333,12 +337,15 @@ def build_prompt(
 # -----------------------------------------------------------------------------
 
 
-def validate_message(message: str, format: str = "freeform") -> None:
+def validate_message(
+    message: str, format: str = "freeform", max_length: int = MAX_MESSAGE_LENGTH
+) -> None:
     """Validate generated commit message.
 
     Args:
         message: Generated commit message to validate
         format: Expected message format
+        max_length: Maximum allowed message length (default: 1000)
 
     Raises:
         InvalidMessageError: If message fails validation
@@ -355,9 +362,9 @@ def validate_message(message: str, format: str = "freeform") -> None:
     if not message or not message.strip():
         raise InvalidMessageError("Generated message is empty")
 
-    if len(message) > MAX_MESSAGE_LENGTH:
+    if len(message) > max_length:
         raise InvalidMessageError(
-            f"Message too long: {len(message)} characters (max {MAX_MESSAGE_LENGTH})"
+            f"Message too long: {len(message)} characters (max {max_length})"
         )
 
     # Format-specific validation
@@ -389,17 +396,23 @@ def validate_message(message: str, format: str = "freeform") -> None:
 # -----------------------------------------------------------------------------
 
 _CHARS_PER_TOKEN: Final[int] = 4
-"""Approximate characters per token for GPT models."""
+"""Default characters per token heuristic for GPT models.
+
+This serves as the default value used by estimate_tokens() when no chars_per_token
+parameter is provided. Can be overridden per-call or via configuration.
+"""
 
 
-def estimate_tokens(text: str) -> int:
+def estimate_tokens(text: str, chars_per_token: int = _CHARS_PER_TOKEN) -> int:
     """Estimate token count for text.
 
-    Uses simple heuristic: ~4 characters per token (approximate for GPT models).
-    This is a rough estimate and actual token counts may vary by model.
+    Uses a simple heuristic (default: ~4 characters per token, approximate for
+    GPT models). This is a rough estimate and actual token counts vary by model
+    and tokenizer.
 
     Args:
         text: Text to estimate tokens for
+        chars_per_token: Characters per token heuristic (default: 4)
 
     Returns:
         Estimated token count
@@ -410,4 +423,4 @@ def estimate_tokens(text: str) -> int:
         >>> estimate_tokens("A" * 400)
         100
     """
-    return len(text) // _CHARS_PER_TOKEN
+    return len(text) // chars_per_token

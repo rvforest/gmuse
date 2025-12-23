@@ -21,6 +21,7 @@ Data Classes:
 """
 
 import hashlib
+import re
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime
@@ -258,8 +259,6 @@ def _sanitize_branch_name(branch_name: str, max_length: int = 60) -> str:
         >>> _sanitize_branch_name("fix/PROJ-456/update-api")
         'fix/ticket-xxx/update-api'
     """
-    import re
-
     # Mask ticket IDs first (before lowercasing): PROJ-123, ABC-456, TICKET-789 -> @@TICKET@@
     # Match uppercase letters (2+) followed by hyphen and digits
     # Use a placeholder that won't be affected by separator normalization

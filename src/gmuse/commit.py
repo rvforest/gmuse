@@ -35,10 +35,12 @@ logger = get_logger(__name__)
 # Constants
 # -----------------------------------------------------------------------------
 
-# Note: DEFAULT_MAX_DIFF_BYTES is kept for backward compatibility but can be
-# overridden via configuration
 DEFAULT_MAX_DIFF_BYTES: Final[int] = 20000
-"""Default maximum diff size in bytes (~5000 tokens)."""
+"""Default maximum diff size in bytes (~5000 tokens).
+
+This serves as the default value but can be overridden via configuration
+using max_diff_bytes parameter.
+"""
 
 
 # -----------------------------------------------------------------------------

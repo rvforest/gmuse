@@ -43,10 +43,12 @@ Guidelines:
 - Prioritize clarity over cleverness"""
 """Base system prompt used for all commit message generations."""
 
-# Note: MAX_MESSAGE_LENGTH is kept for backward compatibility but can be
-# overridden via configuration
 MAX_MESSAGE_LENGTH: Final[int] = 1000
-"""Maximum allowed length for generated commit messages (default)."""
+"""Default maximum allowed length for generated commit messages.
+
+This serves as the default value used by validate_message() when no max_length
+parameter is provided. Can be overridden per-call or via configuration.
+"""
 
 # -----------------------------------------------------------------------------
 # Format-Specific Task Prompts
@@ -379,17 +381,20 @@ def validate_message(
 # Token Estimation
 # -----------------------------------------------------------------------------
 
-# Note: _CHARS_PER_TOKEN is kept for backward compatibility but can be
-# overridden via configuration
 _CHARS_PER_TOKEN: Final[int] = 4
-"""Approximate characters per token for GPT models (default)."""
+"""Default characters per token heuristic for GPT models.
+
+This serves as the default value used by estimate_tokens() when no chars_per_token
+parameter is provided. Can be overridden per-call or via configuration.
+"""
 
 
 def estimate_tokens(text: str, chars_per_token: int = _CHARS_PER_TOKEN) -> int:
     """Estimate token count for text.
 
-    Uses simple heuristic: ~4 characters per token (approximate for GPT models).
-    This is a rough estimate and actual token counts may vary by model.
+    Uses a simple heuristic (default: ~4 characters per token, approximate for
+    GPT models). This is a rough estimate and actual token counts vary by model
+    and tokenizer.
 
     Args:
         text: Text to estimate tokens for

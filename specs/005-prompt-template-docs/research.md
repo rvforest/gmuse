@@ -1,6 +1,6 @@
 # Research: Prompt Template Documentation Reference
 
-**Feature**: 001-prompt-template-docs
+**Feature**: 005-prompt-template-docs
 **Date**: 2025-12-23
 **Status**: Complete
 

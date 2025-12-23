@@ -28,7 +28,7 @@ cd src [ONLY COMMANDS FOR ACTIVE TECHNOLOGIES][ONLY COMMANDS FOR ACTIVE TECHNOLO
 Code style MUST follow the `gmuse` Constitution: type hints, docstrings, Ruff-compatible formatting, and mypy type checks. Include links to the specific `pyproject.toml` sections and nox targets to run checks locally.
 
 ## Recent Changes
-- 001-prompt-template-docs: Added Python 3.10+ (project minimum) + Sphinx, myst-parser, autodoc2, sphinx-copybutton, sphinx-design (existing docs stack)
+- 005-prompt-template-docs: Added Python 3.10+ (project minimum) + Sphinx, myst-parser, autodoc2, sphinx-copybutton, sphinx-design (existing docs stack)
 - 003-msg-dry-run: Added Python 3.10+ + Typer (CLI), pytest (tests), Ruff (lint/format), pyrefly (type-check), LiteLLM (provider calls; must be avoided in dry-run)
 - 002-zsh-completions: Added Python 3.10+ (gmuse), Zsh 5.9 (shell script) + `gmuse` (internal), `zsh` (runtime)
 

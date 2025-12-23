@@ -254,24 +254,28 @@ def _sanitize_branch_name(branch_name: str, max_length: int = 60) -> str:
 
     Example:
         >>> _sanitize_branch_name("feature/USER-123-add-auth")
-        'feature/ticket-xxx-add-auth'
+        'feature/ticket-xxx/add-auth'
         >>> _sanitize_branch_name("fix/PROJ-456/update-api")
         'fix/ticket-xxx/update-api'
     """
     import re
 
+    # Mask ticket IDs first (before lowercasing): PROJ-123, ABC-456, TICKET-789 -> @@TICKET@@
+    # Match uppercase letters (2+) followed by hyphen and digits
+    # Use a placeholder that won't be affected by separator normalization
+    sanitized = re.sub(r"\b[A-Z]{2,}-\d+\b", "@@TICKET@@", branch_name)
+
     # Convert to lowercase
-    sanitized = branch_name.lower()
+    sanitized = sanitized.lower()
 
     # Normalize separators (replace multiple slashes/hyphens/underscores)
     sanitized = re.sub(r"[/_-]+", "/", sanitized)
 
+    # Replace the placeholder with the final masked form
+    sanitized = sanitized.replace("@@ticket@@", "ticket-xxx")
+
     # Remove common username patterns (user/*, username/*)
     sanitized = re.sub(r"^(user|username)/", "", sanitized)
-
-    # Mask ticket IDs: PROJ-123, ABC-456, TICKET-789 -> ticket-xxx
-    # Match uppercase letters followed by hyphen and digits
-    sanitized = re.sub(r"\b[A-Z]{2,}-\d+\b", "ticket-xxx", sanitized, flags=re.IGNORECASE)
 
     # Remove long hex hashes (8+ hex characters)
     sanitized = re.sub(r"\b[0-9a-f]{8,}\b", "", sanitized)
@@ -280,9 +284,24 @@ def _sanitize_branch_name(branch_name: str, max_length: int = 60) -> str:
     sanitized = re.sub(r"/+", "/", sanitized)
     sanitized = sanitized.strip("/")
 
-    # Truncate to max length
+    # Truncate to max length, but try to keep the first segment (type)
     if len(sanitized) > max_length:
-        sanitized = sanitized[:max_length].rsplit("/", 1)[0]
+        # Try to keep at least the first segment (type)
+        first_segment = sanitized.split("/")[0]
+        if len(first_segment) < max_length:
+            # Keep first segment and as much of the rest as possible
+            remaining_length = max_length - len(first_segment) - 1  # -1 for the /
+            if remaining_length > 0:
+                rest = sanitized[len(first_segment) + 1:]
+                sanitized = first_segment + "/" + rest[:remaining_length]
+                # Clean up if we cut in the middle of a word
+                if "/" in sanitized[len(first_segment) + 1:]:
+                    sanitized = sanitized.rsplit("/", 1)[0]
+            else:
+                sanitized = first_segment
+        else:
+            # First segment itself is too long, just truncate
+            sanitized = sanitized[:max_length]
 
     return sanitized
 

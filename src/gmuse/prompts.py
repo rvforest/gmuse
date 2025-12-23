@@ -321,7 +321,9 @@ def build_prompt(
 # -----------------------------------------------------------------------------
 
 
-def validate_message(message: str, format: str = "freeform", max_length: int = MAX_MESSAGE_LENGTH) -> None:
+def validate_message(
+    message: str, format: str = "freeform", max_length: int = MAX_MESSAGE_LENGTH
+) -> None:
     """Validate generated commit message.
 
     Args:

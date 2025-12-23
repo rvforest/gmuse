@@ -5,6 +5,7 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+import sys
 from textwrap import dedent
 from pathlib import Path
 
@@ -13,6 +14,14 @@ project = "gmuse"
 html_title = "gmuse"
 copyright = "2025, Robert Forest"
 author = "Robert Forest"
+
+# -- Path setup --------------------------------------------------------------
+# Ensure gmuse (src/) and local Sphinx extensions (docs/_ext/) are importable.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SRC_DIR = REPO_ROOT / "src"
+EXT_DIR = REPO_ROOT / "docs" / "_ext"
+sys.path.insert(0, str(SRC_DIR))
+sys.path.insert(0, str(EXT_DIR))
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -25,6 +34,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_design",
     "sphinxcontrib.asciinema",
+    "prompt_templates",
 ]
 copybutton_prompt_text = "$ "
 copybutton_only_copy_prompt_lines = True

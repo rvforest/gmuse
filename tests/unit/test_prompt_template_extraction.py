@@ -55,14 +55,21 @@ class TestTemplateExtraction:
     def test_extract_all_templates(self) -> None:
         """Extracts all required templates."""
         templates = template_extractor.extract_all_templates()
-        assert set(templates.keys()) == {"system", "freeform", "conventional", "gitmoji"}
+        assert set(templates.keys()) == {
+            "system",
+            "freeform",
+            "conventional",
+            "gitmoji",
+        }
         assert templates["system"].content == SYSTEM_PROMPT
 
     def test_validate_templates_success(self) -> None:
         """Validation passes for canonical templates."""
         template_extractor.validate_templates()
 
-    def test_validate_templates_empty_template_fails(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    def test_validate_templates_empty_template_fails(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """Validation fails with an actionable message when a template is empty."""
 
         def _empty() -> str:

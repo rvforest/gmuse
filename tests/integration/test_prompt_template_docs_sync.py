@@ -13,7 +13,9 @@ import subprocess
 from pathlib import Path
 
 
-def _run_nox_docs(repo_root: Path, *, extra_env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+def _run_nox_docs(
+    repo_root: Path, *, extra_env: dict[str, str] | None = None
+) -> subprocess.CompletedProcess[str]:
     env = os.environ.copy()
     if extra_env:
         env.update(extra_env)
@@ -33,7 +35,9 @@ def test_docs_build_succeeds_and_contains_templates(tmp_path: Path) -> None:
     result = _run_nox_docs(repo_root)
     assert result.returncode == 0, result.stdout + "\n" + result.stderr
 
-    html_path = repo_root / "docs" / "build" / "html" / "reference" / "prompt-templates.html"
+    html_path = (
+        repo_root / "docs" / "build" / "html" / "reference" / "prompt-templates.html"
+    )
     assert html_path.exists()
 
     html = html_path.read_text(encoding="utf-8")

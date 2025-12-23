@@ -194,11 +194,6 @@ def msg(
         "--history-depth",
         help="Number of recent commits to use for style context (0-50)",
     ),
-    provider: Optional[str] = typer.Option(
-        None,
-        "--provider",
-        help="Explicit provider override (e.g., 'openai', 'anthropic')",
-    ),
     include_branch: bool = typer.Option(
         False,
         "--include-branch",
@@ -232,7 +227,6 @@ def msg(
             copy=copy,
             format=format,
             history_depth=history_depth,
-            provider=provider,
             include_branch=include_branch,
         )
 
@@ -325,7 +319,6 @@ def _load_config(
     copy: bool = False,
     format: Optional[str] = None,
     history_depth: Optional[int] = None,
-    provider: Optional[str] = None,
     include_branch: bool = False,
 ) -> ConfigDict:
     """Load and merge configuration from all sources.
@@ -343,7 +336,6 @@ def _load_config(
         copy: CLI copy to clipboard flag.
         format: CLI format override.
         history_depth: CLI history depth override.
-        provider: CLI provider override.
         include_branch: CLI include branch flag.
 
     Returns:
@@ -362,8 +354,6 @@ def _load_config(
         cli_args["format"] = format
     if history_depth is not None:
         cli_args["history_depth"] = history_depth
-    if provider is not None:
-        cli_args["provider"] = provider
     if include_branch:
         cli_args["include_branch"] = include_branch
 

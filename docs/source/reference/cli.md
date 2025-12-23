@@ -13,11 +13,11 @@ $ gmuse msg [OPTIONS]
 - `--hint TEXT` / `-h TEXT`: Provide a hint to the LLM (e.g., "security fix").
 - `--format TEXT` / `-f TEXT`: Message format: `freeform` (default), `conventional`, or `gitmoji`.
 - `--model TEXT` / `-m TEXT`: LLM model to use (overrides env/config).
-- `--provider TEXT`: Explicit provider override (e.g., `openai`, `gemini`, `anthropic`).
 - `--history-depth INTEGER`: Number of recent commits to use for style context (0–50).
 - `--copy` / `-c`: Copy the generated message to clipboard.
 - `--dry-run`: Print the assembled prompt without calling the LLM provider.
 
+**Note:** Provider selection is auto-detected from configured API keys (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`). To override, set the `GMUSE_PROVIDER` environment variable or add `provider = "<provider>"` to your config file.
 ### Dry-run example
 
 ```console

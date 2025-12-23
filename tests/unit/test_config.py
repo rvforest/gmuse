@@ -208,12 +208,6 @@ class TestGetEnvConfig:
             config = get_env_config()
             assert config == {}
 
-    def test_get_env_config_provider(self) -> None:
-        """Test provider read from GMUSE_PROVIDER env var."""
-        with mock.patch.dict(os.environ, {"GMUSE_PROVIDER": "gemini"}):
-            config = get_env_config()
-            assert config["provider"] == "gemini"
-
     def test_get_env_config_model(self) -> None:
         """Test getting model from GMUSE_MODEL."""
         with mock.patch.dict(os.environ, {"GMUSE_MODEL": "gpt-4"}):

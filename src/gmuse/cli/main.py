@@ -194,11 +194,6 @@ def msg(
         "--history-depth",
         help="Number of recent commits to use for style context (0-50)",
     ),
-    provider: Optional[str] = typer.Option(
-        None,
-        "--provider",
-        help="Explicit provider override (e.g., 'openai', 'anthropic')",
-    ),
     temperature: Optional[float] = typer.Option(
         None,
         "--temperature",
@@ -243,7 +238,6 @@ def msg(
             copy=copy,
             format=format,
             history_depth=history_depth,
-            provider=provider,
             temperature=temperature,
             max_tokens=max_tokens,
             max_diff_bytes=max_diff_bytes,
@@ -336,7 +330,6 @@ def _load_config(
     copy: bool = False,
     format: Optional[str] = None,
     history_depth: Optional[int] = None,
-    provider: Optional[str] = None,
     temperature: Optional[float] = None,
     max_tokens: Optional[int] = None,
     max_diff_bytes: Optional[int] = None,
@@ -356,7 +349,6 @@ def _load_config(
         copy: CLI copy to clipboard flag.
         format: CLI format override.
         history_depth: CLI history depth override.
-        provider: CLI provider override.
         temperature: CLI temperature override.
         max_tokens: CLI max_tokens override.
         max_diff_bytes: CLI max_diff_bytes override.
@@ -377,8 +369,6 @@ def _load_config(
         cli_args["format"] = format
     if history_depth is not None:
         cli_args["history_depth"] = history_depth
-    if provider is not None:
-        cli_args["provider"] = provider
     if temperature is not None:
         cli_args["temperature"] = temperature
     if max_tokens is not None:

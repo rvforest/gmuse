@@ -39,7 +39,6 @@ timeout = 60
 **Type:** string
 **Default:** `null` (auto-detected)
 **Valid values:** `"openai"`, `"anthropic"`, `"gemini"`, `"cohere"`, `"azure"`, `"bedrock"`, `"huggingface"`
-**Environment variable:** `GMUSE_PROVIDER`
 
 LLM provider to use for generation. If not specified, gmuse auto-detects the provider based on available API keys.
 

@@ -521,19 +521,17 @@ class TestUserStory8:
                 old_cwd = os.getcwd()
                 os.chdir(git_repo_with_history)
                 try:
-                    result = runner.invoke(
-                        app, ["msg", "--model", "gpt-4", "--provider", "openai"]
-                    )
+                    result = runner.invoke(app, ["msg", "--model", "gpt-4"])
                 finally:
                     os.chdir(old_cwd)
 
                 assert result.exit_code == 0
 
-                # Verify provider was set
+                # Verify model was passed (provider is auto-detected internally)
                 mock_client_class.assert_called_once()
                 call_kwargs = mock_client_class.call_args[1]
                 assert call_kwargs.get("model") == "gpt-4"
-                assert call_kwargs.get("provider") == "openai"
+                assert call_kwargs.get("provider") is None
 
 
 class TestUserStory9:

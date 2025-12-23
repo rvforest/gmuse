@@ -27,7 +27,7 @@ You should see your configured model and settings displayed.
 
 ## Switch between LLM providers
 
-To use a different provider, set the appropriate API key and optionally specify the provider:
+To use a different provider, set the appropriate API key; gmuse will auto-detect the provider from the environment.
 
 **For OpenAI:**
 ```console
@@ -38,16 +38,16 @@ $ gmuse msg
 **For Anthropic Claude:**
 ```console
 $ export ANTHROPIC_API_KEY="sk-ant-..."
-$ gmuse msg --provider anthropic --model claude-3-5-sonnet-20241022
+$ gmuse msg --model claude-3-5-sonnet-20241022
 ```
 
 **For Google Gemini:**
 ```console
 $ export GEMINI_API_KEY="..."
-$ gmuse msg --provider gemini
+$ gmuse msg --model <model-name>
 ```
 
-To make a provider your default, add it to your config file:
+To make a provider your default, add it to your config file (or set `GMUSE_PROVIDER`):
 ```toml
 provider = "anthropic"
 model = "claude-3-5-sonnet-20241022"

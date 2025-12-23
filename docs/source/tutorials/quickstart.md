@@ -68,11 +68,11 @@ Quick examples used in this guide:
 - `--copy`: Copy the generated message to your clipboard
 
 
-See the CLI Reference for the full list of options and examples (`../reference/cli.md`).
+See the [CLI Reference](../reference/cli.md) for the full list of options and examples.
 
 ## Troubleshooting & Debugging
 
-If gmuse can't detect your provider or model, run `gmuse info` to inspect resolved configuration. If you see `No staged changes`, run `git add` to stage files; see the Troubleshooting guide for more diagnostic tips (`../how_to/troubleshooting.md`).
+If gmuse can't detect your provider or model, run `gmuse info` to inspect resolved configuration. If you see `No staged changes`, run `git add` to stage files; see the [Troubleshooting guide](../how_to/troubleshooting.md) for more diagnostic tips.
 
 ## Tips
 

@@ -63,16 +63,16 @@ class TestValidateBranchConfig:
     def test_validate_branch_max_length_too_small(self) -> None:
         """Test validation fails for branch_max_length below minimum."""
         with pytest.raises(
-            ConfigError, 
-            match=f"branch_max_length must be between {BRANCH_MAX_LENGTH_MIN} and {BRANCH_MAX_LENGTH_MAX}"
+            ConfigError,
+            match=f"branch_max_length must be between {BRANCH_MAX_LENGTH_MIN} and {BRANCH_MAX_LENGTH_MAX}",
         ):
             validate_config({"branch_max_length": BRANCH_MAX_LENGTH_MIN - 1})
 
     def test_validate_branch_max_length_too_large(self) -> None:
         """Test validation fails for branch_max_length above maximum."""
         with pytest.raises(
-            ConfigError, 
-            match=f"branch_max_length must be between {BRANCH_MAX_LENGTH_MIN} and {BRANCH_MAX_LENGTH_MAX}"
+            ConfigError,
+            match=f"branch_max_length must be between {BRANCH_MAX_LENGTH_MIN} and {BRANCH_MAX_LENGTH_MAX}",
         ):
             validate_config({"branch_max_length": BRANCH_MAX_LENGTH_MAX + 1})
 

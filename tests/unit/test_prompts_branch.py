@@ -20,7 +20,7 @@ class TestBuildContextWithBranch:
             size_bytes=100,
             truncated=False,
         )
-        
+
         branch_info = BranchInfo(
             raw_name="feature/add-authentication",
             branch_type="feature",
@@ -44,7 +44,7 @@ class TestBuildContextWithBranch:
             hash="abc",
             size_bytes=10,
         )
-        
+
         branch_info = BranchInfo(
             raw_name="fix",
             branch_type="fix",
@@ -68,7 +68,7 @@ class TestBuildContextWithBranch:
             hash="abc",
             size_bytes=10,
         )
-        
+
         branch_info = BranchInfo(
             raw_name="update-api",
             branch_type=None,
@@ -109,14 +109,14 @@ class TestBuildContextWithBranch:
             hash="abc",
             size_bytes=10,
         )
-        
+
         branch_info = BranchInfo(
             raw_name="feature/test",
             branch_type="feature",
             branch_summary="test",
             is_default=False,
         )
-        
+
         history = CommitHistory(
             commits=[
                 CommitRecord(
@@ -147,7 +147,7 @@ class TestBuildContextWithBranch:
             hash="abc",
             size_bytes=10,
         )
-        
+
         branch_info = BranchInfo(
             raw_name="fix/PROJ-123-bug",
             branch_type="fix",
@@ -174,7 +174,7 @@ class TestBuildPromptWithBranch:
             hash="abc123",
             size_bytes=100,
         )
-        
+
         branch_info = BranchInfo(
             raw_name="feature/add-auth",
             branch_type="feature",
@@ -202,7 +202,7 @@ class TestBuildPromptWithBranch:
             hash="def456",
             size_bytes=50,
         )
-        
+
         branch_info = BranchInfo(
             raw_name="fix/bug-in-api",
             branch_type="fix",
@@ -230,7 +230,7 @@ class TestBuildPromptWithBranch:
             hash="ghi789",
             size_bytes=150,
         )
-        
+
         branch_info = BranchInfo(
             raw_name="docs/update-readme",
             branch_type="docs",

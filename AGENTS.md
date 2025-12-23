@@ -151,7 +151,7 @@ The project supports configuration through CLI flags, environment variables, and
   - CLI: `--include-branch`
   - Environment: `GMUSE_INCLUDE_BRANCH=true`
   - Config file: `include_branch = true`
-  
+
 - **branch_max_length**: Maximum length for branch summary (20-200, default: 60)
   - Environment: `GMUSE_BRANCH_MAX_LENGTH=80`
   - Config file: `branch_max_length = 80`

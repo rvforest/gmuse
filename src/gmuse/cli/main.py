@@ -194,6 +194,11 @@ def msg(
         "--history-depth",
         help="Number of recent commits to use for style context (0-50)",
     ),
+    include_branch: bool = typer.Option(
+        False,
+        "--include-branch",
+        help="Include current branch name as context for commit message generation",
+    ),
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
@@ -212,6 +217,7 @@ def msg(
         gmuse msg --format conventional  # Use conventional commits format
         gmuse msg --copy                 # Auto-copy to clipboard
         gmuse msg --model claude-3-opus  # Use specific model
+        gmuse msg --include-branch       # Include branch context
         gmuse msg --dry-run              # Preview prompt without calling LLM
     """
     try:
@@ -221,10 +227,15 @@ def msg(
             copy=copy,
             format=format,
             history_depth=history_depth,
+            include_branch=include_branch,
         )
 
         # Gather context and generate message
-        context = gather_context(history_depth=config.get("history_depth", 5))
+        context = gather_context(
+            history_depth=config.get("history_depth", 5),
+            include_branch=config.get("include_branch", False),
+            branch_max_length=config.get("branch_max_length", 60),
+        )
 
         # Warn if diff was truncated
         if context.diff_was_truncated:
@@ -242,6 +253,7 @@ def msg(
                 format=effective_format,
                 commit_history=context.history,
                 repo_instructions=context.repo_instructions,
+                branch_info=context.branch_info,
                 user_hint=hint,
                 learning_examples=None,  # learning not implemented yet
             )
@@ -307,6 +319,7 @@ def _load_config(
     copy: bool = False,
     format: Optional[str] = None,
     history_depth: Optional[int] = None,
+    include_branch: bool = False,
 ) -> ConfigDict:
     """Load and merge configuration from all sources.
 
@@ -323,6 +336,7 @@ def _load_config(
         copy: CLI copy to clipboard flag.
         format: CLI format override.
         history_depth: CLI history depth override.
+        include_branch: CLI include branch flag.
 
     Returns:
         Merged and validated configuration dictionary.
@@ -340,6 +354,8 @@ def _load_config(
         cli_args["format"] = format
     if history_depth is not None:
         cli_args["history_depth"] = history_depth
+    if include_branch:
+        cli_args["include_branch"] = include_branch
 
     # Load and merge from all sources
     config_file = load_config()

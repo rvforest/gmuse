@@ -59,6 +59,10 @@ TIMEOUT_MIN: Final[int] = 5
 TIMEOUT_MAX: Final[int] = 300
 """Valid range for timeout configuration (in seconds)."""
 
+BRANCH_MAX_LENGTH_MIN: Final[int] = 20
+BRANCH_MAX_LENGTH_MAX: Final[int] = 200
+"""Valid range for branch_max_length configuration."""
+
 DEFAULTS: Final[ConfigDict] = {
     "model": None,  # Auto-detect from environment
     "copy_to_clipboard": False,
@@ -68,6 +72,8 @@ DEFAULTS: Final[ConfigDict] = {
     "timeout": 30,
     "provider": None,
     "log_file": None,  # Optional path to log file for debug output
+    "include_branch": False,  # Include branch name as context
+    "branch_max_length": 60,  # Maximum length for branch summary
 }
 """Default configuration values used when no override is provided."""
 
@@ -253,6 +259,9 @@ def validate_config(config: ConfigDict) -> None:
         config, "history_depth", HISTORY_DEPTH_MIN, HISTORY_DEPTH_MAX
     )
     _validate_integer_range(config, "timeout", TIMEOUT_MIN, TIMEOUT_MAX)
+    _validate_integer_range(
+        config, "branch_max_length", BRANCH_MAX_LENGTH_MIN, BRANCH_MAX_LENGTH_MAX
+    )
 
     # Validate string choices
     _validate_string_choice(config, "format", VALID_FORMATS)
@@ -261,6 +270,7 @@ def validate_config(config: ConfigDict) -> None:
     # Validate boolean fields
     _validate_boolean(config, "copy_to_clipboard")
     _validate_boolean(config, "learning_enabled")
+    _validate_boolean(config, "include_branch")
 
     # Validate optional string fields
     _validate_optional_string(config, "model")
@@ -333,6 +343,8 @@ def get_env_config() -> ConfigDict:
         - GMUSE_MODEL: Model name
         - GMUSE_FORMAT: Message format
         - GMUSE_HISTORY_DEPTH: Number of commits for context
+        - GMUSE_INCLUDE_BRANCH: Include branch name as context (1/true/yes)
+        - GMUSE_BRANCH_MAX_LENGTH: Maximum length for branch summary
 
     Returns:
         Configuration dictionary from environment variables
@@ -372,8 +384,18 @@ def get_env_config() -> ConfigDict:
     if learning := os.getenv("GMUSE_LEARNING"):
         config["learning_enabled"] = learning.lower() in ("1", "true", "yes")
 
+    if include_branch := os.getenv("GMUSE_INCLUDE_BRANCH"):
+        config["include_branch"] = include_branch.lower() in ("1", "true", "yes")
+
     # Log file override
     if log_file := os.getenv("GMUSE_LOG_FILE"):
         config["log_file"] = log_file
+
+    # Branch max length
+    if branch_max := os.getenv("GMUSE_BRANCH_MAX_LENGTH"):
+        try:
+            config["branch_max_length"] = int(branch_max)
+        except ValueError:
+            logger.warning(f"Invalid GMUSE_BRANCH_MAX_LENGTH: {branch_max}")
 
     return config

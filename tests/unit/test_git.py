@@ -1,5 +1,6 @@
 """Unit tests for gmuse.git module."""
 
+from datetime import datetime
 import subprocess
 import tempfile
 from pathlib import Path
@@ -10,6 +11,7 @@ import pytest
 from gmuse.exceptions import NoStagedChangesError, NotAGitRepositoryError
 from gmuse.git import (
     StagedDiff,
+    _parse_commit_line,
     get_commit_history,
     get_repo_root,
     get_staged_diff,
@@ -80,6 +82,16 @@ class TestGetRepoRoot:
                 ):
                     get_repo_root()
 
+    def test_get_repo_root_timeout(self) -> None:
+        """Test error when git command times out."""
+        with mock.patch("gmuse.git.is_git_repository", return_value=True):
+            with mock.patch(
+                "subprocess.run",
+                side_effect=subprocess.TimeoutExpired("git", 5),
+            ):
+                with pytest.raises(NotAGitRepositoryError, match="timed out"):
+                    get_repo_root()
+
 
 class TestGetStagedDiff:
     """Tests for get_staged_diff function."""
@@ -133,9 +145,49 @@ class TestGetStagedDiff:
             with pytest.raises(NotAGitRepositoryError):
                 get_staged_diff()
 
+    def test_get_staged_diff_command_fails(self) -> None:
+        """Test error when git diff command fails."""
+        error = subprocess.CalledProcessError(1, "git", stderr="boom")
+        with mock.patch("gmuse.git.is_git_repository", return_value=True):
+            with mock.patch("subprocess.run", side_effect=error):
+                with pytest.raises(
+                    NotAGitRepositoryError, match="Failed to get staged diff"
+                ):
+                    get_staged_diff()
+
+    def test_get_staged_diff_timeout(self) -> None:
+        """Test error when git diff command times out."""
+        with mock.patch("gmuse.git.is_git_repository", return_value=True):
+            with mock.patch(
+                "subprocess.run",
+                side_effect=subprocess.TimeoutExpired("git", 30),
+            ):
+                with pytest.raises(NotAGitRepositoryError, match="timed out"):
+                    get_staged_diff()
+
+    def test_get_staged_diff_name_only_failure_falls_back_to_empty_file_list(
+        self,
+    ) -> None:
+        """Test that failure of --name-only collection does not fail the whole call."""
+        mock_diff = "diff --git a/a.py b/a.py\n+line\n"
+        with mock.patch("gmuse.git.is_git_repository", return_value=True):
+            with mock.patch("subprocess.run") as mock_run:
+                mock_run.side_effect = [
+                    mock.Mock(returncode=0, stdout=mock_diff, stderr=""),
+                    subprocess.CalledProcessError(1, "git", stderr="nope"),
+                ]
+                diff = get_staged_diff()
+                assert diff.files_changed == []
+
 
 class TestGetCommitHistory:
     """Tests for get_commit_history function."""
+
+    def test_get_commit_history_not_a_repository(self) -> None:
+        """Test error when not in a git repository."""
+        with mock.patch("gmuse.git.is_git_repository", return_value=False):
+            with pytest.raises(NotAGitRepositoryError, match="Not a git repository"):
+                get_commit_history()
 
     def test_get_commit_history_success(self) -> None:
         """Test fetching commit history successfully."""
@@ -182,6 +234,43 @@ def456|Jane Smith|2025-11-27T09:00:00+00:00|fix: fix bug
                 ):
                     history = get_commit_history()
                     assert len(history.commits) == 0  # Malformed line skipped
+
+    def test_get_commit_history_timeout(self) -> None:
+        """Test error when git log times out."""
+        with mock.patch("gmuse.git.is_git_repository", return_value=True):
+            with mock.patch("gmuse.git.get_repo_root", return_value=Path("/repo")):
+                with mock.patch(
+                    "subprocess.run",
+                    side_effect=subprocess.TimeoutExpired("git", 30),
+                ):
+                    with pytest.raises(
+                        NotAGitRepositoryError, match="Git log command timed out"
+                    ):
+                        get_commit_history()
+
+    def test_get_commit_history_command_fails_raises(self) -> None:
+        """Test that unknown git log failures raise NotAGitRepositoryError."""
+        error = subprocess.CalledProcessError(128, "git", stderr="fatal: bad revision")
+        with mock.patch("gmuse.git.is_git_repository", return_value=True):
+            with mock.patch("gmuse.git.get_repo_root", return_value=Path("/repo")):
+                with mock.patch("subprocess.run", side_effect=error):
+                    with pytest.raises(
+                        NotAGitRepositoryError, match="Failed to fetch commit history"
+                    ):
+                        get_commit_history()
+
+
+class TestParseCommitLine:
+    """Tests for _parse_commit_line helper."""
+
+    def test_parse_commit_line_invalid_timestamp_uses_now(self) -> None:
+        """Invalid ISO timestamps should not crash parsing."""
+        before = datetime.now()
+        commit = _parse_commit_line("abc|Jane|not-a-timestamp|msg")
+        after = datetime.now()
+
+        assert commit is not None
+        assert before <= commit.timestamp <= after
 
 
 class TestTruncateDiff:

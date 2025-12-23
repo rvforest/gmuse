@@ -11,6 +11,14 @@ This file provides essential project information and development standards for c
 - **Python Version**: 3.10+
 - **Main Dependencies**: No runtime dependencies by default. Development and documentation dependencies are defined in `pyproject.toml` (dev: Ruff, pyrefly, pytest, pytest-cov, pre-commit, nox; docs: Sphinx, myst-parser, furo, sphinx-autodoc2)
 
+### Key Features
+
+- **AI-powered commit messages**: Generate commit messages from staged git changes using LLM providers (OpenAI, Anthropic, Google, etc.)
+- **Multiple formats**: Support for freeform, conventional commits, and gitmoji formats
+- **Branch context** (optional): Include sanitized branch name information to improve message generation accuracy
+- **Privacy-first**: Branch context is opt-in with automatic sanitization (masks ticket IDs, removes usernames, etc.)
+- **Configurable**: CLI flags, environment variables, and configuration file support
+
 ## Architecture Overview
 
 The project is organized into several core components:
@@ -123,6 +131,46 @@ uv run nox -s docs
 # Format and lint code
 uv run nox -s format
 uv run nox -s lint
+```
+
+### Configuration Options
+
+The project supports configuration through CLI flags, environment variables, and a config file (`~/.config/gmuse/config.toml`).
+
+#### Core Configuration
+
+- **model**: LLM model to use (e.g., `gpt-4`, `claude-3-opus`)
+- **format**: Message format (`freeform`, `conventional`, `gitmoji`)
+- **history_depth**: Number of recent commits for style context (0-50, default: 5)
+- **timeout**: API timeout in seconds (5-300, default: 30)
+- **copy_to_clipboard**: Auto-copy generated message to clipboard (default: false)
+
+#### Branch Context Configuration (Privacy-Aware)
+
+- **include_branch**: Include current branch name as context (default: `false`)
+  - CLI: `--include-branch`
+  - Environment: `GMUSE_INCLUDE_BRANCH=true`
+  - Config file: `include_branch = true`
+
+- **branch_max_length**: Maximum length for branch summary (20-200, default: 60)
+  - Environment: `GMUSE_BRANCH_MAX_LENGTH=80`
+  - Config file: `branch_max_length = 80`
+
+**Privacy & Sanitization**: When `include_branch` is enabled:
+- Branch names are normalized and lowercased
+- Ticket IDs (e.g., JIRA-123, PROJ-456) are masked as `ticket-xxx`
+- Usernames and long hex hashes are removed
+- Default branches (main, master, develop) are automatically excluded
+- Long branch names are truncated to `branch_max_length`
+
+**Example:**
+```bash
+# With branch context
+gmuse msg --include-branch
+
+# Branch "feature/PROJ-123-add-authentication" becomes:
+# - Branch type: "feature"
+# - Branch summary: "ticket-xxx/add/authentication"
 ```
 
 ### Important Notes

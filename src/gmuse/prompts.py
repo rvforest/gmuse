@@ -77,8 +77,13 @@ Requirements:
 Output only the commit message text, nothing else."""
 
 
-def get_conventional_task() -> str:
+def get_conventional_task(max_chars: int | None = None) -> str:
     """Get task prompt for conventional commit messages.
+
+    Args:
+        max_chars: Optional override for maximum characters. When provided, the
+            default fixed-length guidance is omitted to avoid conflicting
+            instructions.
 
     Returns:
         Task prompt string
@@ -88,7 +93,13 @@ def get_conventional_task() -> str:
         >>> print(task)
         Generate a commit message following Conventional Commits specification...
     """
-    return """Generate a commit message following Conventional Commits specification.
+    length_guidance = (
+        "- Keep total length under 100 characters\n"
+        if max_chars is None
+        else ""
+    )
+
+    return f"""Generate a commit message following Conventional Commits specification.
 
 Format: type(scope): description
 
@@ -105,8 +116,7 @@ Requirements:
 - type is REQUIRED
 - scope is OPTIONAL (use if changes are focused on one area)
 - description must be lowercase, imperative mood
-- Keep total length under 100 characters
-- No period at end of description
+{length_guidance}- No period at end of description
 
 Examples:
 feat(auth): add JWT token validation
@@ -114,7 +124,6 @@ fix(api): handle null pointer in user endpoint
 docs: update installation instructions
 
 Output only the commit message (one line), nothing else."""
-
 
 def get_gitmoji_task() -> str:
     """Get task prompt for gitmoji commit messages.
@@ -262,6 +271,7 @@ def build_prompt(
     branch_info: Optional[BranchInfo] = None,
     user_hint: Optional[str] = None,
     learning_examples: Optional[List[Tuple[str, str]]] = None,
+    max_chars: Optional[int] = None,
 ) -> Tuple[str, str]:
     """Build complete prompt for LLM generation.
 
@@ -319,7 +329,14 @@ def build_prompt(
             f"Unknown format: {format}. Must be one of: {list(task_prompt_map.keys())}"
         )
 
-    task_prompt = task_prompt_map[format]()
+    task_prompt = task_prompt_map[format](**({'max_chars': max_chars} if format == 'conventional' else {}))
+
+    # If max_chars is provided, append an explicit constraint to the user prompt
+    if max_chars is not None:
+        task_prompt = (
+            task_prompt
+            + f"\n\nAdditional requirement:\n- Ensure the final commit message is at most {max_chars} characters long."
+        )
 
     # Combine context and task
     user_prompt = f"{context}\n\n{task_prompt}"

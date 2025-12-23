@@ -75,6 +75,11 @@ MAX_MESSAGE_LENGTH_MIN: Final[int] = 10
 MAX_MESSAGE_LENGTH_MAX: Final[int] = 10000
 """Valid range for max_message_length configuration."""
 
+# New max_chars range
+MAX_CHARS_MIN: Final[int] = 1
+MAX_CHARS_MAX: Final[int] = 500
+"""Valid range for max_chars configuration (characters)."""
+
 CHARS_PER_TOKEN_MIN: Final[int] = 1
 CHARS_PER_TOKEN_MAX: Final[int] = 10
 """Valid range for chars_per_token configuration."""
@@ -95,6 +100,7 @@ DEFAULTS: Final[ConfigDict] = {
     "max_tokens": 500,  # Maximum tokens in LLM response
     "max_diff_bytes": 20000,  # Maximum diff size before truncation (~5000 tokens)
     "max_message_length": 1000,  # Maximum commit message length
+    "max_chars": None,  # Optional maximum characters for generated message
     "chars_per_token": 4,  # Characters per token heuristic for estimation
     "include_branch": False,  # Include branch name as context
     "branch_max_length": 60,  # Maximum length for branch summary
@@ -186,6 +192,10 @@ def _validate_integer_range(
         return
 
     value = config[key]
+    # Allow explicit None for optional parameters (e.g., max_chars)
+    if value is None:
+        return
+
     if not isinstance(value, int):
         raise ConfigError(f"{key} must be an integer, got {type(value).__name__}")
     if not (min_val <= value <= max_val):
@@ -354,6 +364,9 @@ def validate_config(config: ConfigDict) -> None:
         config, "max_message_length", MAX_MESSAGE_LENGTH_MIN, MAX_MESSAGE_LENGTH_MAX
     )
     _validate_integer_range(
+        config, "max_chars", MAX_CHARS_MIN, MAX_CHARS_MAX
+    )
+    _validate_integer_range(
         config, "chars_per_token", CHARS_PER_TOKEN_MIN, CHARS_PER_TOKEN_MAX
     )
 
@@ -452,7 +465,7 @@ def get_env_config() -> ConfigDict:
         - GMUSE_MAX_TOKENS: Maximum tokens in response
         - GMUSE_MAX_DIFF_BYTES: Maximum diff size before truncation
         - GMUSE_MAX_MESSAGE_LENGTH: Maximum commit message length
-        - GMUSE_CHARS_PER_TOKEN: Characters per token heuristic
+    - GMUSE_MAX_CHARS: Optional maximum characters for generated message
         - GMUSE_INCLUDE_BRANCH: Include branch name as context (1/true/yes)
         - GMUSE_BRANCH_MAX_LENGTH: Maximum length for branch summary
 
@@ -481,6 +494,7 @@ def get_env_config() -> ConfigDict:
         ("GMUSE_MAX_TOKENS", "max_tokens"),
         ("GMUSE_MAX_DIFF_BYTES", "max_diff_bytes"),
         ("GMUSE_MAX_MESSAGE_LENGTH", "max_message_length"),
+        ("GMUSE_MAX_CHARS", "max_chars"),
         ("GMUSE_CHARS_PER_TOKEN", "chars_per_token"),
     ]
     for env_var, config_key in int_params:

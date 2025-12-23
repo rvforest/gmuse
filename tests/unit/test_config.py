@@ -370,6 +370,31 @@ class TestNewConfigParameters:
             config = get_env_config()
             assert config["chars_per_token"] == 3
 
+    def test_get_env_config_max_chars(self) -> None:
+        """Test getting max_chars from GMUSE_MAX_CHARS."""
+        with mock.patch.dict(os.environ, {"GMUSE_MAX_CHARS": "80"}):
+            config = get_env_config()
+            assert config["max_chars"] == 80
+
+    def test_validate_max_chars_valid(self) -> None:
+        """Test validation succeeds for valid max_chars."""
+        validate_config({"max_chars": 50})
+        validate_config({"max_chars": 1})
+        validate_config({"max_chars": 500})
+
+    def test_validate_max_chars_out_of_range(self) -> None:
+        """Test validation fails for max_chars out of range."""
+        with pytest.raises(ConfigError, match="max_chars must be between"):
+            validate_config({"max_chars": 0})
+
+        with pytest.raises(ConfigError, match="max_chars must be between"):
+            validate_config({"max_chars": 501})
+
+    def test_validate_max_chars_wrong_type(self) -> None:
+        """Test validation fails for non-integer max_chars."""
+        with pytest.raises(ConfigError, match="max_chars must be an integer"):
+            validate_config({"max_chars": "100"})
+
     def test_defaults_include_new_parameters(self) -> None:
         """Test that DEFAULTS dict includes new parameters."""
         assert "temperature" in DEFAULTS
@@ -381,6 +406,7 @@ class TestNewConfigParameters:
         assert DEFAULTS["max_tokens"] == 500
         assert DEFAULTS["max_diff_bytes"] == 20000
         assert DEFAULTS["max_message_length"] == 1000
+        assert DEFAULTS["max_chars"] is None
         assert DEFAULTS["chars_per_token"] == 4
 
     def test_merge_config_with_new_parameters(self) -> None:

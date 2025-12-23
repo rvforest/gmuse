@@ -199,6 +199,7 @@ def generate_message(
         branch_info=context.branch_info,
         user_hint=hint,
         learning_examples=None,  # TODO: Implement learning in Phase 7
+        max_chars=config.get("max_chars"),
     )
 
     # Initialize LLM client
@@ -220,10 +221,17 @@ def generate_message(
 
     # Validate message
     logger.debug("Validating generated message...")
+    # Use configured max_chars if set, otherwise fall back to max_message_length
+    effective_max = (
+        int(config.get("max_chars"))
+        if config.get("max_chars") is not None
+        else int(config.get("max_message_length", 1000))
+    )
+
     validate_message(
         message,
         format=config.get("format", "freeform"),
-        max_length=int(config.get("max_message_length", 1000)),
+        max_length=effective_max,
     )
 
     logger.debug("Generation complete")

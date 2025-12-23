@@ -277,6 +277,7 @@ def msg(
                 branch_info=context.branch_info,
                 user_hint=hint,
                 learning_examples=None,  # learning not implemented yet
+                max_chars=config.get("max_chars"),
             )
             output = _format_dry_run_output(
                 model=config.get("model"),

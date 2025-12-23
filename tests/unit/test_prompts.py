@@ -285,6 +285,31 @@ class TestBuildPrompt:
         assert "security fix" in user
         assert "Add auth" in user
 
+    def test_build_prompt_includes_max_chars(self) -> None:
+        """Test that max_chars is included in the built user prompt."""
+        diff = StagedDiff(
+            raw_diff="diff",
+            files_changed=["file.py"],
+            lines_added=1,
+            lines_removed=0,
+            hash="abc",
+            size_bytes=10,
+        )
+
+        _, user = build_prompt(diff, format="freeform", max_chars=50)
+        assert "at most 50 characters" in user
+
+    def test_get_conventional_task_omits_default_length_when_max_set(self) -> None:
+        """Conventional task should omit its '100 characters' guidance when max_chars is set."""
+        task = get_conventional_task(max_chars=50)
+        assert "Keep total length under 100 characters" not in task
+
+    def test_validate_message_too_long_reports_actual_and_limit(self) -> None:
+        """Validation error should include actual length and configured max."""
+        long_message = "x" * 51
+        with pytest.raises(InvalidMessageError, match=r"Message too long: 51 characters \(max 50\)"):
+            validate_message(long_message, format="freeform", max_length=50)
+
 
 class TestValidateMessage:
     """Tests for validate_message function."""

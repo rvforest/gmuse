@@ -67,7 +67,7 @@ add new feature
 
 ## Troubleshooting & Fixes
 
-For step-by-step fixes, examples, and guidance on how to adjust prompts or use `--hint` to guide the model toward a valid message, see the [Troubleshooting guide](../how_to/troubleshooting.md).
+For step-by-step fixes, examples, and guidance on how to adjust prompts or use `--hint` to guide the model toward a valid message, see [](../how_to/troubleshooting.md#validation-failures).
 
 ## See also
 

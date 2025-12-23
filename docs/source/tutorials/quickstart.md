@@ -46,7 +46,7 @@ A short summary of the changes with optional details following.
 ```
 
 ### Copy to Clipboard
-To copy automatically for a single invocation, pass `--copy` to `gmuse msg`; to enable persistent copying, set `copy_to_clipboard = true` in your config file (see the [Configuration guide](../how_to/configuration.md)). Clipboard support requires the optional `gmuse[clipboard]` extra.
+To copy automatically for a single invocation, pass `--copy` to `gmuse msg`; to enable persistent copying, set `copy_to_clipboard = true` in your config file (see [](../how_to/configuration.md#enable-clipboard-copying)). Clipboard support requires the optional `gmuse[clipboard]` extra.
 
 ## Try shell completions
 

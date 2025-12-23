@@ -32,7 +32,7 @@ When `gmuse` calls the LLM provider it sends the assembled prompts (System + Use
 * The CLI `--hint` value (if provided)
 * Format/task instructions and any examples or templates
 
-**Note:** gmuse does **not** send unstaged changes, your API keys, files outside the repository, or environment variables — see [Privacy & Security](privacy.md) for full details on what is never sent and provider retention policies.
+**Note:** gmuse does **not** send unstaged changes, your API keys, files outside the repository, or environment variables — see [](./privacy.md#what-is-never-sent) for full details on what is never sent and provider retention policies.
 
 ## Truncation Policy
 
@@ -86,15 +86,15 @@ Depending on your chosen format, a specific task template is appended to the pro
 
 ## Generation Parameters
 
-For default generation settings and guidance on configuring them, see the [Configuration guide](../how_to/configuration.md) and [LLM Generation Parameters](../reference/configuration.md).
+For default generation settings and guidance on configuring them, see the [](../reference/configuration.md#llm-generation-parameters).
 
 ## Validation Rules
 
-For exact validation rules, canonical error messages, examples, and minimal failing/passing examples, see the [Validation reference](../reference/validation.md).
+For exact validation rules, canonical error messages, examples, and minimal failing/passing examples, see the [](../reference/validation.md).
 
 ## Error Handling
 
-For common provider errors, sample messages, and recovery steps, see the [Troubleshooting guide](../how_to/troubleshooting.md).
+For common provider errors, sample messages, and recovery steps, see [](../how_to/troubleshooting.md#error-handling).
 
 ## Example: Tracing a Generation
 

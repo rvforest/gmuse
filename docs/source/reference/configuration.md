@@ -73,6 +73,8 @@ LLM model identifier to use for generation. If not specified, gmuse selects a de
 - `cohere` → `command`
 - `azure` → `gpt-4o`
 
+**For providers without default models** (such as `bedrock` and `huggingface`), you **must** specify a model explicitly using the `model` configuration option, `GMUSE_MODEL` environment variable, or the `--model` CLI flag. Otherwise, gmuse will raise an error with instructions.
+
 ```toml
 model = "gpt-4o"
 ```

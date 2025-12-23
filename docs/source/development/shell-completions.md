@@ -1,4 +1,4 @@
-# Shell completions — Developer guide (gmuse)
+# Shell completions — Developer guide
 
 This document is intended for implementors who want to add or maintain shell
 completion support in gmuse. The canonical, detailed implementation notes for
@@ -7,7 +7,7 @@ single source of truth for any compatibility or protocol requirements.
 
 ## Runtime helper contract
 
-Completion scripts should invoke the runtime helper `gmuse completions-run`
+Completion scripts should invoke the runtime helper `gmuse git-completions-run`
 with arguments `--shell <shell> --for "git commit -m"` and expect a JSON
 response of the form:
 
@@ -35,15 +35,15 @@ Completion scripts must:
 ## Implementation checklist
 
 - Implement a completion script for the target shell that:
-  - Calls `gmuse completions-run --shell <shell> --for "git commit -m"`
+  - Calls `gmuse git-completions-run --shell <shell> --for "git commit -m"`
   - Parses the returned JSON and extracts `suggestion` and `status`
   - Inserts the suggestion only when appropriate (e.g., when the message
     argument is empty)
   - Falls back to the shell's normal completion behavior when needed
 - Add or update automated tests where possible (unit tests for parsing,
-  integration tests that exercise `gmuse completions-run` and the completion
+  integration tests that exercise `gmuse git-completions-run` and the completion
   script in a controlled environment).
-- Document installation and usage in `docs/source/getting_started/completions.md`
+- Document installation and usage in `docs/source/how_to/completions.md`
   by adding the shell to the **Supported shells** section and linking to this
   developer guide for implementors.
 - If the new shell requires special contract extensions or behaviors, add
@@ -56,8 +56,8 @@ Completion scripts must:
   JSON fields. Other shells may choose different strategies.
 - For local testing of the runtime helper, run:
 
-```sh
-GMUSE_DEBUG=1 gmuse completions-run --shell zsh --for "git commit -m" --timeout 3.0
+```console
+GMUSE_DEBUG=1 gmuse git-completions-run --shell zsh --for "git commit -m" --timeout 3.0
 ```
 
 (adjust `--shell` and other args as needed for the target shell).

@@ -80,3 +80,22 @@ jobs:
         run: |
           gmuse --help
           gmuse --version
+
+  docs-check:
+    name: Documentation Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: wntrblm/nox@main
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Build docs
+        run: nox -s docs
+
+      - name: Check links
+        run: nox -s linkcheck

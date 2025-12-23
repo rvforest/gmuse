@@ -1,48 +1,105 @@
-# gmuse documentation
+# AI commit messages
 
-[![GitHub](https://img.shields.io/badge/GitHub-rvforest%2Fgmuse-blue?logo=github)](https://github.com/rvforest/gmuse)
-[![Read the Docs](https://img.shields.io/readthedocs/gmuse)](https://gmuse.readthedocs.io)
-
-[![Checks](https://img.shields.io/github/check-runs/rvforest/gmuse/main)](https://github.com/rvforest/gmuse/actions/workflows/run-checks.yaml?query=branch%3Amain)
-[![codecov](https://codecov.io/gh/rvforest/gmuse/graph/badge.svg?token=JXB4LR2241)](https://codecov.io/gh/rvforest/gmuse)
-
-[![PyPI](https://img.shields.io/pypi/v/gmuse.svg)](https://pypi.org/project/gmuse/)
-[![Python Versions](https://img.shields.io/pypi/pyversions/gmuse.svg)](https://pypi.org/project/gmuse/)
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-
-AI generated commit messages.
-
-```{toctree}
-:maxdepth: 1
-:caption: Getting Started:
-:hidden:
-
-getting_started/installation.md
-getting_started/quickstart.md
-getting_started/completions.md
-
+```{eval-rst}
+.. meta::
+   :description: AI-powered git commit messages in the shell. Streamline your workflow by using LLMs to generate meaningful commit messages directly from your staged changes.
+   :keywords: git, commit, messages, AI, LLM, developer tools, shell
 ```
 
-```{toctree}
-:maxdepth: 1
-:caption: User Guide:
-:hidden:
+:::::{grid} 1 1 2 2
+:gutter: 5
+:class-container: sd-text-center sd-mt-0
+
+::::{grid-item}
+:class: sd-text-left-lg sd-text-center-sm sd-pr-lg-5 sd-d-flex sd-flex-column
+
+:::{div} sd-fs-2 sd-fw-bold
+AI-powered git commit messages in the shell.
+:::
+
+:::{div} sd-fs-5 sd-mt-2 sd-text-muted
+Streamline your workflow by using LLMs to generate meaningful commit messages from staged changes.
+:::
+
+:::{div} sd-mt-3
+{bdg-secondary-line}`MIT` {bdg-secondary-line}`Python` {bdg-info}`AI Powered`
+:::
+
+:::{button-link} tutorials/quickstart.html
+:color: info
+:shadow: lg
+:class: sd-mt-auto sd-rounded-pill sd-mt-5
+
+{octicon}`rocket;1.2em` Get Started
+:::
+::::
+
+::::{grid-item}
+:class: sd-d-flex sd-flex-column sd-pl-lg-5
+
+:::{container} terminal-window
+```console
+$ uv tool install gmuse
+$ echo 'eval "$(gmuse git-completions zsh)"' >> ~/.zshrc
 ```
+:::
 
-```{toctree}
-:maxdepth: 1
-:caption: Reference:
-:hidden:
-
-apidocs/index
+:::{div} sd-mt-auto
+```{asciinema} _static/gmuse-demo.cast
+:preload: 1
+:autoplay: 1
+:rows: 8
+:speed: 2.5
+:theme: monokai
 ```
+:::
+::::
+:::::
+
+:::::{grid} 1 2 2 4
+:gutter: 3
+:class-container: sd-mt-5
+
+:::{grid-item-card} {octicon}`book;1.2em;sd-text-info` Tutorials
+:link: tutorials/index
+:link-type: doc
+:shadow: lg
+
+Step-by-step lessons to help you get started with gmuse.
+:::
+
+:::{grid-item-card} {octicon}`tools;1.2em;sd-text-info` How-to Guides
+:link: how_to/index
+:link-type: doc
+:shadow: lg
+
+Practical guides to solve specific problems and tasks.
+:::
+
+:::{grid-item-card} {octicon}`info;1.2em;sd-text-info` Explanation
+:link: explanation/index
+:link-type: doc
+:shadow: lg
+
+Deep dives into the architecture, concepts, and design.
+:::
+
+:::{grid-item-card} {octicon}`code-square;1.2em;sd-text-info` Reference
+:link: reference/index
+:link-type: doc
+:shadow: lg
+
+Technical reference for APIs, CLI, and configuration.
+:::
+:::::
 
 ```{toctree}
 :maxdepth: 1
-:caption: Development:
 :hidden:
 
-development/contributing.md
-development/shell-completions.md
+tutorials/index
+how_to/index
+explanation/index
+reference/index
+development/index
 ```

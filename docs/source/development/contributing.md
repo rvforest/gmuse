@@ -10,7 +10,7 @@ Thank you for your interest in contributing to gmuse! This guide outlines projec
 - Git
 - A GitHub account
 
-We assume you are familiar with basic git workflows (forking, cloning, branching, committing, pushing, and pull requests). For a refresher, see [GitHub's documentation](https://docs.github.com/en/get-started/quickstart).
+We assume you are familiar with basic git workflows (forking, cloning, branching, committing, pushing, and pull requests). For a refresher, see [GitHub's documentation](https://docs.github.com/en/get-started/start-your-journey).
 
 ### Fork and Clone the Repository
 
@@ -52,7 +52,7 @@ We assume you are familiar with basic git workflows (forking, cloning, branching
 
 ### Code Style
 
-We use [Ruff](https://github.com/charliermarsh/ruff) for both code formatting (Black-compatible rules) and linting.
+We use [Ruff](https://docs.astral.sh/ruff/) for both code formatting (Black-compatible rules) and linting.
 Format your code with:
 
 ```bash

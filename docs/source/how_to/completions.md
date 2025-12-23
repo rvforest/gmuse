@@ -10,21 +10,21 @@ Quickly load the Zsh completion into your current shell and test it locally:
 
 1. Load completions for the current session (temporary):
 
-```zsh
+```console
 # load completions into current shell (temporary)
-eval "$(gmuse completions zsh)"
+$ eval "$(gmuse git-completions zsh)"
 ```
 
 2. Ensure you have staged changes so gmuse has context:
 
-```bash
-git add .  # stage your changes
+```console
+$ git add .  # stage your changes
 ```
 
 3. Test the completion:
 
-```zsh
-git commit -m <TAB>
+```console
+$ git commit -m <TAB>
 # gmuse will generate a suggested commit message and insert it into the -m argument
 ```
 
@@ -39,15 +39,15 @@ To persist the completion across sessions, add the `eval` line to your `~/.zshrc
 
 Generic installation (replace `<shell>` with the shell name):
 
-```sh
+```console
 # add to your shell startup file
-eval "$(gmuse completions <shell>)"
+$ eval "$(gmuse git-completions <shell>)"
 ```
 
 Zsh example (current): add the following to your `~/.zshrc`:
 
-```zsh
-eval "$(gmuse completions zsh)"
+```console
+$ eval "$(gmuse git-completions zsh)"
 ```
 
 Then restart your shell or open a new session (e.g. `exec zsh` for Zsh).

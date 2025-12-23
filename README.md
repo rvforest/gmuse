@@ -1,8 +1,8 @@
 <!-- markdownlint-disable MD033 MD041 -->
 <div align="left">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/rvforest/gmuse/main/docs/source/_static/logo/gmuse-logo-dark.png" width="250">
-<img alt="gmuse Logo" src="https://raw.githubusercontent.com/rvforest/gmuse/main/docs/source/_static/logo/gmuse-logo-light.png" width="250">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/rvforest/gmuse/main/docs/source/_static/logo/gmuse-logo-w-text-dark.png" width="250">
+<img alt="gmuse Logo" src="https://raw.githubusercontent.com/rvforest/gmuse/main/docs/source/_static/logo/gmuse-logo-w-text-light.png" width="250">
   </picture>
 </div>
 
@@ -30,13 +30,13 @@ AI generated git commit messages in the shell using LLMs.
 
 1. Install gmuse (see Installation below).
 2. Ensure your LLM provider API key is set (e.g., `OPENAI_API_KEY`).
-3. Load completions: `eval "$(gmuse completions zsh)"`
+3. Load completions: `eval "$(gmuse git-completions zsh)"`
 4. Stage changes: `git add .`
 5. Test: `git commit -m <TAB>` — gmuse will suggest a message; confirm to use it.
 6. Alternatively, generate a commit message directly: `gmuse msg`
 7. Preview the prompt without calling LLM: `gmuse msg --dry-run`
 
-See [Completions docs](https://gmuse.readthedocs.io/en/latest/getting_started/completions.html) for configuration and how to persist the completion across sessions.
+See [Completions docs](https://gmuse.readthedocs.io/en/latest/how_to/completions.html) for configuration and how to persist the completion across sessions.
 
 ## Installation
 
@@ -75,7 +75,7 @@ Quick install:
 
 ```bash
 # Add to your ~/.zshrc so the completion is loaded on shell startup
-eval "$(gmuse completions zsh)"
+eval "$(gmuse git-completions zsh)"
 ```
 
 Configuration:
@@ -84,4 +84,4 @@ Configuration:
 - `GMUSE_COMPLETIONS_TIMEOUT` (default `3.0`) — generation timeout in seconds
 - `GMUSE_COMPLETIONS_CACHE_TTL` (default `30`) — cache TTL in seconds
 
-See the documentation for details: https://gmuse.readthedocs.io/en/latest/getting_started/completions.html
+See the documentation for details: https://gmuse.readthedocs.io/en/latest/how_to/completions.html

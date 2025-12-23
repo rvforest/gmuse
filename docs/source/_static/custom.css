@@ -1,0 +1,166 @@
+/* Ensure sidebar scrollbar only appears when needed */
+.bd-sidebar-primary {
+    overflow-y: auto !important;
+}
+
+
+/* Hide ReadTheDocs footer container if it's empty to prevent extra spacing */
+#rtd-footer-container:empty {
+    display: none;
+}
+
+
+/* Styled installation snippet */
+.terminal-window {
+    --term-header: #333;
+    --term-bg: #1e1e1e;
+    --term-dot: rgba(255, 255, 255, 0.2);
+    --term-border: rgba(255, 255, 255, 0.1);
+    --term-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+
+    background: var(--term-bg) !important;
+    /* Create a distinct header bar with a gradient */
+    background-image: linear-gradient(to bottom, var(--term-header) 32px, var(--term-bg) 32px) !important;
+
+    border: 1px solid var(--term-border) !important;
+    border-radius: 10px !important;
+    margin: 1.5rem 0 !important;
+    position: relative !important;
+    padding-top: 32px !important;
+    box-shadow: var(--term-shadow) !important;
+    display: block !important;
+    overflow: hidden !important;
+    text-align: left !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.terminal-window:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Light mode theme for terminal */
+[data-theme="light"] .terminal-window {
+    --term-header: #e2e8f0;
+    --term-bg: #ffffff;
+    --term-dot: rgba(0, 0, 0, 0.2);
+    --term-border: rgba(0, 0, 0, 0.1);
+    --term-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .terminal-window:hover {
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Terminal Dots (Monochrome Gray) */
+.terminal-window::before {
+    content: "" !important;
+    position: absolute !important;
+    top: 13px !important;
+    left: 15px !important;
+    width: 7px !important;
+    height: 7px !important;
+    background-color: var(--term-dot) !important;
+    border-radius: 50% !important;
+    box-shadow: 16px 0 0 var(--term-dot), 32px 0 0 var(--term-dot) !important;
+    z-index: 10;
+}
+
+/* Ensure code blocks inside are transparent and correctly padded */
+.terminal-window .highlight,
+.terminal-window div[class*="highlight-"] {
+    background: transparent !important;
+    border: none !important;
+    margin: 0 !important;
+}
+
+/* Style the terminal prompt to be more subtle and completely unselectable */
+.terminal-window .highlight .gp {
+    color: var(--term-dot) !important;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+
+    display: inline-block;
+    width: 1.25rem;
+    /* Sufficient space for the prompt */
+    position: relative;
+    vertical-align: middle;
+    visibility: hidden;
+    /* Hide the actual text node from selection */
+    pointer-events: none;
+}
+
+.terminal-window .highlight .gp::before {
+    content: "$";
+    text-indent: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    color: var(--term-dot) !important;
+    visibility: visible;
+    /* Restore visibility for the visual prompt */
+    font-size: 0.95rem;
+}
+
+.terminal-window .highlight pre,
+.terminal-window div[class*="highlight-"] pre {
+    padding: 1.2rem !important;
+    /* Slightly tighter padding */
+    margin: 0 !important;
+    font-size: 0.95em !important;
+    /* Slightly smaller for a sharper look */
+    background: transparent !important;
+    line-height: 1.5 !important;
+    border: none !important;
+    overflow-x: hidden !important;
+    /* Prevent scrollbar ghosting */
+}
+
+/* This selector tries to find the landing page by looking for the absence of breadcrumbs
+   or the presence of the home-specific data attribute in sphinx-book-theme */
+[data-content_root="./"] .prev-next-area,
+[data-content_root="./"] h1,
+[data-content_root="./"] .bd-sidebar-secondary,
+[data-content_root="./"] .bd-breadcrumbs,
+body.home .prev-next-area,
+body.home h1,
+body.home .bd-sidebar-secondary,
+body.home .bd-breadcrumbs {
+    display: none !important;
+}
+
+/* Expand content width on landing page */
+[data-content_root="./"] .bd-main .bd-content .bd-article-container,
+body.home .bd-main .bd-content .bd-article-container {
+    max-width: 1200px !important;
+}
+
+
+/* Neutralize the 'secondary' outline badges (MIT/Python) to a subtle gray */
+.sd-outline-secondary {
+    background-color: transparent !important;
+    color: rgba(0, 0, 0, 0.5) !important;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Dark mode override */
+[data-theme="dark"] .sd-outline-secondary {
+    color: rgba(255, 255, 255, 0.6) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Make asciinema player text match the terminal window font size */
+/* Target any embedded asciicast (ids start with "asciicast-") and force a matching
+   font-size/line-height to match `.terminal-window .highlight pre` above. */
+div[id^="asciicast-"] .ap-terminal,
+.ap-player .ap-terminal {
+    font-size: 1.0em !important;
+    /* Set the player variable that controls per-line height so the player places
+       each line taller and prevents glyph clipping. Use an `em` value so the
+       spacing scales with the terminal font-size. */
+    --term-line-height: 1.6em !important;
+    /* Fallback for user agents that read `line-height` directly */
+    line-height: 1.6em !important;
+}

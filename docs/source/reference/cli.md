@@ -4,28 +4,54 @@
 
 Generate a commit message from staged changes.
 
-```bash
-gmuse msg [OPTIONS]
+```console
+$ gmuse msg [OPTIONS]
 ```
 
 ### Options
 
-- `--hint TEXT`: Provide a hint to the LLM.
-- `--copy / --no-copy`: Copy the message to clipboard.
-- `--edit / --no-edit`: Open the message in an editor.
+- `--hint TEXT` / `-h TEXT`: Provide a hint to the LLM (e.g., "security fix").
+- `--format TEXT` / `-f TEXT`: Message format: `freeform` (default), `conventional`, or `gitmoji`.
+- `--model TEXT` / `-m TEXT`: LLM model to use (overrides env/config).
+- `--provider TEXT`: Explicit provider override (e.g., `openai`, `gemini`, `anthropic`).
+- `--history-depth INTEGER`: Number of recent commits to use for style context (0–50).
+- `--copy` / `-c`: Copy the generated message to clipboard.
+- `--dry-run`: Print the assembled prompt without calling the LLM provider.
+
+### Dry-run example
+
+```console
+$ gmuse msg --dry-run
+```
+
+Output:
+
+```text
+MODEL: gpt-4o-mini
+FORMAT: freeform
+TRUNCATED: false
+
+SYSTEM PROMPT:
+...
+
+USER PROMPT:
+...
+```
+
+Useful for debugging, auditing, or inspecting the prompt before calling the LLM.
 
 ## gmuse info
 
 Display resolved configuration for debugging.
 
-```bash
-gmuse info
+```console
+$ gmuse info
 ```
 
 ## gmuse git-completions
 
 Generate shell completion scripts.
 
-```bash
-gmuse git-completions zsh
+```console
+$ gmuse git-completions zsh
 ```

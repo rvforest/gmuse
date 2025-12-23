@@ -172,10 +172,10 @@ def resolve_model(provider: str, model: Optional[str] = None) -> str:
         raise LLMError(
             f"No default model configured for provider '{provider}'.\n\n"
             "Please specify a model explicitly:\n"
-            f"  export GMUSE_MODEL='<model-name>'\n"
-            f"  gmuse msg --model '<model-name>'\n\n"
+            "  export GMUSE_MODEL='<model-name>'\n"
+            "  gmuse msg --model '<model-name>'\n\n"
             "Or configure in config.toml:\n"
-            f"  model = '<model-name>'\n\n"
+            "  model = '<model-name>'\n\n"
             "Config location: ~/.config/gmuse/config.toml"
         )
 

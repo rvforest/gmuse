@@ -111,8 +111,7 @@ class TestResolveModel:
         with mock.patch.dict(os.environ, {}, clear=True):
             # Should work when model is explicitly provided
             assert (
-                resolve_model("bedrock", "anthropic.claude-v2")
-                == "anthropic.claude-v2"
+                resolve_model("bedrock", "anthropic.claude-v2") == "anthropic.claude-v2"
             )
             assert (
                 resolve_model("huggingface", "meta-llama/Llama-2-7b-hf")

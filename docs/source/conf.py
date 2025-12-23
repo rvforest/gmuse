@@ -86,3 +86,10 @@ html_favicon = "_static/gmuse-favicon.png"
 linkcheck_allowed_redirects = {
     r"https://github\.com/chrisjsewell/sphinx-autodoc2": r"https://github\.com/sphinx-extensions2/sphinx-autodoc2",
 }
+
+# Ignore specific links that are known to be valid but flagged by linkcheck.
+# In this case `tutorials/quickstart.html` is reported as broken but works in the
+# built docs; ignore only that exact path so other link issues still surface.
+linkcheck_ignore = [
+    r"tutorials/quickstart\.html$",
+]

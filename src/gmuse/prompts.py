@@ -336,7 +336,7 @@ def build_prompt(
     )
 
     # If max_chars is provided, append an explicit constraint to the user prompt
-    if max_chars is not None:
+    if max_chars is not None and format == "conventional":
         task_prompt = (
             task_prompt
             + f"\n\nAdditional requirement:\n- Ensure the final commit message is at most {max_chars} characters long."

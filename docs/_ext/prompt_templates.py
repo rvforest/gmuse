@@ -24,7 +24,7 @@ class PromptTemplateDirective(SphinxDirective):
     required_arguments = 1
     has_content = False
 
-    def run(self):  # noqa: D102
+    def run(self):  # type: ignore[bad-override] # noqa: D102
         template_name = self.arguments[0]
         templates = extract_all_templates()
 
@@ -44,7 +44,7 @@ class ContextInputsTableDirective(SphinxDirective):
 
     has_content = False
 
-    def run(self):  # noqa: D102
+    def run(self):  # type: ignore[bad-override] # noqa: D102
         inputs = get_context_inputs()
 
         table = nodes.table()

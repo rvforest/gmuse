@@ -80,3 +80,9 @@ html_css_files = [
 
 # Favicon configuration
 html_favicon = "_static/gmuse-favicon.png"
+
+# -- Options for linkcheck ---------------------------------------------------
+# Handle permanent redirects
+linkcheck_allowed_redirects = {
+    r"https://github\.com/chrisjsewell/sphinx-autodoc2": r"https://github\.com/sphinx-extensions2/sphinx-autodoc2",
+}

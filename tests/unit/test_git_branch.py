@@ -51,6 +51,12 @@ class TestSanitizeBranchName:
         assert len(result) <= 60
         assert result.startswith("feature")
 
+    def test_sanitize_truncate_first_segment_too_long(self) -> None:
+        """If the first segment itself exceeds max_length, it should be truncated."""
+        long_first = "" + "x" * 100
+        result = _sanitize_branch_name(long_first, max_length=10)
+        assert result == "x" * 10
+
     def test_sanitize_clean_trailing_separators(self) -> None:
         """Test that trailing separators are removed."""
         assert _sanitize_branch_name("feature/test/") == "feature/test"

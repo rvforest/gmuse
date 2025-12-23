@@ -35,6 +35,7 @@ classifiers = [
 dependencies = [
     "typer>=0.9.0",
     "tomli>=2.0.0; python_version < '3.11'",
+    "tomlkit>=0.13.2",
     "litellm>=1.0.0",
 ]
 

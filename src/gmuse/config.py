@@ -13,6 +13,7 @@ values of various types depending on the setting.
 
 import os
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, Final, Optional
 
@@ -102,6 +103,30 @@ DEFAULTS: Final[ConfigDict] = {
 """Default configuration values used when no override is provided."""
 
 
+ALLOWED_CONFIG_KEYS: Final[frozenset[str]] = frozenset(DEFAULTS.keys())
+"""Allowlist of configuration keys that can be set via the CLI."""
+
+
+ENV_VAR_BY_KEY: Final[dict[str, str]] = {
+    "model": "GMUSE_MODEL",
+    "format": "GMUSE_FORMAT",
+    "history_depth": "GMUSE_HISTORY_DEPTH",
+    "timeout": "GMUSE_TIMEOUT",
+    "copy_to_clipboard": "GMUSE_COPY",
+    "learning_enabled": "GMUSE_LEARNING",
+    "provider": "GMUSE_PROVIDER",
+    "log_file": "GMUSE_LOG_FILE",
+    "temperature": "GMUSE_TEMPERATURE",
+    "max_tokens": "GMUSE_MAX_TOKENS",
+    "max_diff_bytes": "GMUSE_MAX_DIFF_BYTES",
+    "max_message_length": "GMUSE_MAX_MESSAGE_LENGTH",
+    "chars_per_token": "GMUSE_CHARS_PER_TOKEN",
+    "include_branch": "GMUSE_INCLUDE_BRANCH",
+    "branch_max_length": "GMUSE_BRANCH_MAX_LENGTH",
+}
+"""Mapping from config keys to their overriding environment variables."""
+
+
 def get_config_path() -> Path:
     """Get the path to the configuration file using XDG Base Directory specification.
 
@@ -163,6 +188,85 @@ def load_config(config_path: Optional[Path] = None) -> ConfigDict:
         raise ConfigError(f"Invalid TOML syntax in {config_path}: {e}") from e
     except OSError as e:
         raise ConfigError(f"Cannot read config file {config_path}: {e}") from e
+
+
+def load_config_raw(config_path: Optional[Path] = None) -> str | None:
+    """Load raw config file contents as text.
+
+    This is used by `gmuse config view` to display the file contents verbatim
+    while still providing clear errors for unreadable files.
+
+    Args:
+        config_path: Path to config file, defaults to XDG location.
+
+    Returns:
+        The file contents if the file exists, otherwise None.
+
+    Raises:
+        ConfigError: If the file exists but cannot be read.
+    """
+    if config_path is None:
+        config_path = get_config_path()
+
+    if not config_path.exists():
+        return None
+
+    try:
+        return config_path.read_text(encoding="utf-8")
+    except OSError as e:
+        raise ConfigError(f"Cannot read config file {config_path}: {e}") from e
+
+
+def parse_config_value(key: str, raw: str) -> Any:
+    """Parse a CLI-provided raw value according to the expected key type.
+
+    Args:
+        key: Configuration key (must be in DEFAULTS).
+        raw: Raw user-provided value string.
+
+    Returns:
+        Parsed Python value.
+
+    Raises:
+        ConfigError: If the key is unknown or the value cannot be parsed.
+    """
+    if key not in DEFAULTS:
+        raise ConfigError(f"Unknown configuration key: '{key}'")
+
+    expected_default = DEFAULTS[key]
+    raw_normalized = raw.strip()
+    lower = raw_normalized.lower()
+
+    if isinstance(expected_default, bool):
+        if lower in {"true", "1", "yes"}:
+            return True
+        if lower in {"false", "0", "no"}:
+            return False
+        raise ConfigError(f"{key} must be a boolean (true/false), got '{raw}'")
+
+    if isinstance(expected_default, int):
+        try:
+            return int(raw_normalized)
+        except ValueError as e:
+            raise ConfigError(f"Cannot parse '{raw}' as integer for '{key}'") from e
+
+    if isinstance(expected_default, float):
+        try:
+            return float(raw_normalized)
+        except ValueError as e:
+            raise ConfigError(f"Cannot parse '{raw}' as number for '{key}'") from e
+
+    # Optional string keys use a None default.
+    if expected_default is None:
+        if lower in {"null", "none"}:
+            return None
+        return raw_normalized
+
+    # Plain strings.
+    if isinstance(expected_default, str):
+        return raw_normalized
+
+    raise ConfigError(f"Unsupported configuration type for '{key}'")
 
 
 def _validate_integer_range(
@@ -391,8 +495,8 @@ def merge_config(
 
     Priority (highest to lowest):
     1. CLI arguments (cli_args)
-    2. Config file (config_file)
-    3. Environment variables (env_vars)
+    2. Environment variables (env_vars)
+    3. Config file (config_file)
     4. Defaults (DEFAULTS)
 
     Args:
@@ -415,16 +519,16 @@ def merge_config(
     # Start with defaults
     result = DEFAULTS.copy()
 
-    # Apply environment variables
-    if env_vars:
-        for key, value in env_vars.items():
-            if value is not None:
-                result[key] = value
-
     # Apply config file
     if config_file:
         for key, value in config_file.items():
             if key in DEFAULTS and value is not None:
+                result[key] = value
+
+    # Apply environment variables
+    if env_vars:
+        for key, value in env_vars.items():
+            if value is not None:
                 result[key] = value
 
     # Apply CLI args (highest priority)
@@ -434,6 +538,100 @@ def merge_config(
                 result[key] = value
 
     return result
+
+
+def _load_toml_document(config_path: Path):
+    """Load a TOML document for round-trip editing.
+
+    Raises:
+        ConfigError: If the file cannot be read or TOML is invalid.
+    """
+    import tomlkit
+    from tomlkit.exceptions import ParseError
+
+    if not config_path.exists():
+        return tomlkit.document()
+
+    try:
+        text = config_path.read_text(encoding="utf-8")
+    except OSError as e:
+        raise ConfigError(f"Cannot read config file {config_path}: {e}") from e
+
+    try:
+        return tomlkit.parse(text)
+    except ParseError as e:
+        raise ConfigError(f"Invalid TOML syntax in {config_path}: {e}") from e
+
+
+def _atomic_write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    tmp_path: Path | None = None
+    try:
+        fd, tmp_name = tempfile.mkstemp(
+            dir=str(path.parent),
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+        )
+        tmp_path = Path(tmp_name)
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(text)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, path)
+    except OSError as e:
+        raise ConfigError(f"Cannot write config file {path}: {e}") from e
+    finally:
+        if tmp_path is not None and tmp_path.exists():
+            try:
+                tmp_path.unlink()
+            except OSError as e:
+                # Best-effort cleanup: failure to remove the temporary file is non-fatal.
+                logger.debug(
+                    "Failed to remove temporary config temp file %s: %s", tmp_path, e
+                )
+
+
+def update_config_key(key: str, value: Any, config_path: Optional[Path] = None) -> Path:
+    """Update (or remove) a single key in the global config file.
+
+    This preserves unrelated settings and comments by using tomlkit round-trip
+    editing and writes the file atomically.
+
+    Args:
+        key: Config key to set.
+        value: Parsed value.
+        config_path: Optional path override (defaults to XDG location).
+
+    Returns:
+        The path that was written.
+
+    Raises:
+        ConfigError: On read/write errors or invalid TOML.
+    """
+    if config_path is None:
+        config_path = get_config_path()
+
+    if key not in ALLOWED_CONFIG_KEYS:
+        raise ConfigError(f"Unknown configuration key: '{key}'")
+
+    doc = _load_toml_document(config_path)
+
+    # Treat None as 'unset' for optional string keys.
+    if value is None and DEFAULTS.get(key) is None:
+        if key in doc:
+            del doc[key]
+    else:
+        doc[key] = value
+
+    import tomlkit
+
+    rendered = tomlkit.dumps(doc)
+    if rendered and not rendered.endswith("\n"):
+        rendered += "\n"
+
+    _atomic_write_text(config_path, rendered)
+    return config_path
 
 
 def get_env_config() -> ConfigDict:
@@ -484,12 +682,14 @@ def get_env_config() -> ConfigDict:
         ("GMUSE_CHARS_PER_TOKEN", "chars_per_token"),
     ]
     for env_var, config_key in int_params:
-        if result := _parse_env_int(env_var, config_key):
-            config[result[0]] = result[1]
+        int_result = _parse_env_int(env_var, config_key)
+        if int_result:
+            config[int_result[0]] = int_result[1]
 
     # Float values - use helper function
-    if result := _parse_env_float("GMUSE_TEMPERATURE", "temperature"):
-        config[result[0]] = result[1]
+    float_result = _parse_env_float("GMUSE_TEMPERATURE", "temperature")
+    if float_result:
+        config[float_result[0]] = float_result[1]
 
     # Boolean values
     if copy := os.getenv("GMUSE_COPY"):

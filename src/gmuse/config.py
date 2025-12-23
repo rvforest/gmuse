@@ -282,6 +282,42 @@ def _validate_optional_string(config: ConfigDict, key: str) -> None:
         raise ConfigError(f"{key} must be a string or null, got {type(value).__name__}")
 
 
+def _parse_env_int(env_var: str, config_key: str) -> tuple[str, int] | None:
+    """Parse an integer environment variable.
+
+    Args:
+        env_var: Environment variable name (e.g., "GMUSE_TIMEOUT")
+        config_key: Configuration key name (e.g., "timeout")
+
+    Returns:
+        Tuple of (config_key, parsed_value) if valid, None otherwise
+    """
+    if value := os.getenv(env_var):
+        try:
+            return (config_key, int(value))
+        except ValueError:
+            logger.warning(f"Invalid {env_var}: {value}")
+    return None
+
+
+def _parse_env_float(env_var: str, config_key: str) -> tuple[str, float] | None:
+    """Parse a float environment variable.
+
+    Args:
+        env_var: Environment variable name (e.g., "GMUSE_TEMPERATURE")
+        config_key: Configuration key name (e.g., "temperature")
+
+    Returns:
+        Tuple of (config_key, parsed_value) if valid, None otherwise
+    """
+    if value := os.getenv(env_var):
+        try:
+            return (config_key, float(value))
+        except ValueError:
+            logger.warning(f"Invalid {env_var}: {value}")
+    return None
+
+
 def validate_config(config: ConfigDict) -> None:
     """Validate configuration values.
 
@@ -427,49 +463,22 @@ def get_env_config() -> ConfigDict:
     if fmt := os.getenv("GMUSE_FORMAT"):
         config["format"] = fmt
 
-    # Integer values
-    if depth := os.getenv("GMUSE_HISTORY_DEPTH"):
-        try:
-            config["history_depth"] = int(depth)
-        except ValueError:
-            logger.warning(f"Invalid GMUSE_HISTORY_DEPTH: {depth}")
+    # Integer values - use helper function
+    int_params = [
+        ("GMUSE_HISTORY_DEPTH", "history_depth"),
+        ("GMUSE_TIMEOUT", "timeout"),
+        ("GMUSE_MAX_TOKENS", "max_tokens"),
+        ("GMUSE_MAX_DIFF_BYTES", "max_diff_bytes"),
+        ("GMUSE_MAX_MESSAGE_LENGTH", "max_message_length"),
+        ("GMUSE_CHARS_PER_TOKEN", "chars_per_token"),
+    ]
+    for env_var, config_key in int_params:
+        if result := _parse_env_int(env_var, config_key):
+            config[result[0]] = result[1]
 
-    if timeout := os.getenv("GMUSE_TIMEOUT"):
-        try:
-            config["timeout"] = int(timeout)
-        except ValueError:
-            logger.warning(f"Invalid GMUSE_TIMEOUT: {timeout}")
-
-    if max_tokens := os.getenv("GMUSE_MAX_TOKENS"):
-        try:
-            config["max_tokens"] = int(max_tokens)
-        except ValueError:
-            logger.warning(f"Invalid GMUSE_MAX_TOKENS: {max_tokens}")
-
-    if max_diff_bytes := os.getenv("GMUSE_MAX_DIFF_BYTES"):
-        try:
-            config["max_diff_bytes"] = int(max_diff_bytes)
-        except ValueError:
-            logger.warning(f"Invalid GMUSE_MAX_DIFF_BYTES: {max_diff_bytes}")
-
-    if max_message_length := os.getenv("GMUSE_MAX_MESSAGE_LENGTH"):
-        try:
-            config["max_message_length"] = int(max_message_length)
-        except ValueError:
-            logger.warning(f"Invalid GMUSE_MAX_MESSAGE_LENGTH: {max_message_length}")
-
-    if chars_per_token := os.getenv("GMUSE_CHARS_PER_TOKEN"):
-        try:
-            config["chars_per_token"] = int(chars_per_token)
-        except ValueError:
-            logger.warning(f"Invalid GMUSE_CHARS_PER_TOKEN: {chars_per_token}")
-
-    # Float values
-    if temperature := os.getenv("GMUSE_TEMPERATURE"):
-        try:
-            config["temperature"] = float(temperature)
-        except ValueError:
-            logger.warning(f"Invalid GMUSE_TEMPERATURE: {temperature}")
+    # Float values - use helper function
+    if result := _parse_env_float("GMUSE_TEMPERATURE", "temperature"):
+        config[result[0]] = result[1]
 
     # Boolean values
     if copy := os.getenv("GMUSE_COPY"):

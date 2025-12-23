@@ -585,8 +585,9 @@ def _atomic_write_text(path: Path, text: str) -> None:
         if tmp_path is not None and tmp_path.exists():
             try:
                 tmp_path.unlink()
-            except OSError:
-                pass
+            except OSError as e:
+                # Best-effort cleanup: failure to remove the temporary file is non-fatal.
+                logger.debug("Failed to remove temporary config temp file %s: %s", tmp_path, e)
 
 
 def update_config_key(key: str, value: Any, config_path: Optional[Path] = None) -> Path:

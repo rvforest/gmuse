@@ -7,6 +7,7 @@ Technical reference for APIs and configuration.
 
 cli
 configuration
+prompt-templates
 validation
 default_models
 ../apidocs/index

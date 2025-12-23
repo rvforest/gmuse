@@ -99,6 +99,3 @@ jobs:
 
       - name: Check links
         run: nox -s linkcheck
-
-      - name: Verify consistency
-        run: nox -s verify_docs

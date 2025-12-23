@@ -137,6 +137,7 @@ def set_value(key: str = typer.Argument(...), value: str = typer.Argument(...)) 
             hint=_format_valid_keys(valid_keys),
         )
 
+    parsed: str | None = None
     try:
         parsed = parse_config_value(normalized_key, value)
     except ConfigError as e:
@@ -166,6 +167,7 @@ def set_value(key: str = typer.Argument(...), value: str = typer.Argument(...)) 
             hint = "Allowed range: 0.0-2.0"
         _exit_with_error(str(e), hint=hint)
 
+    config_path = None
     try:
         config_path = update_config_key(normalized_key, parsed)
     except ConfigError as e:
@@ -173,7 +175,10 @@ def set_value(key: str = typer.Argument(...), value: str = typer.Argument(...)) 
             str(e),
             hint="Check directory permissions and try again.",
         )
+    if config_path is None:
+        _exit_with_error("Failed to determine config file path after update.")
 
+    assert config_path is not None  # for type checker
     typer.echo(
         f"Set '{normalized_key}' to '{_format_value(parsed)}' in {Path(config_path)}"
     )

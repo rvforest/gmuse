@@ -10,7 +10,7 @@ from typer.testing import CliRunner
 from gmuse.cli.main import app
 from gmuse.config import parse_config_value, DEFAULTS
 
-runner = CliRunner(mix_stderr=False)
+runner = CliRunner()
 
 
 def test_config_view_no_file_shows_location_and_defaults(
@@ -75,7 +75,7 @@ def test_config_set_update_config_key_raises_shows_hint(
     # Force update_config_key to raise a ConfigError
     import gmuse.cli.config as cli_cfg
 
-    def fake_update(key, value):
+    def fake_update(key, value, config_path=None):
         raise __import__("gmuse").exceptions.ConfigError("Nope")
 
     monkeypatch.setattr(cli_cfg, "update_config_key", fake_update)

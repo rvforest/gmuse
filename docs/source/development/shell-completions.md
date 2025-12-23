@@ -1,4 +1,4 @@
-# Shell completions — Developer guide (gmuse)
+# Shell completions — Developer guide
 
 This document is intended for implementors who want to add or maintain shell
 completion support in gmuse. The canonical, detailed implementation notes for

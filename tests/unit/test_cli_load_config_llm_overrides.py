@@ -24,7 +24,9 @@ def test__load_config_applies_temperature_and_max_tokens_overrides(
     assert cfg["max_tokens"] == 500
 
 
-def test__load_config_applies_max_diff_bytes_override(monkeypatch: pytest.MonkeyPatch) -> None:
+def test__load_config_applies_max_diff_bytes_override(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     import gmuse.cli.main as main_mod
 
     # Avoid reading any real config file or environment variables.

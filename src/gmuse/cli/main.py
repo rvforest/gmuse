@@ -208,6 +208,7 @@ def msg(
         None,
         "--max-diff-bytes",
         help="Maximum diff size in bytes before truncation (default: 20000)",
+    ),
     include_branch: bool = typer.Option(
         False,
         "--include-branch",

@@ -17,10 +17,12 @@ from typing import Final, Optional
 
 from gmuse.config import ConfigDict
 from gmuse.git import (
+    BranchInfo,
     CommitHistory,
     RepositoryInstructions,
     StagedDiff,
     get_commit_history,
+    get_current_branch,
     get_staged_diff,
     load_repository_instructions,
     truncate_diff,
@@ -59,12 +61,14 @@ class GenerationContext:
         diff: Staged changes from git
         history: Recent commit history for style context (None if empty)
         repo_instructions: Project-level guidance from .gmuse file (None if absent)
+        branch_info: Current branch information (None if not included or unavailable)
         diff_was_truncated: Whether the diff was truncated to fit limits
     """
 
     diff: StagedDiff
     history: Optional[CommitHistory]
     repo_instructions: Optional[RepositoryInstructions]
+    branch_info: Optional["BranchInfo"] = None
     diff_was_truncated: bool = False
 
 
@@ -84,15 +88,20 @@ class GenerationResult:
 def gather_context(
     history_depth: int = 5,
     max_diff_bytes: int = DEFAULT_MAX_DIFF_BYTES,
+    include_branch: bool = False,
+    branch_max_length: int = 60,
 ) -> GenerationContext:
     """Gather all context needed for commit message generation.
 
-    This function collects staged changes, commit history, and repository
-    instructions needed to generate a contextually appropriate commit message.
+    This function collects staged changes, commit history, repository
+    instructions, and optionally branch information needed to generate
+    a contextually appropriate commit message.
 
     Args:
         history_depth: Number of recent commits to fetch for style context
         max_diff_bytes: Maximum diff size in bytes before truncation
+        include_branch: Whether to include current branch information
+        branch_max_length: Maximum length for branch summary
 
     Returns:
         GenerationContext with all gathered information
@@ -122,10 +131,21 @@ def gather_context(
     logger.debug("Checking for .gmuse file...")
     repo_instructions = load_repository_instructions()
 
+    # Get branch info if requested
+    branch_info = None
+    if include_branch:
+        logger.debug("Extracting branch information...")
+        branch_info = get_current_branch(max_length=branch_max_length)
+        # Skip default branches (main, master, develop) for privacy
+        if branch_info and branch_info.is_default:
+            logger.debug("Skipping default branch (not informative)")
+            branch_info = None
+
     return GenerationContext(
         diff=diff,
         history=history if history.commits else None,
         repo_instructions=repo_instructions if repo_instructions.exists else None,
+        branch_info=branch_info,
         diff_was_truncated=diff_was_truncated,
     )
 
@@ -165,6 +185,8 @@ def generate_message(
     if context is None:
         context = gather_context(
             history_depth=config.get("history_depth", 5),
+            include_branch=config.get("include_branch", False),
+            branch_max_length=config.get("branch_max_length", 60),
         )
 
     # Build prompt
@@ -174,6 +196,7 @@ def generate_message(
         format=config.get("format", "freeform"),
         commit_history=context.history,
         repo_instructions=context.repo_instructions,
+        branch_info=context.branch_info,
         user_hint=hint,
         learning_examples=None,  # TODO: Implement learning in Phase 7
     )

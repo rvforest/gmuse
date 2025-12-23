@@ -78,6 +78,9 @@ MAX_MESSAGE_LENGTH_MAX: Final[int] = 10000
 CHARS_PER_TOKEN_MIN: Final[int] = 1
 CHARS_PER_TOKEN_MAX: Final[int] = 10
 """Valid range for chars_per_token configuration."""
+BRANCH_MAX_LENGTH_MIN: Final[int] = 20
+BRANCH_MAX_LENGTH_MAX: Final[int] = 200
+"""Valid range for branch_max_length configuration."""
 
 DEFAULTS: Final[ConfigDict] = {
     "model": None,  # Auto-detect from environment
@@ -93,6 +96,8 @@ DEFAULTS: Final[ConfigDict] = {
     "max_diff_bytes": 20000,  # Maximum diff size before truncation (~5000 tokens)
     "max_message_length": 1000,  # Maximum commit message length
     "chars_per_token": 4,  # Characters per token heuristic for estimation
+    "include_branch": False,  # Include branch name as context
+    "branch_max_length": 60,  # Maximum length for branch summary
 }
 """Default configuration values used when no override is provided."""
 
@@ -354,6 +359,9 @@ def validate_config(config: ConfigDict) -> None:
 
     # Validate float ranges
     _validate_float_range(config, "temperature", TEMPERATURE_MIN, TEMPERATURE_MAX)
+    _validate_integer_range(
+        config, "branch_max_length", BRANCH_MAX_LENGTH_MIN, BRANCH_MAX_LENGTH_MAX
+    )
 
     # Validate string choices
     _validate_string_choice(config, "format", VALID_FORMATS)
@@ -362,6 +370,7 @@ def validate_config(config: ConfigDict) -> None:
     # Validate boolean fields
     _validate_boolean(config, "copy_to_clipboard")
     _validate_boolean(config, "learning_enabled")
+    _validate_boolean(config, "include_branch")
 
     # Validate optional string fields
     _validate_optional_string(config, "model")
@@ -444,6 +453,8 @@ def get_env_config() -> ConfigDict:
         - GMUSE_MAX_DIFF_BYTES: Maximum diff size before truncation
         - GMUSE_MAX_MESSAGE_LENGTH: Maximum commit message length
         - GMUSE_CHARS_PER_TOKEN: Characters per token heuristic
+        - GMUSE_INCLUDE_BRANCH: Include branch name as context (1/true/yes)
+        - GMUSE_BRANCH_MAX_LENGTH: Maximum length for branch summary
 
     Returns:
         Configuration dictionary from environment variables
@@ -487,8 +498,18 @@ def get_env_config() -> ConfigDict:
     if learning := os.getenv("GMUSE_LEARNING"):
         config["learning_enabled"] = learning.lower() in ("1", "true", "yes")
 
+    if include_branch := os.getenv("GMUSE_INCLUDE_BRANCH"):
+        config["include_branch"] = include_branch.lower() in ("1", "true", "yes")
+
     # Log file override
     if log_file := os.getenv("GMUSE_LOG_FILE"):
         config["log_file"] = log_file
+
+    # Branch max length
+    if branch_max := os.getenv("GMUSE_BRANCH_MAX_LENGTH"):
+        try:
+            config["branch_max_length"] = int(branch_max)
+        except ValueError:
+            logger.warning(f"Invalid GMUSE_BRANCH_MAX_LENGTH: {branch_max}")
 
     return config

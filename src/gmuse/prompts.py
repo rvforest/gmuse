@@ -19,7 +19,7 @@ import re
 from typing import Final, List, Optional, Tuple
 
 from gmuse.exceptions import InvalidMessageError
-from gmuse.git import CommitHistory, RepositoryInstructions, StagedDiff
+from gmuse.git import BranchInfo, CommitHistory, RepositoryInstructions, StagedDiff
 from gmuse.logging import get_logger
 
 logger = get_logger(__name__)
@@ -164,6 +164,7 @@ def build_context(
     diff: StagedDiff,
     commit_history: Optional[CommitHistory] = None,
     repo_instructions: Optional[RepositoryInstructions] = None,
+    branch_info: Optional[BranchInfo] = None,
     user_hint: Optional[str] = None,
     learning_examples: Optional[List[Tuple[str, str]]] = None,
 ) -> str:
@@ -173,6 +174,7 @@ def build_context(
         diff: Staged diff information
         commit_history: Recent commit history for style context
         repo_instructions: Repository-level instructions from .gmuse file
+        branch_info: Current branch information for context
         user_hint: User-provided hint via --hint flag
         learning_examples: List of (generated, final) message pairs from learning
 
@@ -196,6 +198,15 @@ def build_context(
         ...
     """
     parts: List[str] = []
+
+    # Add branch context if available
+    if branch_info:
+        parts.append("Branch context:")
+        if branch_info.branch_type:
+            parts.append(f"- Branch type: {branch_info.branch_type}")
+        if branch_info.branch_summary:
+            parts.append(f"- Branch summary: {branch_info.branch_summary}")
+        parts.append("")  # Empty line
 
     # Add commit history if available
     if commit_history and commit_history.commits:
@@ -248,6 +259,7 @@ def build_prompt(
     format: str = "freeform",
     commit_history: Optional[CommitHistory] = None,
     repo_instructions: Optional[RepositoryInstructions] = None,
+    branch_info: Optional[BranchInfo] = None,
     user_hint: Optional[str] = None,
     learning_examples: Optional[List[Tuple[str, str]]] = None,
 ) -> Tuple[str, str]:
@@ -258,6 +270,7 @@ def build_prompt(
         format: Message format style ("freeform", "conventional", "gitmoji")
         commit_history: Recent commit history for style context
         repo_instructions: Repository-level instructions from .gmuse file
+        branch_info: Current branch information for context
         user_hint: User-provided hint via --hint flag
         learning_examples: List of (generated, final) message pairs from learning
 
@@ -289,6 +302,7 @@ def build_prompt(
         diff=diff,
         commit_history=commit_history,
         repo_instructions=repo_instructions,
+        branch_info=branch_info,
         user_hint=user_hint,
         learning_examples=learning_examples,
     )

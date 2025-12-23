@@ -299,6 +299,20 @@ class TestBuildPrompt:
         _, user = build_prompt(diff, format="freeform", max_chars=50)
         assert "at most 50 characters" in user
 
+    def test_build_prompt_without_max_chars_has_no_rule(self) -> None:
+        """When max_chars is unset, the prompt should not include a max-chars rule."""
+        diff = StagedDiff(
+            raw_diff="diff",
+            files_changed=["file.py"],
+            lines_added=1,
+            lines_removed=0,
+            hash="abc",
+            size_bytes=10,
+        )
+
+        _, user = build_prompt(diff, format="freeform")
+        assert "at most" not in user
+
     def test_get_conventional_task_omits_default_length_when_max_set(self) -> None:
         """Conventional task should omit its '100 characters' guidance when max_chars is set."""
         task = get_conventional_task(max_chars=50)

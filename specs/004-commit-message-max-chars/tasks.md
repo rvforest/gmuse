@@ -72,8 +72,8 @@ description: "Task list for implementing max_chars commit message limit"
 
 **Independent Test**: With no `max_chars` configured, `gmuse msg` works as before and prompt content does not include a max-chars rule.
 
-- [ ] T015 [P] [US2] Add unit test asserting default `max_chars=None` and no prompt rule is included when unset in tests/unit/test_prompts.py
-- [ ] T016 [US2] Add regression coverage asserting validation uses `max_message_length` when `max_chars` is unset in tests/unit/test_commit.py
+- [X] T015 [P] [US2] Add unit test asserting default `max_chars=None` and no prompt rule is included when unset in tests/unit/test_prompts.py
+- [X] T016 [P] [US2] Add regression coverage asserting validation uses `max_message_length` when `max_chars` is unset in tests/unit/test_commit.py
 
 **Checkpoint**: US2 is verified; backwards compatibility is preserved.
 
@@ -85,8 +85,8 @@ description: "Task list for implementing max_chars commit message limit"
 
 **Independent Test**: Setting `GMUSE_MAX_CHARS=0` or `GMUSE_MAX_CHARS=abc` causes a `ConfigError` explaining valid type and range.
 
-- [ ] T017 [P] [US3] Add unit tests for invalid `max_chars` values (non-integer, zero/negative, >500) in tests/unit/test_config.py
-- [ ] T018 [US3] Ensure `ConfigError` messages for invalid `max_chars` match the config contract examples in src/gmuse/config.py
+- [X] T017 [P] [US3] Add unit tests for invalid `max_chars` values (non-integer, zero/negative, >500) in tests/unit/test_config.py
+- [X] T018 [US3] Ensure `ConfigError` messages for invalid `max_chars` match the config contract examples in src/gmuse/config.py
 
 **Checkpoint**: US3 is verified; config errors are actionable.
 
@@ -96,8 +96,8 @@ description: "Task list for implementing max_chars commit message limit"
 
 **Purpose**: Documentation and end-to-end verification.
 
-- [ ] T019 [P] Document `max_chars` (key, default, range, env var, interaction with `max_message_length`) in docs/source/reference/configuration.md
-- [ ] T020 [P] Add an entry for `GMUSE_MAX_CHARS` in docs/source/reference/configuration.md
+- [X] T019 [P] Document `max_chars` (key, default, range, env var, interaction with `max_message_length`) in docs/source/reference/configuration.md
+- [X] T020 [P] Add an entry for `GMUSE_MAX_CHARS` in docs/source/reference/configuration.md
 - [ ] T021 Run the feature quickstart steps and ensure they remain accurate in specs/004-commit-message-max-chars/quickstart.md
 - [ ] T022 Run final quality checks (`uv run nox -s check`) using noxfile.py
 

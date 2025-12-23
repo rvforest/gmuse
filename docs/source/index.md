@@ -25,7 +25,7 @@ Streamline your workflow by using LLMs to generate meaningful commit messages fr
 {bdg-secondary-line}`MIT` {bdg-secondary-line}`Python` {bdg-info}`AI Powered`
 :::
 
-:::{button-link} tutorials/quickstart
+:::{button-link} tutorials/quickstart.html
 :color: info
 :shadow: lg
 :class: sd-mt-auto sd-rounded-pill sd-mt-5

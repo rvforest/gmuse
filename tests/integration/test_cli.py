@@ -150,7 +150,6 @@ class TestUserStory1:
                 assert "Generated message is invalid" in result.stderr
                 # Should include the actual length and configured limit
                 assert "max 10" in result.stderr or "(max 10)" in result.stderr
-        assert "No staged changes" in result.stderr
 
     def test_not_a_git_repository_error(self) -> None:
         """

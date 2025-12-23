@@ -177,6 +177,8 @@ class TestDryRunFlagCombinations:
         call_kwargs = mock_build_prompt.call_args.kwargs
         assert call_kwargs.get("user_hint") == "security fix"
 
+    @patch("gmuse.cli.main.gather_context")
+    @patch("gmuse.cli.main.build_prompt")
     @patch.dict("os.environ", {"GMUSE_MAX_CHARS": "50"})
     def test_max_chars_passed_to_build_prompt(
         self,

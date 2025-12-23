@@ -268,9 +268,6 @@ class TestGenerateMessage:
 
         assert captured_kwargs["user_hint"] == "security fix"
 
-    def test_generate_message_includes_commit_history_in_prompt(
-        self, monkeypatch
-    ) -> None:
 
     def test_generate_message_uses_max_message_length_by_default(self, monkeypatch) -> None:
         """When max_chars unset, max_message_length should be used for validation."""

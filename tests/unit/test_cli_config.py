@@ -10,7 +10,7 @@ from typer.testing import CliRunner
 from gmuse.cli.main import app
 from gmuse.config import parse_config_value, DEFAULTS
 
-runner = CliRunner()
+runner = CliRunner(mix_stderr=False)
 
 
 def test_config_view_no_file_shows_location_and_defaults(

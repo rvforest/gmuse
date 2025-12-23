@@ -12,7 +12,7 @@ from typer.testing import CliRunner
 import gmuse.config as gmuse_config
 from gmuse.cli.main import app
 
-runner = CliRunner()
+runner = CliRunner(mix_stderr=False)
 
 
 def _config_path(xdg_home: Path) -> Path:

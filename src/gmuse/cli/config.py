@@ -136,7 +136,6 @@ def set_value(key: str = typer.Argument(...), value: str = typer.Argument(...)) 
             f"Unknown configuration key: '{normalized_key}'",
             hint=_format_valid_keys(valid_keys),
         )
-        raise typer.Exit(code=1)
 
     try:
         parsed = parse_config_value(normalized_key, value)
@@ -145,7 +144,6 @@ def set_value(key: str = typer.Argument(...), value: str = typer.Argument(...)) 
         if normalized_key in {"history_depth", "timeout", "max_tokens"}:
             example = f"Example: gmuse config set {normalized_key} 10"
         _exit_with_error(str(e), hint=example)
-        raise typer.Exit(code=1)
 
     try:
         validate_config({normalized_key: parsed})
@@ -154,13 +152,11 @@ def set_value(key: str = typer.Argument(...), value: str = typer.Argument(...)) 
             _exit_with_error(
                 f"Invalid format: '{parsed}'. Must be one of: freeform, conventional, gitmoji"
             )
-            raise typer.Exit(code=1)
         if normalized_key == "provider" and isinstance(parsed, str):
             providers = ", ".join(sorted(VALID_PROVIDERS))
             _exit_with_error(
                 f"Invalid provider: '{parsed}'. Must be one of: {providers}"
             )
-            raise typer.Exit(code=1)
         hint = None
         if normalized_key == "history_depth":
             hint = "Allowed range: 0-50"
@@ -169,7 +165,6 @@ def set_value(key: str = typer.Argument(...), value: str = typer.Argument(...)) 
         elif normalized_key == "temperature":
             hint = "Allowed range: 0.0-2.0"
         _exit_with_error(str(e), hint=hint)
-        raise typer.Exit(code=1)
 
     try:
         config_path = update_config_key(normalized_key, parsed)
@@ -178,7 +173,6 @@ def set_value(key: str = typer.Argument(...), value: str = typer.Argument(...)) 
             str(e),
             hint="Check directory permissions and try again.",
         )
-        raise typer.Exit(code=1)
 
     typer.echo(
         f"Set '{normalized_key}' to '{_format_value(parsed)}' in {Path(config_path)}"

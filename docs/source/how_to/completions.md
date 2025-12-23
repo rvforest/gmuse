@@ -12,7 +12,7 @@ Quickly load the Zsh completion into your current shell and test it locally:
 
 ```console
 # load completions into current shell (temporary)
-$ eval "$(gmuse completions zsh)"
+$ eval "$(gmuse git-completions zsh)"
 ```
 
 2. Ensure you have staged changes so gmuse has context:
@@ -41,13 +41,13 @@ Generic installation (replace `<shell>` with the shell name):
 
 ```console
 # add to your shell startup file
-$ eval "$(gmuse completions <shell>)"
+$ eval "$(gmuse git-completions <shell>)"
 ```
 
 Zsh example (current): add the following to your `~/.zshrc`:
 
 ```console
-$ eval "$(gmuse completions zsh)"
+$ eval "$(gmuse git-completions zsh)"
 ```
 
 Then restart your shell or open a new session (e.g. `exec zsh` for Zsh).

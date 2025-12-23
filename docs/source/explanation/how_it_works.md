@@ -36,9 +36,19 @@ When `gmuse` calls the LLM provider it sends the assembled prompts (System + Use
 
 ## Truncation Policy
 
-Large diffs are automatically truncated to fit within token limits (default: **20,000 bytes ≈ 5,000 tokens**).
+Large diffs are automatically truncated to fit within token limits (default: **20,000 bytes ≈ 5,000 tokens**). This limit is **configurable** via `max_diff_bytes`:
 
-> **Note:** Token estimation uses a simple heuristic of ~4 characters per token, which is approximate for GPT-style models. Actual token counts vary by model and tokenizer.
+```toml
+# ~/.config/gmuse/config.toml
+max_diff_bytes = 50000  # Allow larger diffs
+```
+
+Or via CLI flag:
+```console
+$ gmuse msg --max-diff-bytes 30000
+```
+
+> **Note:** Token estimation uses a simple heuristic of ~4 characters per token (also configurable via `chars_per_token`), which is approximate for GPT-style models. Actual token counts vary by model and tokenizer.
 
 **How truncation works:**
 
@@ -47,7 +57,10 @@ Large diffs are automatically truncated to fit within token limits (default: **2
 3. When truncated, a marker `... (diff truncated for brevity)` is appended.
 4. The `TRUNCATED: true` flag appears in `--dry-run` output when truncation occurred.
 
-If you see truncation warnings, consider splitting large changes into smaller, focused commits.
+If you see truncation warnings, consider:
+- Splitting large changes into smaller, focused commits
+- Increasing `max_diff_bytes` if your provider supports larger contexts
+- Reviewing the full diff separately before committing
 
 ## Intelligence & Context
 
@@ -86,7 +99,35 @@ Depending on your chosen format, a specific task template is appended to the pro
 
 ## Generation Parameters
 
-For default generation settings and guidance on configuring them, see the [](../reference/configuration.md#llm-generation-parameters).
+gmuse uses several configurable parameters to control how the LLM generates commit messages:
+
+- **temperature** (default: 0.7): Controls randomness/creativity (0.0 = deterministic, 2.0 = very creative)
+- **max_tokens** (default: 500): Maximum number of tokens in the generated response
+- **max_diff_bytes** (default: 20000): Maximum diff size sent to the LLM
+- **max_message_length** (default: 1000): Maximum commit message length (validation)
+- **chars_per_token** (default: 4): Token estimation heuristic
+
+All of these are configurable via CLI flags, environment variables, or config file. See the [Configuration Reference](../reference/configuration.md#llm-generation-parameters) for complete details and usage examples.
+
+**Quick examples:**
+
+```console
+# More deterministic messages (CI/CD)
+$ gmuse msg --temperature 0.0
+
+# Shorter messages
+$ gmuse msg --max-tokens 200
+
+# Larger diff context
+$ gmuse msg --max-diff-bytes 50000
+```
+
+For persistent settings, add them to your config file:
+```toml
+temperature = 0.3
+max_tokens = 200
+max_diff_bytes = 30000
+```
 
 ## Validation Rules
 

@@ -92,6 +92,69 @@ history_depth = 0
 $ gmuse msg --history-depth 20
 ```
 
+## Tune LLM generation parameters
+
+Control how the AI generates messages:
+
+### Temperature
+
+Temperature controls randomness (0.0 = deterministic, 2.0 = very creative):
+
+**For deterministic CI/CD environments:**
+```toml
+temperature = 0.0
+```
+
+**For creative messages (default is 0.7):**
+```toml
+temperature = 1.2
+```
+
+**Override for a single command:**
+```console
+$ gmuse msg --temperature 0.3
+```
+
+### Maximum tokens
+
+Limit the length of generated messages:
+
+```toml
+max_tokens = 200  # Shorter messages
+```
+
+```console
+$ gmuse msg --max-tokens 100
+```
+
+### Diff size limits
+
+Control how much code context is sent to the LLM:
+
+```toml
+max_diff_bytes = 50000  # Allow larger diffs (default: 20000)
+```
+
+```console
+$ gmuse msg --max-diff-bytes 10000  # Smaller limit
+```
+
+**Use case:** Large diffs may exceed API limits or increase costs. Adjust this based on your needs.
+
+### Other tunable parameters
+
+Configure via environment variables or config file:
+
+```toml
+max_message_length = 500    # Maximum commit message length (default: 1000)
+chars_per_token = 4         # Token estimation heuristic (default: 4)
+```
+
+```console
+$ export GMUSE_MAX_MESSAGE_LENGTH=500
+$ export GMUSE_CHARS_PER_TOKEN=3
+```
+
 ## Enable clipboard copying
 
 To automatically copy messages to your clipboard:

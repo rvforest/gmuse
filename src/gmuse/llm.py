@@ -37,14 +37,16 @@ configure_litellm_logging()
 # Constants
 # -----------------------------------------------------------------------------
 
+# Prefer low-cost 'mini/light/haiku' variants for short, high-throughput tasks
+# (commit message generation). These defaults prioritize cost and latency while
+# retaining reliable instruction-following for our use case.
 _DEFAULT_MODELS: Final[dict[str, str]] = {
     "openai": "gpt-4o-mini",
-    "anthropic": "claude-3-5-sonnet-20241022",
-    "cohere": "command",
-    "azure": "gpt-4o",
+    "anthropic": "claude-haiku-4-5",
+    "cohere": "command-light",
+    "azure": "gpt-4o-mini",
     "gemini": "gemini/gemini-flash-lite-latest",
 }
-"""Default model for each supported provider."""
 
 
 # -----------------------------------------------------------------------------

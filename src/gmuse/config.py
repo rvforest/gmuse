@@ -363,9 +363,7 @@ def validate_config(config: ConfigDict) -> None:
     _validate_integer_range(
         config, "max_message_length", MAX_MESSAGE_LENGTH_MIN, MAX_MESSAGE_LENGTH_MAX
     )
-    _validate_integer_range(
-        config, "max_chars", MAX_CHARS_MIN, MAX_CHARS_MAX
-    )
+    _validate_integer_range(config, "max_chars", MAX_CHARS_MIN, MAX_CHARS_MAX)
     _validate_integer_range(
         config, "chars_per_token", CHARS_PER_TOKEN_MIN, CHARS_PER_TOKEN_MAX
     )

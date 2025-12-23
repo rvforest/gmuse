@@ -94,9 +94,7 @@ def get_conventional_task(max_chars: int | None = None) -> str:
         Generate a commit message following Conventional Commits specification...
     """
     length_guidance = (
-        "- Keep total length under 100 characters\n"
-        if max_chars is None
-        else ""
+        "- Keep total length under 100 characters\n" if max_chars is None else ""
     )
 
     return f"""Generate a commit message following Conventional Commits specification.
@@ -124,6 +122,7 @@ fix(api): handle null pointer in user endpoint
 docs: update installation instructions
 
 Output only the commit message (one line), nothing else."""
+
 
 def get_gitmoji_task() -> str:
     """Get task prompt for gitmoji commit messages.
@@ -329,7 +328,9 @@ def build_prompt(
             f"Unknown format: {format}. Must be one of: {list(task_prompt_map.keys())}"
         )
 
-    task_prompt = task_prompt_map[format](**({'max_chars': max_chars} if format == 'conventional' else {}))
+    task_prompt = task_prompt_map[format](
+        **({"max_chars": max_chars} if format == "conventional" else {})
+    )
 
     # If max_chars is provided, append an explicit constraint to the user prompt
     if max_chars is not None:

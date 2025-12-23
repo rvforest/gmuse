@@ -321,7 +321,9 @@ class TestBuildPrompt:
     def test_validate_message_too_long_reports_actual_and_limit(self) -> None:
         """Validation error should include actual length and configured max."""
         long_message = "x" * 51
-        with pytest.raises(InvalidMessageError, match=r"Message too long: 51 characters \(max 50\)"):
+        with pytest.raises(
+            InvalidMessageError, match=r"Message too long: 51 characters \(max 50\)"
+        ):
             validate_message(long_message, format="freeform", max_length=50)
 
 

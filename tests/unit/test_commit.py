@@ -268,8 +268,9 @@ class TestGenerateMessage:
 
         assert captured_kwargs["user_hint"] == "security fix"
 
-
-    def test_generate_message_uses_max_message_length_by_default(self, monkeypatch) -> None:
+    def test_generate_message_uses_max_message_length_by_default(
+        self, monkeypatch
+    ) -> None:
         """When max_chars unset, max_message_length should be used for validation."""
         mock_context = GenerationContext(
             diff=mock.Mock(),
@@ -285,7 +286,9 @@ class TestGenerateMessage:
         monkeypatch.setattr(
             "gmuse.commit.gather_context", lambda **kwargs: mock_context
         )
-        monkeypatch.setattr("gmuse.commit.build_prompt", lambda **kwargs: ("system", "user"))
+        monkeypatch.setattr(
+            "gmuse.commit.build_prompt", lambda **kwargs: ("system", "user")
+        )
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
 
         def capture_validate(msg, format, max_length):
@@ -323,7 +326,9 @@ class TestGenerateMessage:
         monkeypatch.setattr(
             "gmuse.commit.gather_context", lambda **kwargs: mock_context
         )
-        monkeypatch.setattr("gmuse.commit.build_prompt", lambda **kwargs: ("system", "user"))
+        monkeypatch.setattr(
+            "gmuse.commit.build_prompt", lambda **kwargs: ("system", "user")
+        )
         monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
 
         def capture_validate(msg, format, max_length):

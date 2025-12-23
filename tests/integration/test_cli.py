@@ -121,7 +121,9 @@ class TestUserStory1:
                 assert result.exit_code == 0
                 assert "Add hello function" in result.stdout
 
-    def test_max_chars_env_triggers_failure_when_exceeded(self, git_repo_with_history: Path) -> None:
+    def test_max_chars_env_triggers_failure_when_exceeded(
+        self, git_repo_with_history: Path
+    ) -> None:
         """
         Given GMUSE_MAX_CHARS is set, when LLM returns a message exceeding the limit,
         then CLI exits with non-zero and reports an invalid generated message.
@@ -138,7 +140,9 @@ class TestUserStory1:
             mock_client.generate.return_value = "This message is definitely too long"
             mock_client_class.return_value = mock_client
 
-            with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test", "GMUSE_MAX_CHARS": "10"}):
+            with mock.patch.dict(
+                os.environ, {"OPENAI_API_KEY": "sk-test", "GMUSE_MAX_CHARS": "10"}
+            ):
                 old_cwd = os.getcwd()
                 os.chdir(git_repo_with_history)
                 try:

@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "I'd like a prompt template reference in the documentation so that users can quickly see exactly what information is getting loaded into the context window when a suggestion request is sent. I'd like this page or pages to automatically keep sync with the actual template so that there is a single source of truth and there is no drift between the two."
 
+## Clarifications
+
+### Session 2025-12-23
+
+- Q: Should the prompt template be treated as a stable public contract or internal implementation? → A: Treat as stable public contract within major versions; changes only in major releases with documented migration notes.
+- Q: Should the documentation reference be a single unified page or multiple pages per template/mode? → A: Single unified reference page with clear section dividers for different suggestion modes.
+- Q: What are the exhaustive context inputs to be documented? → A: (1) Staged changes (diff/diff-stat output) — always included; (2) Output format (freeform/conventional/gitmoji) — always included; (3) Branch context (optional branch name info) — opt-in via `--include-branch`; (4) Commit history (recent commits for style context) — always included, configurable via `history_depth`.
+- Q: How should template synchronization be automated? → A: Template extraction runs as part of `uv run nox -s docs`; build fails if canonical templates cannot be read.
+- Q: What test coverage strategy should be required? → A: (1) Unit tests for template extraction readability/parseability; (2) Integration test for reference-to-template sync; (3) Drift detection test verifying build failure on template mismatch.
+
 ## User Scenarios & Testing *(mandatory)*
 
 <!--
@@ -91,7 +101,10 @@ Every specification MUST explicitly address the following constitution-oriented 
 Address each item with short acceptance criteria (e.g., "Unit tests added: file path: tests/unit/test_x.py; Coverage target: 85% for new modules").
 
 - **Code Quality**: The feature must not require users to manually duplicate template content in docs. Any new automation should have clear inputs/outputs and be easy to validate.
-- **Testing**: Add automated checks that fail when the documentation reference and canonical template(s) diverge. Add tests that cover multiple templates/modes if they exist.
+- **Testing**:
+  - Unit tests added: `tests/unit/test_prompt_template_extraction.py` — tests for template extraction logic, readability validation, and error handling.
+  - Integration tests added: `tests/integration/test_prompt_template_docs_sync.py` — tests verifying that built documentation reference matches canonical templates byte-for-byte; tests verifying docs build fails when templates are missing/invalid.
+  - Coverage target: 85% for new template extraction modules. Drift detection tests MUST cover all documented context input types.
 - **UX**: The documentation page(s) must be easy to find from the documentation navigation and must clearly label what is included in requests vs what stays local.
 - **Performance**: Documentation generation must not noticeably slow down the normal developer workflow; it should be bounded and predictable.
 
@@ -105,18 +118,22 @@ Address each item with short acceptance criteria (e.g., "Unit tests added: file 
 
 - **FR-001**: Documentation MUST include a dedicated reference page (or pages) that explains what information can be included in a suggestion request.
 - **FR-002**: The reference MUST enumerate each distinct context input that may be included (e.g., change/diff data, selected output format, optional branch context), and for each input MUST state when it is included/excluded.
-- **FR-003**: The reference MUST present the canonical prompt template text used for suggestion requests, in a way that is readable and copyable.
-- **FR-004**: The reference MUST be automatically synchronized with the canonical template source(s) so that updating the canonical template source(s) updates the reference without manual duplication.
-- **FR-005**: The documentation process MUST prevent silent drift: if the reference cannot be generated from the canonical template source(s), the documentation publish/build process MUST fail clearly.
+- **FR-003**: The reference MUST present the canonical prompt template text used for suggestion requests in a **single unified reference page**, with clear section dividers if multiple suggestion modes/templates exist. The page MUST be readable and the template text MUST be copyable.
+- **FR-004**: The reference MUST be automatically synchronized with the canonical template source(s) via the documentation build process. Template extraction MUST run as part of `uv run nox -s docs`, updating the reference page without manual duplication.
+- **FR-005**: The documentation build process (`uv run nox -s docs`) MUST prevent silent drift: if the canonical template source(s) cannot be read or extracted, the documentation build MUST fail with a clear, actionable error message.
 - **FR-006**: The reference MUST avoid leaking sensitive user data: any examples included MUST use synthetic placeholders and MUST NOT incorporate real local repository content.
 - **FR-007**: The documentation navigation MUST make the reference discoverable from the main documentation index and from relevant privacy/explanation pages.
 - **FR-008**: If there are multiple canonical templates for different suggestion types/modes, the reference MUST clearly distinguish them and indicate which template is used for which request.
-- **FR-009**: The reference MUST state the stability expectations: whether the template is considered a public contract (stable across patch releases) or subject to change, and where users should look for version-to-version differences.
+- **FR-009**: The reference MUST state the stability expectations: the template is considered a **stable public contract within major versions** (changes only in major releases). The documentation MUST include migration notes in the CHANGELOG for any template changes in new major versions, and point users to the CHANGELOG for version-to-version differences.
 
 ### Key Entities *(include if feature involves data)*
 
 - **Prompt Template**: The canonical text instructions used to form a suggestion request.
 - **Context Input**: A named piece of information that may be inserted into or accompany a suggestion request (with inclusion rules).
+  - **Staged Changes**: Diff or diff-stat output of staged git changes. Always included in requests.
+  - **Output Format**: The requested message format (freeform, conventional, or gitmoji). Always included in requests.
+  - **Branch Context**: Sanitized current branch name and metadata (e.g., ticket ID extraction, type prefix). Optional, opt-in via `--include-branch` CLI flag or config.
+  - **Commit History**: Recent commit messages for style/tone context. Always included; depth configurable via `history_depth` parameter (default: 5 commits).
 - **Documentation Reference**: The published human-readable representation of the prompt template(s) and context inputs.
 
 ## Success Criteria *(mandatory)*

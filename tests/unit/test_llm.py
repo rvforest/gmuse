@@ -139,17 +139,17 @@ class TestLLMClient:
     """Tests for LLMClient class."""
 
     def test_init_with_explicit_model(self) -> None:
-        """Test initializing client with explicit model and provider."""
-        with mock.patch.dict(os.environ, {}, clear=True):
-            client = LLMClient(model="gpt-4", timeout=60, provider="openai")
+        """Test initializing client with explicit model."""
+        with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
+            client = LLMClient(model="gpt-4", timeout=60)
         assert client.model == "gpt-4"
         assert client.timeout == 60
         assert client.provider == "openai"
 
-    def test_init_with_provider_override(self) -> None:
-        """Test initializing client with explicit provider override."""
-        with mock.patch.dict(os.environ, {}, clear=True):
-            client = LLMClient(model=None, provider="gemini")
+    def test_init_auto_detects_provider(self) -> None:
+        """Test initializing client auto-detects provider from environment."""
+        with mock.patch.dict(os.environ, {"GEMINI_API_KEY": "test"}, clear=True):
+            client = LLMClient(model=None)
             # model should be auto-resolved to gemini default
             assert client.model == "gemini/gemini-flash-lite-latest"
             assert client.provider == "gemini"
@@ -172,7 +172,7 @@ class TestLLMClient:
         mock_litellm.completion.return_value = mock_response
 
         with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
-            client = LLMClient(model="gpt-4", provider="openai")
+            client = LLMClient(model="gpt-4")
             result = client.generate(
                 system_prompt="You are a commit message generator.",
                 user_prompt="Generate a message",
@@ -191,7 +191,7 @@ class TestLLMClient:
         mock_litellm.completion.return_value = mock_response
 
         with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
-            client = LLMClient(model="gpt-4", provider="openai")
+            client = LLMClient(model="gpt-4")
             with pytest.raises(LLMError, match="LLM returned empty response"):
                 client.generate(
                     system_prompt="You are a commit message generator.",
@@ -204,7 +204,7 @@ class TestLLMClient:
         mock_litellm.completion.side_effect = Exception("API key invalid")
 
         with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
-            client = LLMClient(model="gpt-4", provider="openai")
+            client = LLMClient(model="gpt-4")
             with pytest.raises(LLMError, match="Authentication failed"):
                 client.generate(
                     system_prompt="System",
@@ -217,7 +217,7 @@ class TestLLMClient:
         mock_litellm.completion.side_effect = Exception("Request timed out")
 
         with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
-            client = LLMClient(model="gpt-4", timeout=30, provider="openai")
+            client = LLMClient(model="gpt-4", timeout=30)
             with pytest.raises(LLMError, match="Request timed out after 30 seconds"):
                 client.generate(
                     system_prompt="System",
@@ -230,7 +230,7 @@ class TestLLMClient:
         mock_litellm.completion.side_effect = Exception("Rate limit exceeded")
 
         with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
-            client = LLMClient(model="gpt-4", provider="openai")
+            client = LLMClient(model="gpt-4")
             with pytest.raises(LLMError, match="Rate limit exceeded"):
                 client.generate(
                     system_prompt="System",
@@ -243,7 +243,7 @@ class TestLLMClient:
         mock_litellm.completion.side_effect = Exception("Network error occurred")
 
         with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
-            client = LLMClient(model="gpt-4", provider="openai")
+            client = LLMClient(model="gpt-4")
             with pytest.raises(LLMError, match="Network error"):
                 client.generate(
                     system_prompt="System",
@@ -256,7 +256,7 @@ class TestLLMClient:
         mock_litellm.completion.side_effect = Exception("Unknown error")
 
         with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
-            client = LLMClient(model="gpt-4", provider="openai")
+            client = LLMClient(model="gpt-4")
             with pytest.raises(LLMError, match="Failed to generate commit message"):
                 client.generate(
                     system_prompt="System",

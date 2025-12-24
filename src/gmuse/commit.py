@@ -207,7 +207,6 @@ def generate_message(
     client = LLMClient(
         model=config.get("model"),
         timeout=int(config.get("timeout") or 30),
-        provider=config.get("provider"),
     )
 
     # Generate message

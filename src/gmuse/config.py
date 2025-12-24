@@ -47,11 +47,6 @@ VALID_FORMATS: Final[frozenset[str]] = frozenset(
 )
 """Allowed values for the 'format' configuration option."""
 
-VALID_PROVIDERS: Final[frozenset[str]] = frozenset(
-    {"openai", "anthropic", "cohere", "azure", "gemini", "bedrock", "huggingface"}
-)
-"""Allowed values for the 'provider' configuration option."""
-
 HISTORY_DEPTH_MIN: Final[int] = 0
 HISTORY_DEPTH_MAX: Final[int] = 50
 """Valid range for history_depth configuration."""
@@ -95,7 +90,6 @@ DEFAULTS: Final[ConfigDict] = {
     "history_depth": 5,
     "format": "freeform",
     "timeout": 30,
-    "provider": None,
     "log_file": None,  # Optional path to log file for debug output
     "temperature": 0.7,  # LLM sampling temperature
     "max_tokens": 500,  # Maximum tokens in LLM response
@@ -120,7 +114,6 @@ ENV_VAR_BY_KEY: Final[dict[str, str]] = {
     "timeout": "GMUSE_TIMEOUT",
     "copy_to_clipboard": "GMUSE_COPY",
     "learning_enabled": "GMUSE_LEARNING",
-    "provider": "GMUSE_PROVIDER",
     "log_file": "GMUSE_LOG_FILE",
     "temperature": "GMUSE_TEMPERATURE",
     "max_tokens": "GMUSE_MAX_TOKENS",
@@ -480,7 +473,6 @@ def validate_config(config: ConfigDict) -> None:
 
     # Validate string choices
     _validate_string_choice(config, "format", VALID_FORMATS)
-    _validate_string_choice(config, "provider", VALID_PROVIDERS, allow_none=True)
 
     # Validate boolean fields
     _validate_boolean(config, "copy_to_clipboard")
@@ -655,7 +647,6 @@ def get_env_config() -> ConfigDict:
         - GMUSE_TIMEOUT: Request timeout in seconds
         - GMUSE_COPY: Copy to clipboard (true/false)
         - GMUSE_LEARNING: Enable learning mode (true/false)
-        - GMUSE_PROVIDER: LLM provider
         - GMUSE_LOG_FILE: Log file path
         - GMUSE_TEMPERATURE: LLM sampling temperature
         - GMUSE_MAX_TOKENS: Maximum tokens in response

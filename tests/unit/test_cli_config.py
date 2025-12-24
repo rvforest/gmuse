@@ -98,19 +98,6 @@ def test_config_set_invalid_format_exits_1(
     assert "freeform, conventional, gitmoji" in result.stderr
 
 
-def test_config_set_invalid_provider_exits_1(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
-
-    result = runner.invoke(app, ["config", "set", "provider", "nope"])
-
-    assert result.exit_code == 1
-    assert "Invalid provider: 'nope'" in result.stderr
-    # Ensure providers list is present
-    assert "openai" in result.stderr
-
-
 def test_config_set_temperature_out_of_range_exits_1(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

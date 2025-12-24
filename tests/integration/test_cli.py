@@ -121,22 +121,39 @@ class TestUserStory1:
                 assert result.exit_code == 0
                 assert "Add hello function" in result.stdout
 
-    def test_no_staged_changes_error(self, git_repo_with_history: Path) -> None:
+    def test_max_chars_env_triggers_failure_when_exceeded(
+        self, git_repo_with_history: Path
+    ) -> None:
         """
-        Acceptance 2: Given no staged changes, when user runs `gmuse msg`,
-        then error "No staged changes found...".
+        Given GMUSE_MAX_CHARS is set, when LLM returns a message exceeding the limit,
+        then CLI exits with non-zero and reports an invalid generated message.
         """
-        # Don't stage anything - just run in the repo
+        _stage_file(
+            git_repo_with_history,
+            "big.py",
+            "def big():\n    pass\n",
+        )
 
-        old_cwd = os.getcwd()
-        os.chdir(git_repo_with_history)
-        try:
-            result = runner.invoke(app, ["msg"])
-        finally:
-            os.chdir(old_cwd)
+        with mock.patch("gmuse.commit.LLMClient") as mock_client_class:
+            mock_client = mock.Mock()
+            # Return a message longer than 10 chars
+            mock_client.generate.return_value = "This message is definitely too long"
+            mock_client_class.return_value = mock_client
 
-        assert result.exit_code == 1
-        assert "No staged changes" in result.stderr
+            with mock.patch.dict(
+                os.environ, {"OPENAI_API_KEY": "sk-test", "GMUSE_MAX_CHARS": "10"}
+            ):
+                old_cwd = os.getcwd()
+                os.chdir(git_repo_with_history)
+                try:
+                    result = runner.invoke(app, ["msg"])
+                finally:
+                    os.chdir(old_cwd)
+
+                assert result.exit_code != 0
+                assert "Generated message is invalid" in result.stderr
+                # Should include the actual length and configured limit
+                assert "max 10" in result.stderr or "(max 10)" in result.stderr
 
     def test_not_a_git_repository_error(self) -> None:
         """

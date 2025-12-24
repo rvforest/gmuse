@@ -268,6 +268,89 @@ class TestGenerateMessage:
 
         assert captured_kwargs["user_hint"] == "security fix"
 
+    def test_generate_message_uses_max_message_length_by_default(
+        self, monkeypatch
+    ) -> None:
+        """When max_chars unset, max_message_length should be used for validation."""
+        mock_context = GenerationContext(
+            diff=mock.Mock(),
+            history=None,
+            repo_instructions=None,
+            diff_was_truncated=False,
+        )
+        mock_client = mock.Mock()
+        mock_client.generate.return_value = "short message"
+
+        captured = {}
+
+        monkeypatch.setattr(
+            "gmuse.commit.gather_context", lambda **kwargs: mock_context
+        )
+        monkeypatch.setattr(
+            "gmuse.commit.build_prompt", lambda **kwargs: ("system", "user")
+        )
+        monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
+
+        def capture_validate(msg, format, max_length):
+            captured["max_length"] = max_length
+
+        monkeypatch.setattr("gmuse.commit.validate_message", capture_validate)
+
+        config = {
+            "format": "freeform",
+            "model": "gpt-4",
+            "timeout": 30,
+            "provider": None,
+            "temperature": 0.7,
+            "max_tokens": 500,
+            "max_message_length": 20,
+        }
+
+        generate_message(config=config, hint=None)
+
+        assert captured.get("max_length") == 20
+
+    def test_generate_message_uses_max_chars_when_set(self, monkeypatch) -> None:
+        """When max_chars is set, it should be used as the effective max for validation."""
+        mock_context = GenerationContext(
+            diff=mock.Mock(),
+            history=None,
+            repo_instructions=None,
+            diff_was_truncated=False,
+        )
+        mock_client = mock.Mock()
+        mock_client.generate.return_value = "short message"
+
+        captured = {}
+
+        monkeypatch.setattr(
+            "gmuse.commit.gather_context", lambda **kwargs: mock_context
+        )
+        monkeypatch.setattr(
+            "gmuse.commit.build_prompt", lambda **kwargs: ("system", "user")
+        )
+        monkeypatch.setattr("gmuse.commit.LLMClient", lambda **kwargs: mock_client)
+
+        def capture_validate(msg, format, max_length):
+            captured["max_length"] = max_length
+
+        monkeypatch.setattr("gmuse.commit.validate_message", capture_validate)
+
+        config = {
+            "format": "freeform",
+            "model": "gpt-4",
+            "timeout": 30,
+            "provider": None,
+            "temperature": 0.7,
+            "max_tokens": 500,
+            "max_message_length": 1000,
+            "max_chars": 30,
+        }
+
+        generate_message(config=config, hint=None)
+
+        assert captured.get("max_length") == 30
+
     def test_generate_message_includes_commit_history_in_prompt(
         self, monkeypatch
     ) -> None:

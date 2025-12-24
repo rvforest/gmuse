@@ -254,6 +254,20 @@ Maximum allowed length for generated commit messages (in characters). Messages e
 max_message_length = 500  # Shorter maximum
 ```
 
+### max_chars (optional override)
+
+**Type:** integer or null
+**Default:** `null` (unset)
+**Valid range:** `1` to `500`
+**Environment variable:** `GMUSE_MAX_CHARS`
+
+Optional setting to impose a strict maximum character limit for generated commit messages. When set, `max_chars` takes precedence over `max_message_length` for validation and is included in the prompt so the LLM is instructed to produce a message within that limit.
+
+```toml
+# Enforce a short, strict subject length
+max_chars = 50
+```
+
 ### chars_per_token
 
 **Type:** integer

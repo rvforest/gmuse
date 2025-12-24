@@ -179,6 +179,39 @@ class TestDryRunFlagCombinations:
 
     @patch("gmuse.cli.main.gather_context")
     @patch("gmuse.cli.main.build_prompt")
+    @patch.dict("os.environ", {"GMUSE_MAX_CHARS": "50"})
+    def test_max_chars_passed_to_build_prompt(
+        self,
+        mock_build_prompt: MagicMock,
+        mock_gather_context: MagicMock,
+    ) -> None:
+        """GMUSE_MAX_CHARS should be passed to build_prompt as max_chars."""
+        mock_diff: StagedDiff = StagedDiff(
+            raw_diff="d",
+            files_changed=["a.py"],
+            lines_added=1,
+            lines_removed=0,
+            hash="h",
+            size_bytes=10,
+        )
+        mock_context: GenerationContext = GenerationContext(
+            diff=mock_diff,
+            history=None,
+            repo_instructions=None,
+            diff_was_truncated=False,
+        )
+        mock_gather_context.return_value = mock_context
+        mock_build_prompt.return_value = ("sys", "user")
+
+        result = runner.invoke(app, ["msg", "--dry-run"])
+
+        assert result.exit_code == 0
+        mock_build_prompt.assert_called_once()
+        call_kwargs = mock_build_prompt.call_args.kwargs
+        assert call_kwargs.get("max_chars") == 50
+
+    @patch("gmuse.cli.main.gather_context")
+    @patch("gmuse.cli.main.build_prompt")
     def test_format_reflected_in_header(
         self,
         mock_build_prompt: MagicMock,

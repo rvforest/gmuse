@@ -1,6 +1,6 @@
 # Feature Specification: Commit Message Max Characters
 
-**Feature Branch**: `004-commit-message-max-chars`
+**Feature Branch**: `006-commit-message-max-chars`
 **Created**: 2025-12-23
 **Status**: Draft
 **Input**: User description: "Create a config param for the number of characters in a commit message which will be provided in the prompt"

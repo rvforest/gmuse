@@ -5,7 +5,7 @@ description: "Task list for implementing max_chars commit message limit"
 
 # Tasks: Commit Message Max Characters (`max_chars`)
 
-**Input**: Design documents from `/specs/004-commit-message-max-chars/`
+**Input**: Design documents from `/specs/006-commit-message-max-chars/`
 **Prerequisites**: plan.md (required), spec.md (required), research.md, data-model.md, contracts/, quickstart.md
 
 **Tests**: Included (explicitly requested in the feature spec’s Constitution Check).
@@ -98,7 +98,7 @@ description: "Task list for implementing max_chars commit message limit"
 
 - [X] T019 [P] Document `max_chars` (key, default, range, env var, interaction with `max_message_length`) in docs/source/reference/configuration.md
 - [X] T020 [P] Add an entry for `GMUSE_MAX_CHARS` in docs/source/reference/configuration.md
-- [ ] T021 Run the feature quickstart steps and ensure they remain accurate in specs/004-commit-message-max-chars/quickstart.md
+- [ ] T021 Run the feature quickstart steps and ensure they remain accurate in specs/006-commit-message-max-chars/quickstart.md
 - [ ] T022 Run final quality checks (`uv run nox -s check`) using noxfile.py
 
 ---

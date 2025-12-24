@@ -1,7 +1,7 @@
 # Implementation Plan: Commit Message Max Characters (`max_chars`)
 
-**Branch**: `004-commit-message-max-chars` | **Date**: 2025-12-23 | **Spec**: ../004-commit-message-max-chars/spec.md
-**Input**: Feature specification from `specs/004-commit-message-max-chars/spec.md`
+**Branch**: `006-commit-message-max-chars` | **Date**: 2025-12-23 | **Spec**: ../006-commit-message-max-chars/spec.md
+**Input**: Feature specification from `specs/006-commit-message-max-chars/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
@@ -54,7 +54,7 @@ Checklist:
 ### Documentation (this feature)
 
 ```text
-specs/004-commit-message-max-chars/
+specs/006-commit-message-max-chars/
 ├── plan.md              # This file (/speckit.plan command output)
 ├── research.md          # Phase 0 output (/speckit.plan command)
 ├── data-model.md        # Phase 1 output (/speckit.plan command)
@@ -114,16 +114,16 @@ Research focus areas:
 
 Output artifact:
 
-- `specs/004-commit-message-max-chars/research.md`
+- `specs/006-commit-message-max-chars/research.md`
 
 ## Phase 1 — Design & Contracts (Outputs: `data-model.md`, `contracts/`, `quickstart.md`)
 
 Design artifacts:
 
-- Data model for `max_chars` and its interaction with `max_message_length`: `specs/004-commit-message-max-chars/data-model.md`
-- Configuration contract: `specs/004-commit-message-max-chars/contracts/config.md`
-- Prompt context contract: `specs/004-commit-message-max-chars/contracts/prompt-context.md`
-- Quickstart examples: `specs/004-commit-message-max-chars/quickstart.md`
+- Data model for `max_chars` and its interaction with `max_message_length`: `specs/006-commit-message-max-chars/data-model.md`
+- Configuration contract: `specs/006-commit-message-max-chars/contracts/config.md`
+- Prompt context contract: `specs/006-commit-message-max-chars/contracts/prompt-context.md`
+- Quickstart examples: `specs/006-commit-message-max-chars/quickstart.md`
 
 Phase 1 agent context update:
 

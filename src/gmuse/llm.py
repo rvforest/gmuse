@@ -210,7 +210,6 @@ class LLMClient:
         self,
         model: Optional[str] = None,
         timeout: int = 30,
-        provider: Optional[str] = None,
     ):
         """Initialize LLM client.
 
@@ -221,11 +220,10 @@ class LLMClient:
         Raises:
             LLMError: If no provider is configured
         """
-        # Detect provider once and reuse for both model resolution and storage
-        if provider is None:
-            provider = detect_provider()
+        # Detect provider for model resolution
+        provider = detect_provider()
 
-        assert provider is not None, "Provider must be specified or detected"
+        assert provider is not None, "Provider must be detected"
         self.provider = provider
 
         self.model = resolve_model(provider, model)

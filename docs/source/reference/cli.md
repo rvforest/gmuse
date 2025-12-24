@@ -17,7 +17,8 @@ $ gmuse msg [OPTIONS]
 - `--copy` / `-c`: Copy the generated message to clipboard.
 - `--dry-run`: Print the assembled prompt without calling the LLM provider.
 
-**Note:** Provider selection is auto-detected from configured API keys (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`). To override, set the `GMUSE_PROVIDER` environment variable or add `provider = "<provider>"` to your config file.
+**Note:** Provider selection is auto-detected from configured API keys (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`). See [Configuration Reference](configuration.md#model) for details on provider detection.
+
 ### Dry-run example
 
 ```console

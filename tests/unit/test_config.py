@@ -134,11 +134,6 @@ class TestValidateConfig:
         with pytest.raises(ConfigError, match="model must be a string"):
             validate_config({"model": 123})
 
-    def test_validate_provider_invalid(self) -> None:
-        """Test validation fails for invalid provider value."""
-        with pytest.raises(ConfigError, match="provider must be one of"):
-            validate_config({"provider": "invalid-provider"})
-
 
 class TestMergeConfig:
     """Tests for merge_config function."""
@@ -150,7 +145,7 @@ class TestMergeConfig:
 
     def test_merge_cli_overrides_all(self) -> None:
         """Test CLI args have highest priority."""
-        cli_args = {"model": "cli-model", "provider": "openai"}
+        cli_args = {"model": "cli-model"}
         config_file = {"model": "file-model"}
         env_vars = {"model": "env-model"}
 
@@ -161,7 +156,7 @@ class TestMergeConfig:
 
     def test_merge_env_overrides_config_file(self) -> None:
         """Test environment variables override config file."""
-        config_file = {"model": "file-model", "provider": "gemini"}
+        config_file = {"model": "file-model"}
         env_vars = {"model": "env-model"}
 
         result = merge_config(config_file=config_file, env_vars=env_vars)
@@ -169,7 +164,7 @@ class TestMergeConfig:
 
     def test_merge_env_overrides_defaults(self) -> None:
         """Test environment variables override defaults."""
-        env_vars = {"model": "env-model", "provider": "openai"}
+        env_vars = {"model": "env-model"}
 
         result = merge_config(env_vars=env_vars)
         assert result["model"] == "env-model"
@@ -189,17 +184,6 @@ class TestMergeConfig:
 
         result = merge_config(cli_args=cli_args)
         assert result["model"] == DEFAULTS["model"]
-
-    def test_merge_provider_works(self) -> None:
-        """Test provider from env/config/cli is used based on priority."""
-        env_vars = {"provider": "gemini"}
-        config_file = {"provider": "anthropic"}
-        cli_args = {"provider": "openai"}
-
-        result = merge_config(
-            cli_args=cli_args, config_file=config_file, env_vars=env_vars
-        )
-        assert result["provider"] == "openai"
 
 
 class TestGetEnvConfig:

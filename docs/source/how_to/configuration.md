@@ -65,9 +65,8 @@ $ export GEMINI_API_KEY="..."
 $ gmuse msg --model <model-name>
 ```
 
-To make a provider your default, add it to your config file:
+To set your default model, add it to your config file:
 ```toml
-provider = "anthropic"
 model = "claude-3-5-sonnet-20241022"
 ```
 

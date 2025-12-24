@@ -69,9 +69,7 @@ def test_info_handles_detect_provider_failure(
 ) -> None:
     monkeypatch.setattr(main, "load_config", lambda: {})
     monkeypatch.setattr(main, "get_env_config", lambda: {})
-    monkeypatch.setattr(
-        main, "merge_config", lambda **_: {"model": "m", "provider": None}
-    )
+    monkeypatch.setattr(main, "merge_config", lambda **_: {"model": "m"})
 
     fake_llm = ModuleType("gmuse.llm")
 

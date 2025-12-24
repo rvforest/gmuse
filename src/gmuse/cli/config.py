@@ -19,7 +19,6 @@ from gmuse.config import (
     ALLOWED_CONFIG_KEYS,
     DEFAULTS,
     ENV_VAR_BY_KEY,
-    VALID_PROVIDERS,
     get_config_path,
     get_env_config,
     load_config,
@@ -152,11 +151,6 @@ def set_value(key: str = typer.Argument(...), value: str = typer.Argument(...)) 
         if normalized_key == "format" and isinstance(parsed, str):
             _exit_with_error(
                 f"Invalid format: '{parsed}'. Must be one of: freeform, conventional, gitmoji"
-            )
-        if normalized_key == "provider" and isinstance(parsed, str):
-            providers = ", ".join(sorted(VALID_PROVIDERS))
-            _exit_with_error(
-                f"Invalid provider: '{parsed}'. Must be one of: {providers}"
             )
         hint = None
         if normalized_key == "history_depth":

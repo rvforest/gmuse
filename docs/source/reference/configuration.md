@@ -23,7 +23,6 @@ gmuse loads persistent user-level configuration from:
 **Example:**
 ```toml
 model = "gpt-4o-mini"
-provider = "openai"
 format = "conventional"
 history_depth = 10
 copy_to_clipboard = false
@@ -49,30 +48,6 @@ $ gmuse config set <key> <value>
 
 ## Configuration Options
 
-### provider
-
-**Type:** string
-**Default:** `null` (auto-detected)
-**Valid values:** `"openai"`, `"anthropic"`, `"gemini"`, `"cohere"`, `"azure"`, `"bedrock"`, `"huggingface"`
-
-LLM provider to use for generation. If not specified, gmuse auto-detects the provider based on available API keys.
-
-```toml
-provider = "openai"
-```
-
-Run `gmuse info` to see which provider was detected.
-
-**Provider API Keys:** gmuse detects providers based on these environment variables:
-
-| Variable | Provider |
-|----------|----------|
-| `OPENAI_API_KEY` | OpenAI |
-| `ANTHROPIC_API_KEY` | Anthropic |
-| `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Google Gemini |
-| `COHERE_API_KEY` | Cohere |
-| `AZURE_API_KEY` | Azure OpenAI |
-
 ### model
 
 **Type:** string
@@ -88,6 +63,18 @@ LLM model identifier to use for generation. If not specified, gmuse selects a de
 - `azure` → `gpt-4o`
 
 **For providers without default models** (such as `bedrock` and `huggingface`), you **must** specify a model explicitly using the `model` configuration option, `GMUSE_MODEL` environment variable, or the `--model` CLI flag. Otherwise, gmuse will raise an error with instructions.
+
+**Provider Detection:** gmuse auto-detects the provider based on these environment variables:
+
+| Variable | Provider |
+|----------|----------|
+| `OPENAI_API_KEY` | OpenAI |
+| `ANTHROPIC_API_KEY` | Anthropic |
+| `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Google Gemini |
+| `COHERE_API_KEY` | Cohere |
+| `AZURE_API_KEY` | Azure OpenAI |
+
+Run `gmuse info` to see which provider was detected.
 
 ```toml
 model = "gpt-4o"

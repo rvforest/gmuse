@@ -75,7 +75,6 @@ def test_validate_config_history_depth_errors(cfg: dict) -> None:
     [
         {"format": 1},
         {"format": "nonsense"},
-        {"provider": 123},
     ],
 )
 def test_validate_config_string_choices_errors(cfg: dict) -> None:

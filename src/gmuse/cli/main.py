@@ -156,7 +156,6 @@ def info() -> None:
 
     typer.echo(f"Resolved model: {config.get('model')}")
     typer.echo(f"Detected provider heuristics: {provider}")
-    typer.echo(f"Configured provider in merged config: {config.get('provider')}")
 
     typer.echo("Environment vars:")
     typer.echo(f"  OPENAI_API_KEY set: {'OPENAI_API_KEY' in os.environ}")

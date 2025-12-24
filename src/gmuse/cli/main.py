@@ -172,7 +172,6 @@ def msg(
     hint: Optional[str] = typer.Option(
         None,
         "--hint",
-        "-h",
         help="Additional guidance for message generation (e.g., 'emphasize security')",
     ),
     copy: bool = typer.Option(

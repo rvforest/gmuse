@@ -22,6 +22,10 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
+      - name: Clean previous builds
+        run: |
+          rm -rf dist build *.egg-info
+
       - name: Build
         run: uv build
 

@@ -104,9 +104,6 @@ source = "versioningit"
 [tool.hatch.build.targets.wheel]
 packages = ["src/gmuse"]
 
-[tool.hatch.build.targets.wheel.force-include]
-"src/gmuse/templates" = "gmuse/templates"
-
 [tool.versioningit.vcs]
 method = "git"
 match = ["v*"]

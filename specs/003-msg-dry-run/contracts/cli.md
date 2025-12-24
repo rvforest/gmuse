@@ -15,7 +15,6 @@ All existing flags remain supported and should influence prompt assembly exactly
 - `--format/-f`
 - `--model/-m`
 - `--history-depth`
-- `--provider`
 - `--copy/-c`
 
 ## Output

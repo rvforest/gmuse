@@ -85,6 +85,30 @@ def test_info_handles_detect_provider_failure(
     assert "Detected provider heuristics: None" in captured.out
 
 
+def test_info_reports_ollama_provider_from_model_env(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(main, "load_config", lambda: {})
+    monkeypatch.setattr(
+        main, "get_env_config", lambda: {"GMUSE_MODEL": "ollama/qwen2.5-coder"}
+    )
+    monkeypatch.setattr(
+        main,
+        "merge_config",
+        lambda **_: {"model": "ollama/qwen2.5-coder"},
+    )
+
+    fake_llm = ModuleType("gmuse.llm")
+    setattr(fake_llm, "detect_provider", lambda: "ollama")
+    monkeypatch.setitem(sys.modules, "gmuse.llm", fake_llm)
+
+    main.info()
+
+    captured = capsys.readouterr()
+    assert "Resolved model: ollama/qwen2.5-coder" in captured.out
+    assert "Detected provider heuristics: ollama" in captured.out
+
+
 @pytest.mark.parametrize(
     ("exc", "exit_code", "expected_hint"),
     [

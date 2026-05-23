@@ -117,9 +117,17 @@ def detect_provider() -> Optional[str]:
     if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
         return "gemini"
 
-    # Check if GMUSE_MODEL explicitly indicates gemini
+    # Check if GMUSE_MODEL explicitly indicates a provider that does not
+    # require an API key (e.g., local runtimes).
     if model := os.getenv("GMUSE_MODEL"):
-        if model.lower().startswith("gemini/") or "gemini" in model.lower():
+        lowered = model.lower()
+
+        # Local runtimes via LiteLLM (no API key required)
+        if lowered.startswith("ollama/") or lowered.startswith("ollama_chat/"):
+            return "ollama"
+
+        # Gemini can also be inferred from the model string
+        if lowered.startswith("gemini/") or "gemini" in lowered:
             return "gemini"
 
     raise LLMError(

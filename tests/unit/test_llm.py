@@ -51,7 +51,7 @@ class TestDetectProvider:
         with mock.patch.dict(
             os.environ, {"GMUSE_MODEL": "ollama_chat/llama3.1"}, clear=True
         ):
-            assert detect_provider() == "ollama"
+            assert detect_provider() == "ollama_chat"
 
     def test_detect_no_provider_raises_error(self) -> None:
         """Test error when no provider API key is set."""

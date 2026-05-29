@@ -39,6 +39,20 @@ class TestDetectProvider:
         ):
             assert detect_provider() == "gemini"
 
+    def test_detect_ollama_from_model_env(self) -> None:
+        """Detect ollama provider when GMUSE_MODEL indicates an ollama model."""
+        with mock.patch.dict(
+            os.environ, {"GMUSE_MODEL": "ollama/llama3.1"}, clear=True
+        ):
+            assert detect_provider() == "ollama"
+
+    def test_detect_ollama_chat_from_model_env(self) -> None:
+        """Detect ollama provider when GMUSE_MODEL uses the ollama_chat prefix."""
+        with mock.patch.dict(
+            os.environ, {"GMUSE_MODEL": "ollama_chat/llama3.1"}, clear=True
+        ):
+            assert detect_provider() == "ollama"
+
     def test_detect_no_provider_raises_error(self) -> None:
         """Test error when no provider API key is set."""
         with mock.patch.dict(os.environ, {}, clear=True):

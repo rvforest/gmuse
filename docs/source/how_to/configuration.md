@@ -65,6 +65,8 @@ $ export GEMINI_API_KEY="..."
 $ gmuse msg --model <model-name>
 ```
 
+For local models such as Ollama, see [Host a local model](local_models.md).
+
 To set your default model, add it to your config file:
 ```toml
 model = "claude-3-5-sonnet-20241022"

@@ -40,6 +40,15 @@ Enable context-aware AI completions in your favorite shell.
 Common errors, diagnostics, and debugging tips.
 :::
 ::::
+
+::::{grid-item}
+:::{card} {octicon}`shield-lock;1.2em;sd-text-primary` Local Models
+:link: local_models
+:link-type: doc
+
+Run a local LLM for maximum privacy.
+:::
+::::
 :::::
 
 ```{toctree}
@@ -50,4 +59,5 @@ installation
 configuration
 completions
 troubleshooting
+local_models
 ```

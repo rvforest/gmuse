@@ -247,6 +247,16 @@ tags
 
 
 # =============================
+# AI coding agents
+# =============================
+# Claude Code keeps per-repo local overrides in this file.
+.claude/settings.local.json
+
+# Aider writes a chat transcript into the repo root.
+.aider.chat.history.md
+
+
+# =============================
 # JetBrains
 # =============================
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839

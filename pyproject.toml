@@ -36,7 +36,7 @@ dependencies = [
     "typer>=0.9.0",
     "tomli>=2.0.0; python_version < '3.11'",
     "tomlkit>=0.13.2",
-    "litellm>=1.0.0",
+    "litellm>=1.86.0",
 ]
 
 [project.optional-dependencies]
@@ -57,7 +57,7 @@ gmuse = "gmuse.cli.main:app"
 
 [dependency-groups]
 dev = [
-  "nox>=2025.2.9",
+  "nox>=2026",
   "pre-commit>=4.2.0",
   "pyrefly>=0.16.0",
   "pytest>=8.3.5",

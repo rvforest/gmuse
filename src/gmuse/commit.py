@@ -27,7 +27,7 @@ from gmuse.git import (
     load_repository_instructions,
     truncate_diff,
 )
-from gmuse.llm import LLMClient
+from gmuse.llm import LLMClient, resolve_resolution_context
 from gmuse.logging import get_logger
 from gmuse.prompts import build_prompt, validate_message
 
@@ -202,10 +202,24 @@ def generate_message(
         max_chars=config.get("max_chars"),
     )
 
-    # Initialize LLM client
-    logger.debug(f"Initializing LLM client (model={config.get('model')})...")
-    client = LLMClient(
+    # Resolve the backend/model pair before client construction so generation,
+    # diagnostics, and future backend controls share the same decision.
+    resolution_context = resolve_resolution_context(
+        backend=config.get("backend"),
         model=config.get("model"),
+        backend_settings=config.get("backend_settings"),
+    )
+
+    # Initialize LLM client
+    logger.debug(
+        "Initializing LLM client (backend=%s, model=%s)...",
+        resolution_context.backend.value,
+        resolution_context.model.value,
+    )
+    client = LLMClient(
+        backend=resolution_context.backend.value,
+        model=resolution_context.model.value,
+        backend_settings=resolution_context.backend_settings,
         timeout=int(config.get("timeout") or 30),
     )
 

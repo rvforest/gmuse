@@ -13,6 +13,7 @@ from typing import Any
 
 import pytest
 import typer
+from typer.testing import CliRunner
 
 from gmuse import __version__
 from gmuse.cli import main
@@ -22,6 +23,8 @@ from gmuse.exceptions import (
     NoStagedChangesError,
     NotAGitRepositoryError,
 )
+
+runner = CliRunner()
 
 
 def _fake_context(*, truncated: bool = False):
@@ -47,21 +50,34 @@ def test_info_works_when_config_load_fails(
     monkeypatch.setattr(main, "get_env_config", lambda: {"GMUSE_MODEL": "x"})
 
     def fake_merge_config(*, cli_args, config_file, env_vars):  # noqa: ARG001
-        return {"model": "gpt-4.1", "provider": "openai"}
+        return {"model": "gpt-4.1", "backend": "openai"}
 
     monkeypatch.setattr(main, "merge_config", fake_merge_config)
 
     # Ensure detect_provider exists and returns something deterministic
     fake_llm = ModuleType("gmuse.llm")
     setattr(fake_llm, "detect_provider", lambda: "openai")
+    setattr(
+        fake_llm,
+        "resolve_resolution_context",
+        lambda **_: mock.Mock(
+            backend=mock.Mock(value="openai"),
+            model=mock.Mock(value="gpt-4.1"),
+            diagnostic_source="single_configured_backend",
+            backend_settings={},
+        ),
+    )
     monkeypatch.setitem(sys.modules, "gmuse.llm", fake_llm)
 
     main.info()
 
     captured = capsys.readouterr()
+    assert "Resolved backend: openai" in captured.out
     assert "Resolved model:" in captured.out
     assert "gpt-4.1" in captured.out
-    assert "Detected provider heuristics: openai" in captured.out
+    assert "Resolution source: single_configured_backend" in captured.out
+    assert "Detected backend heuristics: openai" in captured.out
+    assert "backend settings" not in captured.out.lower()
 
 
 def test_info_handles_detect_provider_failure(
@@ -69,7 +85,9 @@ def test_info_handles_detect_provider_failure(
 ) -> None:
     monkeypatch.setattr(main, "load_config", lambda: {})
     monkeypatch.setattr(main, "get_env_config", lambda: {})
-    monkeypatch.setattr(main, "merge_config", lambda **_: {"model": "m"})
+    monkeypatch.setattr(
+        main, "merge_config", lambda **_: {"model": "m", "backend": "openai"}
+    )
 
     fake_llm = ModuleType("gmuse.llm")
 
@@ -77,12 +95,23 @@ def test_info_handles_detect_provider_failure(
         raise RuntimeError("nope")
 
     setattr(fake_llm, "detect_provider", _boom)
+    setattr(
+        fake_llm,
+        "resolve_resolution_context",
+        lambda **_: mock.Mock(
+            backend=mock.Mock(value="openai"),
+            model=mock.Mock(value="m"),
+            diagnostic_source="explicit_backend",
+            backend_settings={},
+        ),
+    )
     monkeypatch.setitem(sys.modules, "gmuse.llm", fake_llm)
 
     main.info()
 
     captured = capsys.readouterr()
-    assert "Detected provider heuristics: None" in captured.out
+    assert "Resolved backend: openai" in captured.out
+    assert "Detected backend heuristics: None" in captured.out
 
 
 def test_info_reports_ollama_provider_from_model_env(
@@ -100,13 +129,26 @@ def test_info_reports_ollama_provider_from_model_env(
 
     fake_llm = ModuleType("gmuse.llm")
     setattr(fake_llm, "detect_provider", lambda: "ollama")
+    setattr(
+        fake_llm,
+        "resolve_resolution_context",
+        lambda **_: (_ for _ in ()).throw(RuntimeError("unsupported")),
+    )
     monkeypatch.setitem(sys.modules, "gmuse.llm", fake_llm)
 
     main.info()
 
     captured = capsys.readouterr()
     assert "Resolved model: ollama/qwen2.5-coder" in captured.out
-    assert "Detected provider heuristics: ollama" in captured.out
+    assert "Detected backend heuristics: ollama" in captured.out
+
+
+def test_msg_help_hides_inactive_backend_settings_controls() -> None:
+    result = runner.invoke(main.app, ["msg", "--help"])
+
+    assert result.exit_code == 0
+    assert "--backend" in result.stdout
+    assert "backend-settings" not in result.stdout
 
 
 @pytest.mark.parametrize(

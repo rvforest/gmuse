@@ -170,3 +170,34 @@ def test_generate_truncation_warning(
 
     captured = capsys.readouterr()
     assert "truncated" in captured.err.lower()
+
+
+def test_backend_flag_is_forwarded_to_config_loader(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The explicit backend flag should be forwarded into config loading."""
+    captured_load_kwargs: dict[str, Any] = {}
+
+    def fake_load_config(**kwargs: Any) -> dict[str, Any]:
+        captured_load_kwargs.update(kwargs)
+        return {
+            "backend": kwargs.get("backend"),
+            "model": "claude-haiku-4-5",
+            "format": "freeform",
+            "history_depth": 5,
+            "copy_to_clipboard": False,
+            "timeout": 30,
+        }
+
+    monkeypatch.setattr(main, "_load_config", fake_load_config)
+    monkeypatch.setattr(main, "gather_context", lambda **kwargs: fake_context())
+    monkeypatch.setattr(main, "build_prompt", lambda **kwargs: ("sys", "user"))
+    monkeypatch.setattr(
+        main, "_format_dry_run_output", lambda **kwargs: "dry run output"
+    )
+
+    with pytest.raises(typer.Exit) as excinfo:
+        main.msg(backend="anthropic", dry_run=True)
+
+    assert excinfo.value.exit_code == 0
+    assert captured_load_kwargs["backend"] == "anthropic"

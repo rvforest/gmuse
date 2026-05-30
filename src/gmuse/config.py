@@ -47,6 +47,11 @@ VALID_FORMATS: Final[frozenset[str]] = frozenset(
 )
 """Allowed values for the 'format' configuration option."""
 
+VALID_BACKENDS: Final[frozenset[str]] = frozenset(
+    {"openai", "anthropic", "cohere", "azure", "gemini"}
+)
+"""Allowed values for the 'backend' configuration option."""
+
 HISTORY_DEPTH_MIN: Final[int] = 0
 HISTORY_DEPTH_MAX: Final[int] = 50
 """Valid range for history_depth configuration."""
@@ -85,6 +90,7 @@ BRANCH_MAX_LENGTH_MAX: Final[int] = 200
 
 DEFAULTS: Final[ConfigDict] = {
     "model": None,  # Auto-detect from environment
+    "backend": None,  # Auto-detect from configured backends
     "copy_to_clipboard": False,
     "learning_enabled": False,
     "history_depth": 5,
@@ -109,6 +115,7 @@ ALLOWED_CONFIG_KEYS: Final[frozenset[str]] = frozenset(DEFAULTS.keys())
 
 ENV_VAR_BY_KEY: Final[dict[str, str]] = {
     "model": "GMUSE_MODEL",
+    "backend": "GMUSE_BACKEND",
     "format": "GMUSE_FORMAT",
     "history_depth": "GMUSE_HISTORY_DEPTH",
     "timeout": "GMUSE_TIMEOUT",
@@ -124,6 +131,10 @@ ENV_VAR_BY_KEY: Final[dict[str, str]] = {
     "branch_max_length": "GMUSE_BRANCH_MAX_LENGTH",
 }
 """Mapping from config keys to their overriding environment variables."""
+
+
+RESERVED_CONFIG_NAMESPACES: Final[frozenset[str]] = frozenset({"backend_settings"})
+"""Reserved config namespaces that are carried internally but not advertised."""
 
 
 def get_config_path() -> Path:
@@ -394,6 +405,36 @@ def _validate_optional_string(config: ConfigDict, key: str) -> None:
         raise ConfigError(f"{key} must be a string or null, got {type(value).__name__}")
 
 
+def _validate_backend_settings_namespace(config: ConfigDict) -> None:
+    """Validate the reserved backend_settings namespace shape when present."""
+    if "backend_settings" not in config:
+        return
+
+    value = config["backend_settings"]
+    if not isinstance(value, dict):
+        raise ConfigError("backend_settings must be a table/mapping")
+
+    for backend_name, backend_value in value.items():
+        if not isinstance(backend_name, str):
+            raise ConfigError("backend_settings keys must be backend names")
+        if not isinstance(backend_value, dict):
+            raise ConfigError(
+                "backend_settings entries must map backend names to tables/mappings"
+            )
+
+
+def get_backend_settings(config: ConfigDict | None) -> dict[str, object]:
+    """Return the reserved backend settings namespace from a config mapping."""
+    if not config:
+        return {}
+
+    value = config.get("backend_settings")
+    if not isinstance(value, dict):
+        return {}
+
+    return dict(value)
+
+
 def _parse_env_int(env_var: str, config_key: str) -> tuple[str, int] | None:
     """Parse an integer environment variable.
 
@@ -472,6 +513,7 @@ def validate_config(config: ConfigDict) -> None:
     )
 
     # Validate string choices
+    _validate_string_choice(config, "backend", VALID_BACKENDS, allow_none=True)
     _validate_string_choice(config, "format", VALID_FORMATS)
 
     # Validate boolean fields
@@ -481,9 +523,10 @@ def validate_config(config: ConfigDict) -> None:
 
     # Validate optional string fields
     _validate_optional_string(config, "model")
+    _validate_backend_settings_namespace(config)
 
     # Warn about unknown keys
-    known_keys = set(DEFAULTS.keys())
+    known_keys = set(DEFAULTS.keys()) | set(RESERVED_CONFIG_NAMESPACES)
     unknown_keys = set(config.keys()) - known_keys
     if unknown_keys:
         logger.warning(f"Unknown config keys (will be ignored): {unknown_keys}")
@@ -527,18 +570,27 @@ def merge_config(
         for key, value in config_file.items():
             if key in DEFAULTS and value is not None:
                 result[key] = value
+        backend_settings = get_backend_settings(config_file)
+        if backend_settings:
+            result["backend_settings"] = backend_settings
 
     # Apply environment variables
     if env_vars:
         for key, value in env_vars.items():
             if value is not None:
                 result[key] = value
+        backend_settings = get_backend_settings(env_vars)
+        if backend_settings:
+            result["backend_settings"] = backend_settings
 
     # Apply CLI args (highest priority)
     if cli_args:
         for key, value in cli_args.items():
             if value is not None:
                 result[key] = value
+        backend_settings = get_backend_settings(cli_args)
+        if backend_settings:
+            result["backend_settings"] = backend_settings
 
     return result
 
@@ -642,6 +694,7 @@ def get_env_config() -> ConfigDict:
 
     Environment variables:
         - GMUSE_MODEL: Model name
+        - GMUSE_BACKEND: Backend name
         - GMUSE_FORMAT: Message format
         - GMUSE_HISTORY_DEPTH: Number of commits for context
         - GMUSE_TIMEOUT: Request timeout in seconds
@@ -670,6 +723,9 @@ def get_env_config() -> ConfigDict:
     # String values
     if model := os.getenv("GMUSE_MODEL"):
         config["model"] = model
+
+    if backend := os.getenv("GMUSE_BACKEND"):
+        config["backend"] = backend
 
     if fmt := os.getenv("GMUSE_FORMAT"):
         config["format"] = fmt

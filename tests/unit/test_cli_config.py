@@ -54,6 +54,18 @@ def test_config_set_unknown_key_exits_1(
     assert "Valid keys:" in result.stderr
 
 
+def test_config_cli_does_not_advertise_backend_settings_namespace(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
+
+    result = runner.invoke(app, ["config", "set", "unknown_key", "value"])
+
+    assert result.exit_code == 1
+    assert "backend_settings" not in result.stderr
+    assert "backend-settings" not in result.stderr
+
+
 def test_config_set_type_parse_error_exits_1(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

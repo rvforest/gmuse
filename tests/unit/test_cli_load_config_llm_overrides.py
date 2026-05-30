@@ -36,3 +36,16 @@ def test__load_config_applies_max_diff_bytes_override(
     cfg = main_mod._load_config(max_diff_bytes=5000)
 
     assert cfg["max_diff_bytes"] == 5000
+
+
+def test__load_config_applies_backend_override(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import gmuse.cli.main as main_mod
+
+    monkeypatch.setattr(main_mod, "load_config", lambda: {"backend": "openai"})
+    monkeypatch.setattr(main_mod, "get_env_config", lambda: {"backend": "anthropic"})
+
+    cfg = main_mod._load_config(backend="cohere")
+
+    assert cfg["backend"] == "cohere"

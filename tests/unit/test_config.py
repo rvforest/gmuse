@@ -134,6 +134,11 @@ class TestValidateConfig:
         with pytest.raises(ConfigError, match="model must be a string"):
             validate_config({"model": 123})
 
+    def test_validate_invalid_backend(self) -> None:
+        """Test validation fails for unsupported backend names."""
+        with pytest.raises(ConfigError, match="backend must be one of"):
+            validate_config({"backend": "not-a-backend"})
+
 
 class TestMergeConfig:
     """Tests for merge_config function."""
@@ -161,6 +166,14 @@ class TestMergeConfig:
 
         result = merge_config(config_file=config_file, env_vars=env_vars)
         assert result["model"] == "env-model"
+
+    def test_merge_backend_env_overrides_config_file(self) -> None:
+        """Test backend follows the same precedence as other config keys."""
+        config_file = {"backend": "openai"}
+        env_vars = {"backend": "anthropic"}
+
+        result = merge_config(config_file=config_file, env_vars=env_vars)
+        assert result["backend"] == "anthropic"
 
     def test_merge_env_overrides_defaults(self) -> None:
         """Test environment variables override defaults."""
@@ -200,6 +213,12 @@ class TestGetEnvConfig:
         with mock.patch.dict(os.environ, {"GMUSE_MODEL": "gpt-4"}):
             config = get_env_config()
             assert config["model"] == "gpt-4"
+
+    def test_get_env_config_backend(self) -> None:
+        """Test getting backend from GMUSE_BACKEND."""
+        with mock.patch.dict(os.environ, {"GMUSE_BACKEND": "anthropic"}):
+            config = get_env_config()
+            assert config["backend"] == "anthropic"
 
     def test_get_env_config_format(self) -> None:
         """Test getting format from GMUSE_FORMAT."""

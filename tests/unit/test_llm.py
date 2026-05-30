@@ -10,6 +10,7 @@ from gmuse.exceptions import LLMError
 from gmuse.llm import (
     LLMClient,
     detect_provider,
+    resolve_resolution_context,
     resolve_model,
 )
 
@@ -147,6 +148,63 @@ class TestResolveModel:
             # Should work when GMUSE_MODEL is set
             assert resolve_model("bedrock") == "my-custom-model"
             assert resolve_model("huggingface") == "my-custom-model"
+
+
+class TestResolveResolutionContext:
+    """Tests for backend/model resolution scaffolding."""
+
+    def test_resolves_single_configured_backend_with_default_model(self) -> None:
+        """Resolve a single configured backend and its maintained default model."""
+        with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
+            context = resolve_resolution_context()
+
+        assert context.backend.value == "openai"
+        assert context.backend.source == "single_configured_backend"
+        assert context.backend.status == "resolved"
+        assert context.model.value == "gpt-4o-mini"
+        assert context.model.source == "backend_default"
+
+    def test_prefers_native_backend_hint_for_model(self) -> None:
+        """Prefer the model's native backend hint when multiple backends are configured."""
+        with mock.patch.dict(
+            os.environ,
+            {"OPENAI_API_KEY": "sk-test", "ANTHROPIC_API_KEY": "sk-ant-test"},
+            clear=True,
+        ):
+            context = resolve_resolution_context(model="claude-haiku-4-5")
+
+        assert context.backend.value == "anthropic"
+        assert context.backend.source == "native_backend_hint"
+        assert context.backend.status == "resolved"
+        assert context.model.value == "claude-haiku-4-5"
+        assert context.model.source == "explicit_model"
+
+    def test_raises_for_ambiguous_configured_backends(self) -> None:
+        """Fail when multiple configured backends remain without a unique selector."""
+        with mock.patch.dict(
+            os.environ,
+            {"OPENAI_API_KEY": "sk-test", "ANTHROPIC_API_KEY": "sk-ant-test"},
+            clear=True,
+        ):
+            with pytest.raises(LLMError, match="Multiple configured backends"):
+                resolve_resolution_context()
+
+    def test_explicit_backend_resolution_selects_reserved_backend_settings(
+        self,
+    ) -> None:
+        """Carry the selected backend's reserved settings namespace in the context."""
+        with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
+            context = resolve_resolution_context(
+                backend="openai",
+                backend_settings={
+                    "openai": {"routing": "primary"},
+                    "anthropic": {"routing": "secondary"},
+                },
+            )
+
+        assert context.backend.source == "explicit_backend"
+        assert context.diagnostic_source == "explicit_backend"
+        assert context.backend_settings == {"routing": "primary"}
 
 
 class TestLLMClient:

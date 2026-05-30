@@ -132,9 +132,9 @@ def main(
 
 @app.command()
 def info() -> None:
-    """Print resolved LLM configuration and environment values for debugging.
+    """Print resolved LLM backend/model configuration for debugging.
 
-    Useful for diagnosing provider selection and which credentials are being used.
+    Useful for diagnosing backend selection and which credentials are being used.
     """
     # Resolve configuration similarly to `generate` without performing network calls
     try:
@@ -146,22 +146,39 @@ def info() -> None:
     # Merge but don't raise errors here
     config = merge_config(cli_args={}, config_file=config_file, env_vars=env_config)
 
-    provider = None
+    detected_backend = None
+    resolved_backend = config.get("backend")
+    resolved_model = config.get("model")
+    resolution_source = "unresolved"
+
     try:
-        from gmuse.llm import detect_provider
+        from gmuse.llm import detect_provider, resolve_resolution_context
 
-        provider = detect_provider()
+        detected_backend = detect_provider()
+        resolution_context = resolve_resolution_context(
+            backend=config.get("backend"),
+            model=config.get("model"),
+            backend_settings=config.get("backend_settings"),
+        )
+        resolved_backend = resolution_context.backend.value
+        resolved_model = resolution_context.model.value
+        resolution_source = resolution_context.diagnostic_source
     except Exception:
-        provider = None
+        detected_backend = None if detected_backend is None else detected_backend
 
-    typer.echo(f"Resolved model: {config.get('model')}")
-    typer.echo(f"Detected provider heuristics: {provider}")
+    typer.echo(f"Resolved backend: {resolved_backend}")
+    typer.echo(f"Resolved model: {resolved_model}")
+    typer.echo(f"Resolution source: {resolution_source}")
+    typer.echo(f"Detected backend heuristics: {detected_backend}")
 
     typer.echo("Environment vars:")
     typer.echo(f"  OPENAI_API_KEY set: {'OPENAI_API_KEY' in os.environ}")
     typer.echo(f"  ANTHROPIC_API_KEY set: {'ANTHROPIC_API_KEY' in os.environ}")
+    typer.echo(f"  COHERE_API_KEY set: {'COHERE_API_KEY' in os.environ}")
+    typer.echo(f"  AZURE_API_KEY set: {'AZURE_API_KEY' in os.environ}")
     typer.echo(f"  GEMINI_API_KEY set: {'GEMINI_API_KEY' in os.environ}")
     typer.echo(f"  GOOGLE_API_KEY set: {'GOOGLE_API_KEY' in os.environ}")
+    typer.echo(f"  GMUSE_BACKEND env var: {os.getenv('GMUSE_BACKEND')}")
     typer.echo(f"  GMUSE_MODEL env var: {os.getenv('GMUSE_MODEL')}")
     typer.echo(f"  GMUSE_TIMEOUT env var: {os.getenv('GMUSE_TIMEOUT')}")
 
@@ -184,6 +201,11 @@ def msg(
         "--model",
         "-m",
         help="LLM model to use (e.g., 'gpt-4', 'claude-3-opus')",
+    ),
+    backend: Optional[str] = typer.Option(
+        None,
+        "--backend",
+        help="LLM backend to use (e.g., 'openai', 'anthropic', 'cohere')",
     ),
     format: Optional[str] = typer.Option(
         None,
@@ -219,7 +241,7 @@ def msg(
     dry_run: bool = typer.Option(
         False,
         "--dry-run",
-        help="Print the assembled prompt without calling the LLM provider",
+        help="Print the assembled prompt without calling the selected LLM backend",
     ),
 ) -> None:
     """Generate a commit message from staged changes.
@@ -233,6 +255,7 @@ def msg(
         gmuse msg --hint "security fix"  # Add context hint
         gmuse msg --format conventional  # Use conventional commits format
         gmuse msg --copy                 # Auto-copy to clipboard
+        gmuse msg --backend anthropic    # Use specific backend
         gmuse msg --model claude-3-opus  # Use specific model
         gmuse msg --temperature 0.3      # Lower temperature for more deterministic output
         gmuse msg --max-tokens 200       # Limit response length
@@ -243,6 +266,7 @@ def msg(
         # Load and merge configuration
         config = _load_config(
             model=model,
+            backend=backend,
             copy=copy,
             format=format,
             history_depth=history_depth,
@@ -340,6 +364,7 @@ def msg(
 
 def _load_config(
     model: Optional[str] = None,
+    backend: Optional[str] = None,
     copy: bool = False,
     format: Optional[str] = None,
     history_depth: Optional[int] = None,
@@ -360,6 +385,7 @@ def _load_config(
 
     Args:
         model: CLI model override.
+        backend: CLI backend override.
         copy: CLI copy to clipboard flag.
         format: CLI format override.
         history_depth: CLI history depth override.
@@ -378,6 +404,8 @@ def _load_config(
     cli_args: dict[str, Any] = {}
     if model is not None:
         cli_args["model"] = model
+    if backend is not None:
+        cli_args["backend"] = backend
     if copy:
         cli_args["copy_to_clipboard"] = copy
     if format is not None:

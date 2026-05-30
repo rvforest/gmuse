@@ -194,10 +194,12 @@ class TestUserStory1:
                 os.chdir(old_cwd)
 
             assert result.exit_code != 0
-            # Should mention either "No API key" or "No LLM provider"
+            # Should mention either legacy provider wording or the new backend wording
             assert (
                 "No API key" in result.stderr
                 or "No LLM provider" in result.stderr
+                or "No compatible backend" in result.stderr
+                or "backend" in result.stderr.lower()
                 or "provider" in result.stderr.lower()
             )
 
@@ -549,6 +551,36 @@ class TestUserStory8:
                 call_kwargs = mock_client_class.call_args[1]
                 assert call_kwargs.get("model") == "gpt-4"
                 assert call_kwargs.get("provider") is None
+
+    def test_model_flag_prefers_native_backend_hint(
+        self, git_repo_with_history: Path
+    ) -> None:
+        """Use the model's native backend when multiple direct backends are configured."""
+        _stage_file(git_repo_with_history, "test.py", "test content")
+
+        with mock.patch("gmuse.commit.LLMClient") as mock_client_class:
+            mock_client = mock.Mock()
+            mock_client.generate.return_value = "Update test file"
+            mock_client_class.return_value = mock_client
+
+            with mock.patch.dict(
+                os.environ,
+                {"OPENAI_API_KEY": "sk-test", "ANTHROPIC_API_KEY": "sk-ant-test"},
+                clear=True,
+            ):
+                old_cwd = os.getcwd()
+                os.chdir(git_repo_with_history)
+                try:
+                    result = runner.invoke(app, ["msg", "--model", "claude-haiku-4-5"])
+                finally:
+                    os.chdir(old_cwd)
+
+                assert result.exit_code == 0
+
+                mock_client_class.assert_called_once()
+                call_kwargs = mock_client_class.call_args[1]
+                assert call_kwargs.get("backend") == "anthropic"
+                assert call_kwargs.get("model") == "claude-haiku-4-5"
 
 
 class TestUserStory9:

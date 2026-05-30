@@ -19,7 +19,7 @@ def _isolate_gmuse_global_config(
     This fixture:
     - redirects XDG_CONFIG_HOME to a per-test temp directory
     - clears any GMUSE_* env vars (tests can still set them explicitly)
-    - clears common provider API key env vars to avoid accidental provider detection
+    - clears common backend credential env vars to avoid accidental provider detection
     """
     monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path))
 
@@ -30,6 +30,8 @@ def _isolate_gmuse_global_config(
     for key in (
         "OPENAI_API_KEY",
         "ANTHROPIC_API_KEY",
+        "COHERE_API_KEY",
+        "AZURE_API_KEY",
         "GEMINI_API_KEY",
         "GOOGLE_API_KEY",
     ):

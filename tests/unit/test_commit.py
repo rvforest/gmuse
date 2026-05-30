@@ -1,5 +1,6 @@
 """Unit tests for gmuse.commit module."""
 
+import os
 from unittest import mock
 
 import pytest
@@ -125,6 +126,11 @@ class TestGatherContext:
 class TestGenerateMessage:
     """Tests for generate_message function."""
 
+    @pytest.fixture(autouse=True)
+    def _configure_backend(self, monkeypatch) -> None:
+        """Provide one configured backend for generate_message tests by default."""
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+
     def test_generate_message_success(self, monkeypatch) -> None:
         """Test successful message generation."""
         mock_context = GenerationContext(
@@ -229,6 +235,51 @@ class TestGenerateMessage:
 
         with pytest.raises(LLMError, match="API error"):
             generate_message(config=config, context=mock_context)
+
+    def test_generate_message_resolves_backend_and_model_before_client_init(
+        self, monkeypatch
+    ) -> None:
+        """Thread the resolved backend/model pair into LLM client construction."""
+        mock_context = GenerationContext(
+            diff=mock.Mock(),
+            history=None,
+            repo_instructions=None,
+            diff_was_truncated=False,
+        )
+        mock_client = mock.Mock()
+        mock_client.generate.return_value = "feat: add new feature"
+        captured_client_kwargs = {}
+
+        def capture_client(**kwargs):
+            captured_client_kwargs.update(kwargs)
+            return mock_client
+
+        monkeypatch.setattr(
+            "gmuse.commit.gather_context", lambda **kwargs: mock_context
+        )
+        monkeypatch.setattr(
+            "gmuse.commit.build_prompt", lambda **kwargs: ("system", "user")
+        )
+        monkeypatch.setattr("gmuse.commit.LLMClient", capture_client)
+        monkeypatch.setattr(
+            "gmuse.commit.validate_message", lambda msg, format, max_length: None
+        )
+
+        config = {
+            "format": "freeform",
+            "model": None,
+            "timeout": 30,
+            "temperature": 0.7,
+            "max_tokens": 500,
+            "max_message_length": 1000,
+        }
+
+        with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
+            result = generate_message(config=config, context=mock_context)
+
+        assert result.message == "feat: add new feature"
+        assert captured_client_kwargs["backend"] == "openai"
+        assert captured_client_kwargs["model"] == "gpt-4o-mini"
 
     def test_generate_message_passes_hint_to_prompt(self, monkeypatch) -> None:
         """Test that user hint is passed to prompt builder."""

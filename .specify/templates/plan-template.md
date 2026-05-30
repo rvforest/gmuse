@@ -1,9 +1,10 @@
 # Implementation Plan: [FEATURE]
 
 **Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
+
 **Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
 
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
@@ -18,27 +19,28 @@
 -->
 
 **Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
+
 **Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
+
 **Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+
 **Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
+
 **Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]
+
+**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
+
 **Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
+
 **Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
+
 **Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-All feature plans MUST validate against the `gmuse` Constitution. At minimum, the following checks MUST be documented and verified:
-
-- **Code Quality Gate** — The plan MUST identify whether the change introduces public API surface changes, the affected modules, and whether new linting or typing rules are required.
-- **Testing Gate** — The plan MUST list tests to be added: unit tests for public APIs, integration tests for cross-component behavior, and any acceptance tests for CLI/UX flows. Coverage targets should be stated.
-- **UX Gate** — For CLI or user-facing changes, the plan MUST include intended command changes, help text, error messages, and documentation updates.
-- **Performance Gate** — The plan MUST outline expected performance characteristics (latency, memory, token usage) and proposed mitigations for heavy operations (summarization, streaming, batching).
-
-The plan MUST include a short checklist showing conformance (Yes/No) and any mitigation steps for items answered No.
+[Gates determined based on constitution file]
 
 ## Project Structure
 

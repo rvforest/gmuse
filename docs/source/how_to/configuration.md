@@ -25,6 +25,8 @@ Create a configuration file to set persistent preferences:
 
 You should see your configured model and settings displayed.
 
+`gmuse info` reports the resolved backend, resolved model, and why that backend was chosen.
+
 ## Manage config from the CLI
 
 You can also view and update your global configuration without manually editing files:
@@ -43,9 +45,11 @@ Notes:
 - `gmuse config view` shows the config file location, the file contents (if present), and an effective configuration table.
 - Environment variables (for example `GMUSE_FORMAT`) can override values stored in the config file.
 
-## Switch between LLM providers
+## Select a backend and model
 
-To use a different provider, set the appropriate API key; gmuse will auto-detect the provider from the environment.
+If you have exactly one compatible direct backend configured, gmuse resolves it automatically. When you have multiple compatible backends configured, choose the backend explicitly with a CLI flag, environment variable, or config file setting.
+
+### Use a single configured backend automatically
 
 **For OpenAI:**
 ```console
@@ -53,24 +57,52 @@ $ export OPENAI_API_KEY="sk-..."
 $ gmuse msg
 ```
 
+### Choose a backend explicitly
+
+**CLI flag:**
+```console
+$ export OPENAI_API_KEY="sk-..."
+$ export ANTHROPIC_API_KEY="sk-ant-..."
+$ gmuse msg --backend anthropic --model claude-haiku-4-5
+```
+
+**Environment variable:**
+```console
+$ export GMUSE_BACKEND=anthropic
+$ export ANTHROPIC_API_KEY="sk-ant-..."
+$ gmuse msg
+```
+
+**Persistent config:**
+```toml
+backend = "anthropic"
+model = "claude-haiku-4-5"
+```
+
+### Use a model's native backend hint
+
+gmuse also honors models that clearly name a native backend when that backend is configured.
+
 **For Anthropic Claude:**
 ```console
 $ export ANTHROPIC_API_KEY="sk-ant-..."
-$ gmuse msg --model claude-3-5-sonnet-20241022
+$ gmuse msg --model claude-haiku-4-5
 ```
 
 **For Google Gemini:**
 ```console
 $ export GEMINI_API_KEY="..."
-$ gmuse msg --model <model-name>
+$ gmuse msg --model gemini/gemini-flash-lite-latest
 ```
 
 For local models such as Ollama, see [Host a local model](local_models.md).
 
 To set your default model, add it to your config file:
 ```toml
-model = "claude-3-5-sonnet-20241022"
+model = "claude-haiku-4-5"
 ```
+
+If gmuse reports that multiple configured backends match, either set `--backend`/`GMUSE_BACKEND` or choose a model with a clear native backend hint.
 
 ## Change commit message format
 
@@ -266,7 +298,7 @@ $ gmuse msg --format conventional --dry-run
 $ gmuse msg --history-depth 0 --dry-run
 ```
 
-The `--dry-run` flag shows you the prompt without calling the LLM.
+The `--dry-run` flag shows you the prompt without calling the selected backend.
 
 ## Check your configuration
 
@@ -277,7 +309,8 @@ $ gmuse info
 ```
 
 This shows:
+- Resolved backend name
 - Resolved model name
-- Detected provider
+- Resolution source
 - Which API keys are set
 - Environment variables in use

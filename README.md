@@ -24,17 +24,18 @@ AI generated git commit messages in the shell using LLMs.
 ## Highlights
 
 - **AI-powered shell completions (zsh, experimental)** — context-aware suggestions for `git commit -m` that help you generate commit messages faster.
-- **Fast, configurable message generation** — generate high‑quality commit messages via the CLI with customizable prompts, models, and provider settings.
+- **Fast, configurable message generation** — generate high‑quality commit messages via the CLI with customizable prompts, backend selection, and model settings.
 
 ## Quickstart
 
 1. Install gmuse (see Installation below).
-2. Ensure your LLM provider API key is set (e.g., `OPENAI_API_KEY`).
+2. Ensure one supported backend credential is set (for example, `OPENAI_API_KEY`).
 3. Load completions: `eval "$(gmuse git-completions zsh)"`
 4. Stage changes: `git add .`
 5. Test: `git commit -m <TAB>` — gmuse will suggest a message; confirm to use it.
 6. Alternatively, generate a commit message directly: `gmuse msg`
-7. Preview the prompt without calling LLM: `gmuse msg --dry-run`
+7. Choose a backend explicitly when needed: `gmuse msg --backend anthropic --model claude-haiku-4-5`
+8. Preview the prompt without calling the selected backend: `gmuse msg --dry-run`
 
 See [Completions docs](https://gmuse.readthedocs.io/en/latest/how_to/completions.html) for configuration and how to persist the completion across sessions.
 
@@ -48,18 +49,20 @@ pip install gmuse
 pip install gmuse[clipboard]
 ```
 
-## Provider Setup
+## Backend Setup
 
-gmuse supports 100+ LLM providers via LiteLLM. Set your API key:
+gmuse supports 100+ LLM providers via LiteLLM, while the built-in direct backend flow currently covers OpenAI, Anthropic, Cohere, Azure OpenAI, and Gemini. Set the credential for the backend you want to use:
 
 ```bash
 export OPENAI_API_KEY="sk-..."          # For OpenAI
 export ANTHROPIC_API_KEY="sk-ant-..."  # For Anthropic
+export COHERE_API_KEY="..."            # For Cohere
+export AZURE_API_KEY="..."             # For Azure OpenAI
 export GOOGLE_API_KEY="..."             # For Google
 # Or configure in ~/.config/gmuse/config.toml
 ```
 
-Provider selection is auto-detected from API keys (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
+If exactly one compatible direct backend is configured, gmuse resolves it automatically. You can make the choice explicit with `gmuse msg --backend <name>`, `GMUSE_BACKEND`, or `backend = "<name>"` in your config file. Run `gmuse info` to inspect the resolved backend, model, and resolution source.
 
 Default model choices (cost-efficient variants):
 

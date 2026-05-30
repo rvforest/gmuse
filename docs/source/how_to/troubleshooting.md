@@ -2,13 +2,13 @@
 
 This page contains practical, step-by-step troubleshooting and debugging advice for `gmuse`.
 
-Use this guide when you need to resolve common problems (timeouts, authentication failures, validation errors, rate limits, etc.) or when you want to inspect what `gmuse` would send to a provider.
+Use this guide when you need to resolve common problems (timeouts, authentication failures, backend selection failures, validation errors, rate limits, etc.) or when you want to inspect what `gmuse` would send to a backend.
 
 ## Dry-run & debugging
 
-Use `gmuse msg --dry-run` to print the assembled prompts (`SYSTEM PROMPT` and `USER PROMPT`) without contacting any LLM provider — useful to inspect exactly what will be sent. The `--dry-run` command never calls providers and does not consume tokens.
+Use `gmuse msg --dry-run` to print the assembled prompts (`SYSTEM PROMPT` and `USER PROMPT`) without contacting any LLM backend — useful to inspect exactly what will be sent. The `--dry-run` command never calls a backend and does not consume tokens.
 
-For more detailed provider/client diagnostics, set the environment variable `GMUSE_DEBUG=1` before running gmuse; this enables LiteLLM/provider debug output. Prompts are also logged by gmuse at DEBUG level if you enable debug logging.
+For more detailed backend/client diagnostics, set the environment variable `GMUSE_DEBUG=1` before running gmuse; this enables LiteLLM/backend debug output. Prompts are also logged by gmuse at DEBUG level if you enable debug logging.
 
 **Note:** If you see `No staged changes`, make sure you've staged your files with `git add`. Use `gmuse msg --dry-run` to confirm that your diff is included and to check whether gmuse warns about truncation due to model token limits.
 
@@ -46,21 +46,27 @@ For the exact validation rules and canonical error messages, see [](../reference
 ### Examples & fixes
 
 - "Generated message is empty": Run with `--dry-run` to confirm the prompt includes the diff and examples; try increasing `temperature` slightly or providing a clearer hint.
-- "Message too long: 1200 characters (max 1000)": Reduce `max_tokens` in your provider config, or add a hint like `"Keep message under 80 characters"`.
+- "Message too long: 1200 characters (max 1000)": Reduce `max_tokens` in your backend config, or add a hint like `"Keep message under 80 characters"`.
 - "Message does not match Conventional Commits format": Use `--format conventional` and add a `--hint` with an example commit message in the expected format.
 
 ## Error handling
 
-When provider errors occur, `gmuse` displays helpful messages and exits without retrying automatically. Common error types and recovery steps:
+When backend or provider errors occur, `gmuse` displays helpful messages and exits without retrying automatically. Common error types and recovery steps:
 
 | Error Type | Message | Recovery |
 |------------|---------|----------|
 | **Authentication** | `Authentication failed. Check your API key` | Verify your `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc. |
+| **Backend selection** | `No compatible backend is configured` | Configure one supported backend, or choose a model with a clear native backend hint |
+| **Backend ambiguity** | `Multiple configured backends match the current request` | Set `--backend`, `GMUSE_BACKEND`, or `backend = "..."` |
+| **Backend mismatch** | `Backend 'anthropic' cannot serve model 'gpt-4'` | Pick a compatible model or change the backend |
+| **Missing credentials** | `Selected backend 'anthropic' is missing credentials` | Configure the selected backend's API key before retrying |
 | **Timeout** | `Request timed out after 30 seconds` | Increase timeout: `export GMUSE_TIMEOUT=60` or choose a faster model |
 | **Rate limit** | `Rate limit exceeded. Wait a moment and try again` | Wait and retry, or switch to a different model |
 | **Network** | `Network error. Check your internet connection` | Check connectivity and retry |
 
-> **Tip:** Set `GMUSE_DEBUG=1` to enable detailed LiteLLM/provider debug output for troubleshooting.
+Use `gmuse info` when debugging backend resolution. It prints the resolved backend, resolved model, and resolution source without making a network request.
+
+> **Tip:** Set `GMUSE_DEBUG=1` to enable detailed LiteLLM/backend debug output for troubleshooting.
 
 ## See also
 

@@ -22,6 +22,7 @@ gmuse loads persistent user-level configuration from:
 
 **Example:**
 ```toml
+backend = "openai"
 model = "gpt-4o-mini"
 format = "conventional"
 history_depth = 10
@@ -51,33 +52,64 @@ $ gmuse config set <key> <value>
 ### model
 
 **Type:** string
-**Default:** `null` (auto-detected based on provider)
+**Default:** `null` (resolved from the selected backend)
 **Environment variable:** `GMUSE_MODEL`
 
-LLM model identifier to use for generation. If not specified, gmuse selects a default model based on the detected provider:
+LLM model identifier to use for generation. If not specified, gmuse selects a default model after it resolves the active backend:
 
 - `openai` → `gpt-4o-mini`
-- `anthropic` → `claude-3-5-sonnet-20241022`
+- `anthropic` → `claude-haiku-4-5`
 - `gemini` → `gemini/gemini-flash-lite-latest`
-- `cohere` → `command`
-- `azure` → `gpt-4o`
+- `cohere` → `command-light`
+- `azure` → `gpt-4o-mini`
 
 **For providers without default models** (such as `bedrock` and `huggingface`), you **must** specify a model explicitly using the `model` configuration option, `GMUSE_MODEL` environment variable, or the `--model` CLI flag. Otherwise, gmuse will raise an error with instructions.
 
-**Provider Detection:** gmuse auto-detects the provider based on these environment variables:
+**Native backend hints:** gmuse also treats clearly named models such as `claude-*` and `gemini/*` as hints toward their native built-in backends when those backends are configured.
 
-| Variable | Provider |
-|----------|----------|
-| `OPENAI_API_KEY` | OpenAI |
-| `ANTHROPIC_API_KEY` | Anthropic |
-| `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Google Gemini |
-| `COHERE_API_KEY` | Cohere |
-| `AZURE_API_KEY` | Azure OpenAI |
+### backend
 
-Run `gmuse info` to see which provider was detected.
+**Type:** string or `null`
+**Default:** `null` (automatic resolution)
+**Valid values:** `openai`, `anthropic`, `cohere`, `azure`, `gemini`
+**CLI flag:** `--backend`
+**Environment variable:** `GMUSE_BACKEND`
+
+The backend controls which direct transport gmuse uses for the request. If you do not set `backend`, gmuse resolves it automatically using this order:
+
+1. Explicit backend from `--backend`, `GMUSE_BACKEND`, or config file
+2. A selected model's native backend hint when that backend is configured
+3. Exactly one configured compatible direct backend
+4. Otherwise, an actionable error
+
+Built-in direct backends are detected from these environment variables:
+
+| Variable | Backend |
+|----------|---------|
+| `OPENAI_API_KEY` | `openai` |
+| `ANTHROPIC_API_KEY` | `anthropic` |
+| `GEMINI_API_KEY` or `GOOGLE_API_KEY` | `gemini` |
+| `COHERE_API_KEY` | `cohere` |
+| `AZURE_API_KEY` | `azure` |
+
+Run `gmuse info` to see the resolved backend, model, and resolution source.
 
 ```toml
-model = "gpt-4o"
+backend = "anthropic"
+```
+
+### backend_settings (reserved namespace)
+
+**Type:** TOML table
+**Status:** Reserved for future backend-specific settings
+
+gmuse reserves a `backend_settings` namespace for future backend-specific controls, but the current built-in direct backends do not expose concrete options yet. The namespace is carried internally when present in the config file, but it is intentionally omitted from the effective configuration table, `gmuse config set`, and `gmuse info` until a later feature activates concrete settings.
+
+Example reserved shape:
+
+```toml
+[backend_settings.openai]
+# reserved for future backend-specific settings
 ```
 
 ### format

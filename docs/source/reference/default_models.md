@@ -1,6 +1,6 @@
 # Default Models
 
-This page documents gmuse's default LLM model choices and the rationale.
+This page documents gmuse's default LLM model choices for the built-in direct backends and the rationale.
 
 ## Default mapping (economy-focused)
 
@@ -14,9 +14,9 @@ This page documents gmuse's default LLM model choices and the rationale.
 
 The defaults prefer smaller/light/mini/haiku variants intended to be lower-cost and
 lower-latency while still providing reliable instruction-following for short
-text generation tasks such as commit message generation. Users can override
-these defaults using the `GMUSE_MODEL` environment variable or the `--model`
-CLI option for a single invocation.
+text generation tasks such as commit message generation. Once gmuse resolves the
+active backend, it uses that backend's default model unless you override it with
+`GMUSE_MODEL`, `backend = "..."` plus `model = "..."`, or the `--model` CLI option.
 
 ## Notes
 
@@ -24,3 +24,5 @@ CLI option for a single invocation.
   cost-efficient variants. If you need higher quality or advanced capabilities
   (e.g., long-form reasoning or large-context agents), specify a stronger
   model via `--model` or config file.
+- When multiple compatible backends are configured, use `--backend` or
+  `GMUSE_BACKEND` if you want to override the automatic backend selection.

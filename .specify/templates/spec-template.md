@@ -1,8 +1,11 @@
 # Feature Specification: [FEATURE NAME]
 
 **Feature Branch**: `[###-feature-name]`
+
 **Created**: [DATE]
+
 **Status**: Draft
+
 **Input**: User description: "$ARGUMENTS"
 
 ## User Scenarios & Testing *(mandatory)*
@@ -70,22 +73,16 @@
 <!--
   ACTION REQUIRED: The content in this section represents placeholders.
   Fill them out with the right edge cases.
+-->
 
-## Constitution Check (Mandatory)
-
-Every specification MUST explicitly address the following constitution-oriented questions and include evidence or steps:
-
-- **Code Quality**: Does this spec change public APIs, require new libraries, or introduce patterns that need additional linting/type checks? Describe how you'll keep code readable and testable.
-- **Testing**: What unit and integration tests will be added? Are there required coverage targets or new test types (contract, performance, security) that must be in CI?
-- **UX**: If the spec introduces CLI or user-visible changes, include help text, error messages, and docs that will need updates.
-- **Performance**: Document expected ranges for latency, memory, or token consumption, and any strategies for keeping those within acceptable bounds.
-
-Address each item with short acceptance criteria (e.g., "Unit tests added: file path: tests/unit/test_x.py; Coverage target: 85% for new modules").
+- What happens when [boundary condition]?
+- How does system handle [error scenario]?
 
 ## Requirements *(mandatory)*
 
 <!--
   ACTION REQUIRED: The content in this section represents placeholders.
+  Fill them out with the right functional requirements.
 -->
 
 ### Functional Requirements
@@ -119,3 +116,16 @@ Address each item with short acceptance criteria (e.g., "Unit tests added: file 
 - **SC-002**: [Measurable metric, e.g., "System handles 1000 concurrent users without degradation"]
 - **SC-003**: [User satisfaction metric, e.g., "90% of users successfully complete primary task on first attempt"]
 - **SC-004**: [Business metric, e.g., "Reduce support tickets related to [X] by 50%"]
+
+## Assumptions
+
+<!--
+  ACTION REQUIRED: The content in this section represents placeholders.
+  Fill them out with the right assumptions based on reasonable defaults
+  chosen when the feature description did not specify certain details.
+-->
+
+- [Assumption about target users, e.g., "Users have stable internet connectivity"]
+- [Assumption about scope boundaries, e.g., "Mobile support is out of scope for v1"]
+- [Assumption about data/environment, e.g., "Existing authentication system will be reused"]
+- [Dependency on existing system/service, e.g., "Requires access to the existing user profile API"]

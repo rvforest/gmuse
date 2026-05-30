@@ -1,0 +1,7 @@
+{
+  "ai": "copilot",
+  "context_file": ".github/copilot-instructions.md",
+  "integration": "copilot",
+  "script": "sh",
+  "speckit_version": "0.8.18"
+}

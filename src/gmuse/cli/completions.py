@@ -24,7 +24,7 @@ from importlib import resources as _importlib_resources
 
 import typer
 
-from gmuse.cli._config import resolve_config
+from gmuse.cli.config_resolution import resolve_config
 from gmuse.commit import GenerationContext, generate_message
 from gmuse.exceptions import LLMError, NoStagedChangesError, NotAGitRepositoryError
 from gmuse.git import get_commit_history, get_staged_diff, load_repository_instructions

@@ -45,7 +45,7 @@ from gmuse.exceptions import (
     NoStagedChangesError,
     NotAGitRepositoryError,
 )
-from gmuse.cli._config import resolve_config
+from gmuse.cli.config_resolution import resolve_config
 from gmuse.commit import generate_message, gather_context
 from gmuse.logging import get_logger
 from gmuse.prompts import build_prompt

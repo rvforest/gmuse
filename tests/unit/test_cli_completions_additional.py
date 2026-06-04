@@ -46,17 +46,23 @@ def test_completions_run_invalid_env_timeout_does_not_override(
 
     captured_cli_args: dict[str, object] = {}
 
-    def fake_merge_config(*, cli_args, config_file, env_vars):  # noqa: ARG001
+    def fake_resolve_config(*, cli_args, tolerate_load_errors=False, validate=False):
         captured_cli_args.update(cli_args)
         return {"timeout": cli_args["timeout"]}
 
-    monkeypatch.setattr(
-        completions, "load_config", lambda: (_ for _ in ()).throw(Exception("no file"))
-    )
-    monkeypatch.setattr(completions, "get_env_config", lambda: {})
-    monkeypatch.setattr(completions, "merge_config", fake_merge_config)
+    monkeypatch.setattr(completions, "resolve_config", fake_resolve_config)
     monkeypatch.setattr(
         completions, "get_staged_diff", lambda: SimpleNamespace(truncated=False)
+    )
+    monkeypatch.setattr(
+        completions,
+        "get_commit_history",
+        lambda depth: SimpleNamespace(commits=[], depth=depth),
+    )
+    monkeypatch.setattr(
+        completions,
+        "load_repository_instructions",
+        lambda: SimpleNamespace(content="", file_path="", exists=False),
     )
 
     class _Result:
@@ -129,9 +135,17 @@ def test_completions_run_llmerror_status_mapping(
     monkeypatch.setattr(
         completions, "get_staged_diff", lambda: SimpleNamespace(truncated=False)
     )
-    monkeypatch.setattr(completions, "load_config", lambda: {})
-    monkeypatch.setattr(completions, "get_env_config", lambda: {})
-    monkeypatch.setattr(completions, "merge_config", lambda **_: {})
+    monkeypatch.setattr(completions, "resolve_config", lambda **_: {})
+    monkeypatch.setattr(
+        completions,
+        "get_commit_history",
+        lambda depth: SimpleNamespace(commits=[], depth=depth),
+    )
+    monkeypatch.setattr(
+        completions,
+        "load_repository_instructions",
+        lambda: SimpleNamespace(content="", file_path="", exists=False),
+    )
 
     def _raise(**_):
         raise LLMError(error)

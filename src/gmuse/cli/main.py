@@ -37,13 +37,7 @@ if "git-completions-run" in " ".join(sys.argv) and not os.getenv("GMUSE_LOG_FILE
 import typer
 
 from gmuse import __version__  # noqa: E402
-from gmuse.config import (
-    ConfigDict,
-    get_env_config,
-    load_config,
-    merge_config,
-    validate_config,
-)
+from gmuse.config import ConfigDict
 from gmuse.exceptions import (
     ConfigError,
     InvalidMessageError,
@@ -51,6 +45,7 @@ from gmuse.exceptions import (
     NoStagedChangesError,
     NotAGitRepositoryError,
 )
+from gmuse.cli._config import resolve_config
 from gmuse.commit import generate_message, gather_context
 from gmuse.logging import get_logger
 from gmuse.prompts import build_prompt
@@ -136,15 +131,7 @@ def info() -> None:
 
     Useful for diagnosing provider selection and which credentials are being used.
     """
-    # Resolve configuration similarly to `generate` without performing network calls
-    try:
-        config_file = load_config()
-    except Exception:
-        config_file = {}
-
-    env_config = get_env_config()
-    # Merge but don't raise errors here
-    config = merge_config(cli_args={}, config_file=config_file, env_vars=env_config)
+    config = resolve_config(tolerate_load_errors=True)
 
     provider = None
     try:
@@ -393,17 +380,7 @@ def _load_config(
     if include_branch:
         cli_args["include_branch"] = include_branch
 
-    # Load and merge from all sources
-    config_file = load_config()
-    env_config = get_env_config()
-    config = merge_config(
-        cli_args=cli_args,
-        config_file=config_file,
-        env_vars=env_config,
-    )
-
-    # Validate merged config
-    validate_config(config)
+    config = resolve_config(cli_args=cli_args, validate=True)
     logger.debug(f"Configuration loaded: {config}")
 
     return config

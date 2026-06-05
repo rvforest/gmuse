@@ -55,9 +55,15 @@ class TestDetectProvider:
 
     def test_detect_no_provider_raises_error(self) -> None:
         """Test error when no provider API key is set."""
+        api_key_name = "_".join(("OPENAI", "API", "KEY"))
         with mock.patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(LLMError, match="No LLM provider API key configured"):
+            with pytest.raises(LLMError) as excinfo:
                 detect_provider()
+
+            message = str(excinfo.value)
+            assert "No LLM provider API key configured" in message
+            assert f"gmuse auth set {api_key_name}" in message
+            assert f"export {api_key_name}='sk-...'" in message
 
     def test_detect_openai_priority(self) -> None:
         """Test OpenAI takes priority when multiple keys present."""
@@ -66,6 +72,34 @@ class TestDetectProvider:
             {"OPENAI_API_KEY": "sk-test", "ANTHROPIC_API_KEY": "sk-ant-test"},
         ):
             assert detect_provider() == "openai"
+
+    def test_detect_blank_env_falls_back_to_keyring(self) -> None:
+        """Blank env values should be treated as missing and fall back to keyring."""
+
+        def fake_get_password(service_name: str, username: str) -> str | None:
+            if username == "OPENAI_API_KEY":
+                return "stored-secret"
+            return None
+
+        with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "   "}, clear=True):
+            with mock.patch(
+                "gmuse.credentials.keyring.get_password", fake_get_password
+            ):
+                assert detect_provider() == "openai"
+
+    def test_detect_provider_from_keyring(self) -> None:
+        """The keyring should be consulted when no env vars are set."""
+
+        def fake_get_password(service_name: str, username: str) -> str | None:
+            if username == "OPENAI_API_KEY":
+                return "stored-secret"
+            return None
+
+        with mock.patch.dict(os.environ, {}, clear=True):
+            with mock.patch(
+                "gmuse.credentials.keyring.get_password", fake_get_password
+            ):
+                assert detect_provider() == "openai"
 
 
 class TestResolveModel:
@@ -215,15 +249,22 @@ class TestLLMClient:
     @mock.patch("gmuse.llm.litellm")
     def test_generate_auth_error(self, mock_litellm: mock.Mock) -> None:
         """Test handling authentication errors."""
+        mock_litellm.get_llm_provider.return_value = (None, "openai", None, None)
         mock_litellm.completion.side_effect = Exception("API key invalid")
 
         with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
             client = LLMClient(model="gpt-4")
-            with pytest.raises(LLMError, match="Authentication failed"):
+            with pytest.raises(LLMError, match="Authentication failed") as excinfo:
                 client.generate(
                     system_prompt="System",
                     user_prompt="User",
                 )
+
+            message = str(excinfo.value)
+            assert "Check your provider credentials" in message
+            assert "gmuse auth status" in message
+            assert "OPENAI_API_KEY" not in message
+            assert "ANTHROPIC_API_KEY" not in message
 
     @mock.patch("gmuse.llm.litellm")
     def test_generate_timeout_error(self, mock_litellm: mock.Mock) -> None:

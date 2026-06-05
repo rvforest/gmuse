@@ -17,11 +17,20 @@ import contextlib
 import io
 import os
 import sys
-from typing import Final, Iterator, Optional
+from typing import Final, Generator, Optional
 
 import litellm
 
-from gmuse.exceptions import LLMError
+from gmuse.credentials import (
+    detect_provider_from_credentials,
+    normalize_env_value,
+    resolve_provider_credential,
+)
+from gmuse.exceptions import (
+    CredentialLookupTimeout,
+    LLMError,
+    build_missing_credential_message,
+)
 from gmuse.logging import configure_litellm_logging, get_logger
 
 logger = get_logger(__name__)
@@ -55,7 +64,7 @@ _DEFAULT_MODELS: Final[dict[str, str]] = {
 
 
 @contextlib.contextmanager
-def _suppress_litellm_output() -> Iterator[None]:
+def _suppress_litellm_output() -> Generator[None, None, None]:
     """Context manager to suppress litellm's noisy stdout/stderr output.
 
     LiteLLM prints debug info like "Provider List: ..." that clutters output.
@@ -85,8 +94,10 @@ def _suppress_litellm_output() -> Iterator[None]:
 # -----------------------------------------------------------------------------
 
 
-def detect_provider() -> Optional[str]:
-    """Detect LLM provider from environment variables.
+def detect_provider(
+    *, model: str | None = None, credential_lookup_timeout: float | None = None
+) -> Optional[str]:
+    """Detect LLM provider from environment variables or model.
 
     Checks for common API key environment variables in priority order:
 
@@ -105,32 +116,47 @@ def detect_provider() -> Optional[str]:
         >>> detect_provider()
         'openai'
     """
-    # Check for API keys in priority order
-    if os.getenv("OPENAI_API_KEY"):
-        return "openai"
-    if os.getenv("ANTHROPIC_API_KEY"):
-        return "anthropic"
-    if os.getenv("COHERE_API_KEY"):
-        return "cohere"
-    if os.getenv("AZURE_API_KEY"):
-        return "azure"
-    if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
-        return "gemini"
+    # If model is known, try provider lookup. Fall back to credential detection
+    # if LiteLLM introspection is unavailable or returns an unexpected shape.
+    if model is not None or (model := os.getenv("GMUSE_MODEL")):
+        with contextlib.suppress(Exception):
+            provider_info = litellm.get_llm_provider(model)
+            if isinstance(provider_info, tuple) and len(provider_info) >= 2:
+                provider = provider_info[1]
+                if isinstance(provider, str) and provider:
+                    return provider
 
-    # Check if GMUSE_MODEL explicitly indicates a provider
-    if model := os.getenv("GMUSE_MODEL"):
-        _, provider, _, _ = litellm.get_llm_provider(model)
-        return provider
+    env_var_provider = resolve_provider_from_key_env_vars()
+    if env_var_provider is not None:
+        return env_var_provider
 
-    raise LLMError(
-        "No LLM provider API key configured.\n\n"
-        "Set an environment variable for your provider:\n"
-        "  export OPENAI_API_KEY='sk-...'\n"
-        "  export ANTHROPIC_API_KEY='sk-ant-...'\n\n"
-        "Or configure in config.toml:\n"
-        "  model = 'gpt-4'\n\n"
-        "Config location: ~/.config/gmuse/config.toml"
+    keyring_provider: Optional[str] = detect_provider_from_credentials(
+        completion_timeout=credential_lookup_timeout,
     )
+    if keyring_provider is not None:
+        return keyring_provider
+    raise LLMError(build_missing_credential_message())
+
+
+def resolve_provider_from_key_env_vars() -> Optional[str]:
+    """Resolve provider by checking for known API key environment variables.
+
+    Returns:
+        Provider name if found, None otherwise
+    """
+    if normalize_env_value(os.getenv("OPENAI_API_KEY")):
+        return "openai"
+    if normalize_env_value(os.getenv("ANTHROPIC_API_KEY")):
+        return "anthropic"
+    if normalize_env_value(os.getenv("COHERE_API_KEY")):
+        return "cohere"
+    if normalize_env_value(os.getenv("AZURE_API_KEY")):
+        return "azure"
+    if normalize_env_value(os.getenv("GEMINI_API_KEY")) or normalize_env_value(
+        os.getenv("GOOGLE_API_KEY")
+    ):
+        return "gemini"
+    return None
 
 
 def resolve_model(provider: str, model: Optional[str] = None) -> str:
@@ -210,6 +236,7 @@ class LLMClient:
         self,
         model: Optional[str] = None,
         timeout: int = 30,
+        credential_lookup_timeout: float | None = None,
     ):
         """Initialize LLM client.
 
@@ -221,13 +248,28 @@ class LLMClient:
             LLMError: If no provider is configured
         """
         # Detect provider for model resolution
-        provider = detect_provider()
+        provider = detect_provider(
+            model=model,
+            credential_lookup_timeout=credential_lookup_timeout,
+        )
 
         assert provider is not None, "Provider must be detected"
         self.provider = provider
 
         self.model = resolve_model(provider, model)
         self.timeout = timeout
+        self.api_key: str | None = None
+
+        credential = resolve_provider_credential(
+            provider,
+            completion_timeout=credential_lookup_timeout,
+        )
+        if credential is not None:
+            if credential.source == "timeout":
+                raise CredentialLookupTimeout(
+                    f"Credential lookup for provider '{provider}' timed out after {credential_lookup_timeout} seconds."
+                )
+            self.api_key = credential.raw_value
 
         logger.debug(
             f"Initialized LLMClient with model={self.model}, timeout={timeout}s"
@@ -281,6 +323,7 @@ class LLMClient:
                     temperature=temperature,
                     max_tokens=max_tokens,
                     timeout=self.timeout,
+                    api_key=self.api_key,
                 )
 
             # Extract generated text
@@ -312,9 +355,9 @@ def _convert_to_llm_error(error: Exception, timeout: int) -> LLMError:
 
     if "api key" in error_msg or "authentication" in error_msg:
         return LLMError(
-            "Authentication failed. Check your API key:\n\n"
-            "  export OPENAI_API_KEY='sk-...'\n"
-            "  export ANTHROPIC_API_KEY='sk-ant-...'\n\n"
+            "Authentication failed. Check your provider credentials.\n\n"
+            "You can configure credentials using environment variables or gmuse auth commands.\n"
+            "Run 'gmuse auth status' to inspect credential detection.\n\n"
             f"Original error: {error}"
         )
 

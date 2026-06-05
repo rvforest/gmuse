@@ -13,6 +13,7 @@ from gmuse.cli.completions import (
     completions_run_command,
     completions_zsh,
 )
+from gmuse.exceptions import CredentialLookupTimeout
 
 
 class TestDataStructures:
@@ -304,6 +305,58 @@ class TestCompletionsRun:
 
         assert result["status"] == "offline"
         assert "api key" in result["metadata"]["error"].lower()
+
+    def test_completions_run_credential_timeout(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Credential lookup timeouts should degrade to a timeout response."""
+        mock_diff = self._create_mock_diff()
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_staged_diff",
+            lambda: mock_diff,
+        )
+
+        from gmuse.git import CommitHistory, RepositoryInstructions
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_commit_history",
+            lambda depth: CommitHistory(
+                commits=[], depth=depth, repository_path="/test"
+            ),
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.load_repository_instructions",
+            lambda: RepositoryInstructions(content="", file_path="", exists=False),
+        )
+        monkeypatch.setattr("gmuse.cli.completions.load_config", lambda: {})
+        monkeypatch.setattr("gmuse.cli.completions.get_env_config", lambda: {})
+        monkeypatch.setattr(
+            "gmuse.cli.completions.merge_config",
+            lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
+        )
+
+        def mock_generate_message(**kwargs: object) -> None:
+            raise CredentialLookupTimeout("timed out")
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.generate_message",
+            mock_generate_message,
+        )
+
+        completions_run_command(
+            shell="zsh",
+            for_command="git commit -m",
+            timeout=3.0,
+        )
+
+        captured = capsys.readouterr()
+        import json
+
+        result = json.loads(captured.out)
+
+        assert result["status"] == "timeout"
+        assert result["suggestion"] == ""
 
     def test_completions_run_timeout_from_env(
         self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]

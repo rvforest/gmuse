@@ -25,8 +25,14 @@ from importlib import resources as _importlib_resources
 import typer
 
 from gmuse.commit import GenerationContext, generate_message
+from gmuse.credentials import COMPLETION_LOOKUP_TIMEOUT_SECONDS
 from gmuse.config import get_env_config, load_config, merge_config
-from gmuse.exceptions import LLMError, NoStagedChangesError, NotAGitRepositoryError
+from gmuse.exceptions import (
+    CredentialLookupTimeout,
+    LLMError,
+    NoStagedChangesError,
+    NotAGitRepositoryError,
+)
 from gmuse.git import get_commit_history, get_staged_diff, load_repository_instructions
 from gmuse.logging import get_logger
 
@@ -288,7 +294,12 @@ def completions_run_command(
             )
 
             # Generate message
-            result = generate_message(config=config, hint=None, context=context)
+            result = generate_message(
+                config=config,
+                hint=None,
+                context=context,
+                credential_lookup_timeout=COMPLETION_LOOKUP_TIMEOUT_SECONDS,
+            )
 
             elapsed_ms = int((time.time() - start_time) * 1000)
 
@@ -302,6 +313,13 @@ def completions_run_command(
             )
             typer.echo(response.to_json())
 
+        except CredentialLookupTimeout:
+            response = CompletionResponse(
+                suggestion="",
+                status=CompletionStatus.TIMEOUT,
+                metadata={"elapsed_ms": int((time.time() - start_time) * 1000)},
+            )
+            typer.echo(response.to_json())
         except LLMError as e:
             error_msg = str(e).lower()
             if (

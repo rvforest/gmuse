@@ -85,3 +85,75 @@ class InvalidMessageError(GmuseError):
     - Message doesn't match required format (e.g., conventional commits)
     - Message contains invalid characters
     """
+
+
+def _env_var_name(prefix: str) -> str:
+    return "_".join((prefix, "API", "KEY"))
+
+
+class CredentialError(GmuseError):
+    """Raised when credential storage or lookup fails."""
+
+
+class CredentialLookupTimeout(CredentialError):
+    """Raised when credential lookup exceeds the allowed time budget."""
+
+
+class KeyringUnavailableError(CredentialError):
+    """Raised when no secure keyring backend is available."""
+
+
+class InsecureKeyringError(CredentialError):
+    """Raised when the active keyring backend is insecure."""
+
+
+def build_missing_credential_message(variable_name: str | None = None) -> str:
+    """Build an actionable missing-credential error message."""
+
+    if variable_name:
+        return (
+            "No API credential is configured for the selected provider.\n\n"
+            "For interactive use, run:\n"
+            f"  gmuse auth set {variable_name}\n\n"
+            "For CI/CD or headless environments, use environment variables:\n"
+            f"  export {variable_name}='sk-...'"
+        )
+
+    return (
+        "No LLM provider API key configured.\n\n"
+        "For interactive use, run:\n"
+        f"  gmuse auth set {_env_var_name('OPENAI')}\n\n"
+        "For CI/CD or headless environments, use environment variables:\n"
+        f"  export {_env_var_name('OPENAI')}='sk-...'\n"
+        f"  export {_env_var_name('ANTHROPIC')}='sk-ant-...'"
+    )
+
+
+def build_no_secure_keyring_message() -> str:
+    """Build an actionable message for missing secure keyring support."""
+    return (
+        "No secure system keyring is available.\n\n"
+        "Use environment variables instead for this environment:\n"
+        f"  export {_env_var_name('OPENAI')}='sk-...'"
+    )
+
+
+def build_insecure_keyring_message() -> str:
+    """Build an actionable message for insecure keyring backends."""
+    return (
+        "Active keyring backend is insecure and cannot be used.\n\n"
+        "gmuse refuses plaintext or null keyring backends. Use environment variables instead."
+    )
+
+
+def build_overwrite_message(variable_name: str) -> str:
+    """Build the message shown when a credential already exists."""
+    return (
+        f"Credential for {variable_name} already exists.\n\n"
+        "Re-run with --force or confirm overwrite in an interactive terminal."
+    )
+
+
+def build_provider_validation_message(provider: str) -> str:
+    """Build the message shown when provider validation fails."""
+    return f"Could not validate credentials for provider '{provider}'."

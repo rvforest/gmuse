@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import subprocess
+from pathlib import Path
 from typing import Iterator
 
 import pytest
@@ -36,3 +38,26 @@ def _isolate_gmuse_global_config(
         monkeypatch.delenv(key, raising=False)
 
     yield
+
+
+@pytest.fixture
+def git_repo(tmp_path: Path) -> Path:
+    """Create a temporary git repository for integration tests."""
+    repo_path = tmp_path / "repo"
+    repo_path.mkdir()
+
+    subprocess.run(["git", "init"], cwd=repo_path, check=True, capture_output=True)
+    subprocess.run(
+        ["git", "config", "user.name", "Test User"],
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "test@example.com"],
+        cwd=repo_path,
+        check=True,
+        capture_output=True,
+    )
+
+    return repo_path

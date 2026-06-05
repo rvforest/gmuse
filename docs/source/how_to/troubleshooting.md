@@ -62,6 +62,19 @@ When provider errors occur, `gmuse` displays helpful messages and exits without 
 
 > **Tip:** Set `GMUSE_DEBUG=1` to enable detailed LiteLLM/provider debug output for troubleshooting.
 
+## Credential setup
+
+If `gmuse msg` reports that no API credential is configured, use `gmuse auth set <VAR_NAME>` on interactive machines or export the matching environment variable in non-interactive environments. Blank environment values are treated as unresolved, so `export OPENAI_API_KEY=""` falls through to the keyring rather than counting as a valid credential.
+
+If `gmuse auth set` says no secure keyring backend is available, the machine is likely missing a secure keyring provider or is using an insecure/null backend. In that case, use environment variables instead.
+
+To inspect or clean up stored credentials, use:
+
+```console
+$ gmuse auth status
+$ gmuse auth remove OPENAI_API_KEY
+```
+
 ## See also
 
 - Conceptual overview: [How it Works](../explanation/how_it_works.md)

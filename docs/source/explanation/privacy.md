@@ -35,6 +35,7 @@ Remote providers receive exactly those pieces of data. When LiteLLM or any other
 ## API Key Security
 
 *   **Priority of $ENV**: `gmuse` prefers using environment variables (e.g., `OPENAI_API_KEY`) for authentication. This is the most secure method as it keeps keys out of configuration files.
+*   **Optional Keyring Storage**: For interactive setups, `gmuse auth set` can store credentials in the OS keyring under the `gmuse` service namespace. `gmuse` reads from the keyring only when environment variables are unset or blank.
 *   **No Accidental Commits**: If you use a local `.env` file, ensure it is in your `.gitignore`. `gmuse` never automatically reads or uploads `.env` files.
 *   **Local Usage**: Keys are read on your machine and used only to authenticate the request to the provider; gmuse never uploads them to a gmuse-operated service or stores them anywhere.
 

@@ -29,7 +29,9 @@ AI generated git commit messages in the shell using LLMs.
 ## Quickstart
 
 1. Install gmuse (see Installation below).
-2. Ensure your LLM provider API key is set (e.g., `OPENAI_API_KEY`).
+2. Set credentials for your provider:
+  - Interactive setup: `gmuse auth set OPENAI_API_KEY`
+  - Non-interactive environments (CI, containers, automation): export environment variables (for example `OPENAI_API_KEY`)
 3. Load completions: `eval "$(gmuse git-completions zsh)"`
 4. Stage changes: `git add .`
 5. Test: `git commit -m <TAB>` — gmuse will suggest a message; confirm to use it.
@@ -50,7 +52,18 @@ pip install gmuse[clipboard]
 
 ## Provider Setup
 
-gmuse supports 100+ LLM providers via LiteLLM. Set your API key:
+gmuse supports 100+ LLM providers via LiteLLM.
+
+Interactive setup (stores credentials in your OS keyring):
+
+```bash
+gmuse auth set OPENAI_API_KEY
+gmuse auth status
+```
+
+Auth command details: https://gmuse.readthedocs.io/en/latest/reference/cli.html#gmuse-auth
+
+Non-interactive environments (CI, containers, automation):
 
 ```bash
 export OPENAI_API_KEY="sk-..."          # For OpenAI
@@ -59,7 +72,7 @@ export GOOGLE_API_KEY="..."             # For Google
 # Or configure in ~/.config/gmuse/config.toml
 ```
 
-Provider selection is auto-detected from API keys (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`).
+Provider selection is auto-detected from credentials (environment variables first, then keyring when env values are unset or blank).
 
 Default model choices (cost-efficient variants):
 

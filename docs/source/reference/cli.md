@@ -17,7 +17,7 @@ $ gmuse msg [OPTIONS]
 - `--copy` / `-c`: Copy the generated message to clipboard.
 - `--dry-run`: Print the assembled prompt without calling the LLM provider.
 
-**Note:** Provider selection is auto-detected from configured API keys (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`). See [Configuration Reference](configuration.md#model) for details on provider detection.
+**Note:** Provider selection is auto-detected from configured API keys (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`). Empty environment values fall through to the OS keyring, and `gmuse auth` provides the secure setup path for interactive use. See [Configuration Reference](configuration.md#model) for details on provider detection.
 
 ### Dry-run example
 
@@ -48,6 +48,28 @@ Display resolved configuration for debugging.
 ```console
 $ gmuse info
 ```
+
+## gmuse auth
+
+Manage API credentials stored in the OS keyring.
+
+```console
+$ gmuse auth set OPENAI_API_KEY
+$ gmuse auth set OPENAI_API_KEY --force
+$ gmuse auth status
+$ gmuse auth status openai
+$ gmuse auth remove OPENAI_API_KEY
+$ gmuse auth remove OPENAI_API_KEY ANTHROPIC_API_KEY
+```
+
+`gmuse auth set` prompts for a secret and stores it under the `gmuse` keyring service. `gmuse auth status` shows the managed keys and their masked values, and `gmuse auth remove` deletes one or more stored credentials.
+
+Status `Source` values mean:
+
+- `env`: resolved from an environment variable
+- `keyring`: resolved from the OS keyring
+- `missing`: no credential found
+- `timeout`: keyring lookup exceeded the completion safety budget
 
 ## gmuse git-completions
 

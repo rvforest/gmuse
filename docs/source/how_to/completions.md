@@ -70,6 +70,8 @@ Environment variables:
 - `GMUSE_COMPLETIONS_TIMEOUT` (default `3.0`) — generation timeout in seconds
 - `GMUSE_COMPLETIONS_CACHE_TTL` (default `30`) — completion-side cache TTL in seconds
 
+Credential lookup for completions is additionally bounded to a 200ms budget. If the keyring blocks, prompts, or otherwise fails during lookup, gmuse exits the completion helper cleanly without inserting a suggestion so the shell never hangs.
+
 ## Developer & implementation notes
 
 For implementation details, the runtime helper contract, and a checklist for

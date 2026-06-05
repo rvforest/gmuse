@@ -57,10 +57,10 @@ $ gmuse config set <key> <value>
 LLM model identifier to use for generation. If not specified, gmuse selects a default model based on the detected provider:
 
 - `openai` → `gpt-4o-mini`
-- `anthropic` → `claude-3-5-sonnet-20241022`
+- `anthropic` → `claude-haiku-4-5`
 - `gemini` → `gemini/gemini-flash-lite-latest`
-- `cohere` → `command`
-- `azure` → `gpt-4o`
+- `cohere` → `command-light`
+- `azure` → `gpt-4o-mini`
 
 **For providers without default models** (such as `bedrock` and `huggingface`), you **must** specify a model explicitly using the `model` configuration option, `GMUSE_MODEL` environment variable, or the `--model` CLI flag. Otherwise, gmuse will raise an error with instructions.
 
@@ -73,6 +73,10 @@ LLM model identifier to use for generation. If not specified, gmuse selects a de
 | `GEMINI_API_KEY` or `GOOGLE_API_KEY` | Google Gemini |
 | `COHERE_API_KEY` | Cohere |
 | `AZURE_API_KEY` | Azure OpenAI |
+
+If one of these environment variables is set but empty or whitespace-only, gmuse treats it as unresolved and falls back to the OS keyring before reporting a missing credential error.
+
+For interactive setup, use `gmuse auth set <VAR_NAME>` to store credentials in the keyring. For non-interactive environments, keep using environment variables so they continue to take precedence.
 
 Run `gmuse info` to see which provider was detected.
 

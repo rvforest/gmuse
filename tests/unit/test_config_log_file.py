@@ -33,7 +33,7 @@ def test__load_config_includes_log_file_env(monkeypatch: pytest.MonkeyPatch) -> 
 
     # Avoid reading any real config file
     import gmuse.cli.main as main_mod
-    from gmuse.cli import _config as cli_config
+    from gmuse.cli import config_resolution as cli_config
 
     monkeypatch.setattr(cli_config, "load_config", lambda: {})
 

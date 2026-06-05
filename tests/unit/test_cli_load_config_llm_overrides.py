@@ -13,7 +13,7 @@ def test__load_config_applies_temperature_and_max_tokens_overrides(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import gmuse.cli.main as main_mod
-    from gmuse.cli import _config as cli_config
+    from gmuse.cli import config_resolution as cli_config
 
     # Avoid reading any real config file or environment variables.
     monkeypatch.setattr(cli_config, "load_config", lambda: {})
@@ -29,7 +29,7 @@ def test__load_config_applies_max_diff_bytes_override(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     import gmuse.cli.main as main_mod
-    from gmuse.cli import _config as cli_config
+    from gmuse.cli import config_resolution as cli_config
 
     # Avoid reading any real config file or environment variables.
     monkeypatch.setattr(cli_config, "load_config", lambda: {})

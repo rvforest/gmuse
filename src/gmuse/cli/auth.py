@@ -25,8 +25,8 @@ from gmuse.exceptions import (
 auth_app = typer.Typer(
     help=(
         "Manage API credentials for gmuse.\n\n"
-        "Store interactive credentials in the OS keyring. Environment variables remain\n"
-        "the recommended path for CI/CD and always take precedence when set."
+        "Store interactive credentials in the OS keyring.\n"
+        "Environment variables always take precedence when set."
     ),
     no_args_is_help=True,
 )

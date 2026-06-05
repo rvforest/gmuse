@@ -282,7 +282,10 @@ class LLMClient:
                 raise CredentialLookupTimeout(
                     f"Credential lookup for provider '{provider}' timed out after {credential_lookup_timeout} seconds."
                 )
-            self.api_key = credential.raw_value
+            if credential.source == "missing":
+                raise LLMError(build_missing_credential_message(credential.variable_name))
+            if credential.source in {"env", "keyring"}:
+                self.api_key = credential.raw_value
 
         logger.debug(
             f"Initialized LLMClient with model={self.model}, timeout={timeout}s"

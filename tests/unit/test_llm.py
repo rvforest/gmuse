@@ -6,7 +6,8 @@ from unittest import mock
 import io
 import pytest
 
-from gmuse.exceptions import LLMError
+from gmuse.exceptions import CredentialLookupTimeout, LLMError
+from gmuse import credentials
 from gmuse.llm import (
     LLMClient,
     detect_provider,
@@ -31,6 +32,11 @@ class TestDetectProvider:
         """Test detecting Cohere provider."""
         with mock.patch.dict(os.environ, {"COHERE_API_KEY": "test"}):
             assert detect_provider() == "cohere"
+
+    def test_detect_azure(self) -> None:
+        """Test detecting Azure provider."""
+        with mock.patch.dict(os.environ, {"AZURE_API_KEY": "test"}):
+            assert detect_provider() == "azure"
 
     def test_detect_gemini_from_model_env(self) -> None:
         """Detect gemini provider when GMUSE_MODEL indicates a gemini model."""
@@ -209,6 +215,24 @@ class TestLLMClient:
             assert client.model == "gpt-4o-mini"
             assert client.timeout == 30
             assert client.provider == "openai"
+
+    def test_init_raises_on_credential_lookup_timeout(self) -> None:
+        """Test initializing the client when credential lookup times out."""
+        timeout_resolution = credentials.CredentialResolution(
+            variable_name="OPENAI_API_KEY",
+            source="timeout",
+            raw_value=None,
+            masked_value=None,
+            is_managed=False,
+        )
+
+        with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "sk-test"}, clear=True):
+            with mock.patch(
+                "gmuse.llm.resolve_provider_credential",
+                return_value=timeout_resolution,
+            ):
+                with pytest.raises(CredentialLookupTimeout, match="timed out"):
+                    LLMClient(model="gpt-4", credential_lookup_timeout=0.2)
 
     @mock.patch("gmuse.llm.litellm")
     def test_generate_success(self, mock_litellm: mock.Mock) -> None:

@@ -24,9 +24,10 @@ from importlib import resources as _importlib_resources
 
 import typer
 
+from gmuse.cli.config_resolution import resolve_config
 from gmuse.commit import GenerationContext, generate_message
-from gmuse.credentials import COMPLETION_LOOKUP_TIMEOUT_SECONDS
 from gmuse.config import get_env_config, load_config, merge_config
+from gmuse.credentials import COMPLETION_LOOKUP_TIMEOUT_SECONDS
 from gmuse.exceptions import (
     CredentialLookupTimeout,
     LLMError,
@@ -265,17 +266,9 @@ def completions_run_command(
 
         # Generate commit message using LLM
         try:
-            # Load minimal config for completion
-            try:
-                config_file = load_config()
-            except Exception:
-                config_file = {}
-
-            env_config = get_env_config()
-            config = merge_config(
+            config = resolve_config(
                 cli_args={"timeout": timeout},
-                config_file=config_file,
-                env_vars=env_config,
+                tolerate_load_errors=True,
             )
 
             # Fetch commit history and repository instructions for context

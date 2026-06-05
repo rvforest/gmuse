@@ -42,14 +42,10 @@ def test_info_works_when_config_load_fails(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     monkeypatch.setattr(
-        main, "load_config", lambda: (_ for _ in ()).throw(Exception("boom"))
+        main,
+        "resolve_config",
+        lambda **_: {"model": "gpt-4.1", "provider": "openai"},
     )
-    monkeypatch.setattr(main, "get_env_config", lambda: {"GMUSE_MODEL": "x"})
-
-    def fake_merge_config(*, cli_args, config_file, env_vars):  # noqa: ARG001
-        return {"model": "gpt-4.1", "provider": "openai"}
-
-    monkeypatch.setattr(main, "merge_config", fake_merge_config)
 
     # Ensure detect_provider exists and returns something deterministic
     fake_llm = ModuleType("gmuse.llm")
@@ -67,9 +63,7 @@ def test_info_works_when_config_load_fails(
 def test_info_handles_detect_provider_failure(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(main, "load_config", lambda: {})
-    monkeypatch.setattr(main, "get_env_config", lambda: {})
-    monkeypatch.setattr(main, "merge_config", lambda **_: {"model": "m"})
+    monkeypatch.setattr(main, "resolve_config", lambda **_: {"model": "m"})
 
     fake_llm = ModuleType("gmuse.llm")
 
@@ -88,13 +82,9 @@ def test_info_handles_detect_provider_failure(
 def test_info_reports_ollama_provider_from_model_env(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(main, "load_config", lambda: {})
-    monkeypatch.setattr(
-        main, "get_env_config", lambda: {"GMUSE_MODEL": "ollama/qwen2.5-coder"}
-    )
     monkeypatch.setattr(
         main,
-        "merge_config",
+        "resolve_config",
         lambda **_: {"model": "ollama/qwen2.5-coder"},
     )
 
@@ -179,52 +169,26 @@ def test_copy_to_clipboard_generic_exception_warns(
 def test_load_config_calls_load_env_merge_and_validate(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """_load_config should call load_config/get_env_config/merge_config/validate_config.
+    """_load_config should pass CLI args through resolve_config with validation.
 
-    This specifically covers the internal line that loads the config file.
+    This specifically covers the wrapper policy used by the msg command.
     """
 
-    called: dict[str, Any] = {
-        "load_config": False,
-        "get_env_config": False,
-        "validate_config": False,
-        "cli_args": None,
-        "config_file": None,
-        "env_vars": None,
-    }
+    called: dict[str, Any] = {"cli_args": None, "validate": None}
 
-    def fake_load_config() -> dict[str, Any]:
-        called["load_config"] = True
-        return {"model": "from-file"}
-
-    def fake_get_env_config() -> dict[str, Any]:
-        called["get_env_config"] = True
-        return {"GMUSE_MODEL": "from-env"}
-
-    def fake_merge_config(*, cli_args, config_file, env_vars):
+    def fake_resolve_config(*, cli_args, tolerate_load_errors=False, validate=False):
         called["cli_args"] = dict(cli_args)
-        called["config_file"] = dict(config_file)
-        called["env_vars"] = dict(env_vars)
+        called["validate"] = validate
         return {"model": cli_args.get("model") or "merged"}
 
-    def fake_validate_config(_: dict[str, Any]) -> None:
-        called["validate_config"] = True
-
-    monkeypatch.setattr(main, "load_config", fake_load_config)
-    monkeypatch.setattr(main, "get_env_config", fake_get_env_config)
-    monkeypatch.setattr(main, "merge_config", fake_merge_config)
-    monkeypatch.setattr(main, "validate_config", fake_validate_config)
+    monkeypatch.setattr(main, "resolve_config", fake_resolve_config)
 
     config = main._load_config(model="cli-model", copy=True, include_branch=True)
 
-    assert called["load_config"] is True
-    assert called["get_env_config"] is True
-    assert called["validate_config"] is True
     assert called["cli_args"] == {
         "model": "cli-model",
         "copy_to_clipboard": True,
         "include_branch": True,
     }
-    assert called["config_file"] == {"model": "from-file"}
-    assert called["env_vars"] == {"GMUSE_MODEL": "from-env"}
+    assert called["validate"] is True
     assert config["model"] == "cli-model"

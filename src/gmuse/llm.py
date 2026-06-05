@@ -124,11 +124,24 @@ def detect_provider(
             if isinstance(provider_info, tuple) and len(provider_info) >= 2:
                 provider = provider_info[1]
                 if isinstance(provider, str) and provider:
+                    if provider == "ollama_chat":
+                        return "ollama"
                     return provider
 
     env_var_provider = resolve_provider_from_key_env_vars()
     if env_var_provider is not None:
         return env_var_provider
+
+    if model:
+        lowered = model.lower()
+
+        # Local runtimes via LiteLLM (no API key required)
+        if lowered.startswith("ollama/") or lowered.startswith("ollama_chat/"):
+            return "ollama"
+
+        # Gemini can also be inferred from the model string
+        if lowered.startswith("gemini/") or "gemini" in lowered:
+            return "gemini"
 
     keyring_provider: Optional[str] = detect_provider_from_credentials(
         completion_timeout=credential_lookup_timeout,

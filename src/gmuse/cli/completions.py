@@ -26,7 +26,6 @@ import typer
 
 from gmuse.cli.config_resolution import resolve_config
 from gmuse.commit import GenerationContext, generate_message
-from gmuse.config import get_env_config, load_config, merge_config
 from gmuse.credentials import COMPLETION_LOOKUP_TIMEOUT_SECONDS
 from gmuse.exceptions import (
     CredentialLookupTimeout,

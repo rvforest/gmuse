@@ -312,10 +312,8 @@ class TestCompletionsRun:
             "gmuse.cli.completions.load_repository_instructions",
             lambda: RepositoryInstructions(content="", file_path="", exists=False),
         )
-        monkeypatch.setattr("gmuse.cli.completions.load_config", lambda: {})
-        monkeypatch.setattr("gmuse.cli.completions.get_env_config", lambda: {})
         monkeypatch.setattr(
-            "gmuse.cli.completions.merge_config",
+            "gmuse.cli.completions.resolve_config",
             lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
         )
 
@@ -451,12 +449,7 @@ class TestCompletionsRun:
             lambda: mock_diff,
         )
         monkeypatch.setattr(
-            "gmuse.cli.completions.load_config",
-            lambda: (_ for _ in ()).throw(RuntimeError("missing config")),
-        )
-        monkeypatch.setattr("gmuse.cli.completions.get_env_config", lambda: {})
-        monkeypatch.setattr(
-            "gmuse.cli.completions.merge_config",
+            "gmuse.cli.completions.resolve_config",
             lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
         )
         monkeypatch.setattr(
@@ -503,10 +496,8 @@ class TestCompletionsRun:
             "gmuse.cli.completions.get_staged_diff",
             lambda: mock_diff,
         )
-        monkeypatch.setattr("gmuse.cli.completions.load_config", lambda: {})
-        monkeypatch.setattr("gmuse.cli.completions.get_env_config", lambda: {})
         monkeypatch.setattr(
-            "gmuse.cli.completions.merge_config",
+            "gmuse.cli.completions.resolve_config",
             lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
         )
         monkeypatch.setattr(
@@ -548,10 +539,8 @@ class TestCompletionsRun:
             "gmuse.cli.completions.get_staged_diff",
             lambda: mock_diff,
         )
-        monkeypatch.setattr("gmuse.cli.completions.load_config", lambda: {})
-        monkeypatch.setattr("gmuse.cli.completions.get_env_config", lambda: {})
         monkeypatch.setattr(
-            "gmuse.cli.completions.merge_config",
+            "gmuse.cli.completions.resolve_config",
             lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
         )
         monkeypatch.setattr(
@@ -594,10 +583,8 @@ class TestCompletionsRun:
             "gmuse.cli.completions.get_staged_diff",
             lambda: mock_diff,
         )
-        monkeypatch.setattr("gmuse.cli.completions.load_config", lambda: {})
-        monkeypatch.setattr("gmuse.cli.completions.get_env_config", lambda: {})
         monkeypatch.setattr(
-            "gmuse.cli.completions.merge_config",
+            "gmuse.cli.completions.resolve_config",
             lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
         )
         monkeypatch.setattr(

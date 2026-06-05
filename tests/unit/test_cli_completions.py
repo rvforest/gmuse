@@ -201,17 +201,8 @@ class TestCompletionsRun:
             lambda: RepositoryInstructions(content="", file_path="", exists=False),
         )
 
-        # Mock config loading
         monkeypatch.setattr(
-            "gmuse.cli.completions.load_config",
-            lambda: {},
-        )
-        monkeypatch.setattr(
-            "gmuse.cli.completions.get_env_config",
-            lambda: {},
-        )
-        monkeypatch.setattr(
-            "gmuse.cli.completions.merge_config",
+            "gmuse.cli.completions.resolve_config",
             lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
         )
 
@@ -271,15 +262,7 @@ class TestCompletionsRun:
         )
 
         monkeypatch.setattr(
-            "gmuse.cli.completions.load_config",
-            lambda: {},
-        )
-        monkeypatch.setattr(
-            "gmuse.cli.completions.get_env_config",
-            lambda: {},
-        )
-        monkeypatch.setattr(
-            "gmuse.cli.completions.merge_config",
+            "gmuse.cli.completions.resolve_config",
             lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
         )
 

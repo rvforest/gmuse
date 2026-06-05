@@ -189,6 +189,7 @@ def test_auth_set_rejects_blank_variable_name(
 
 def test_auth_set_handles_unavailable_backend(
     monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.setattr(
         auth,
@@ -202,6 +203,7 @@ def test_auth_set_handles_unavailable_backend(
         auth.set_credential("OPENAI_API_KEY", force=True)
 
     prompt.assert_not_called()
+    assert "Error: unavailable" in capsys.readouterr().err
 
 
 def test_auth_set_decline_overwrite_and_abort_prompt(
@@ -323,28 +325,34 @@ def test_auth_remove_empty_and_delete_error_paths(
 
 def test_auth_remove_handles_backend_errors(
     monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.setattr(
         auth,
         "ensure_secure_backend",
-        mock.Mock(side_effect=KeyringUnavailableError("unavailable")),
+        mock.Mock(side_effect=KeyringUnavailableError("custom unavailable guidance")),
     )
 
     with pytest.raises(typer.Exit):
         auth.remove_credential(["OPENAI_API_KEY"])
+
+    assert "Error: custom unavailable guidance" in capsys.readouterr().err
 
 
 def test_auth_remove_handles_insecure_backend(
     monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.setattr(
         auth,
         "ensure_secure_backend",
-        mock.Mock(side_effect=InsecureKeyringError("insecure")),
+        mock.Mock(side_effect=InsecureKeyringError("custom insecure guidance")),
     )
 
     with pytest.raises(typer.Exit):
         auth.remove_credential(["OPENAI_API_KEY"])
+
+    assert "Error: custom insecure guidance" in capsys.readouterr().err
 
 
 def test_auth_remove_reports_missing_credentials(

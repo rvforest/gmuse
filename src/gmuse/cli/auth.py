@@ -17,11 +17,7 @@ from gmuse.credentials import (
 )
 from gmuse.exceptions import (
     CredentialError,
-    InsecureKeyringError,
-    KeyringUnavailableError,
-    build_insecure_keyring_message,
     build_missing_credential_message,
-    build_no_secure_keyring_message,
     build_overwrite_message,
     build_provider_validation_message,
 )
@@ -65,6 +61,13 @@ def _print_table(title: str, rows: list[tuple[str, str, str]]) -> None:
         )
 
 
+def _ensure_secure_backend_or_exit() -> None:
+    try:
+        ensure_secure_backend()
+    except CredentialError as exc:
+        _exit_with_error(str(exc))
+
+
 @auth_app.command("set")
 def set_credential(
     variable_name: str = typer.Argument(
@@ -79,12 +82,7 @@ def set_credential(
     if not normalized_name:
         _exit_with_error("Variable name cannot be empty.")
 
-    try:
-        ensure_secure_backend()
-    except KeyringUnavailableError:
-        _exit_with_error(build_no_secure_keyring_message())
-    except InsecureKeyringError:
-        _exit_with_error(build_insecure_keyring_message())
+    _ensure_secure_backend_or_exit()
 
     if credential_exists(normalized_name) and not force:
         confirmed = False
@@ -175,12 +173,7 @@ def remove_credential(
     if not variable_names:
         _exit_with_error("Provide at least one variable name to remove.")
 
-    try:
-        ensure_secure_backend()
-    except KeyringUnavailableError:
-        _exit_with_error(build_no_secure_keyring_message())
-    except InsecureKeyringError:
-        _exit_with_error(build_insecure_keyring_message())
+    _ensure_secure_backend_or_exit()
 
     removed = 0
     missing: list[str] = []

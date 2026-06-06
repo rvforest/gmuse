@@ -33,4 +33,3 @@
 
 - Validation pass completed with no unresolved clarification markers.
 - The spec explicitly resolves command migration, completion preservation, and clipboard retirement as behavioral decisions rather than implementation notes.
-

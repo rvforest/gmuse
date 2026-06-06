@@ -153,4 +153,3 @@ As an existing `gmuse` user, I want the renamed commands, deprecated aliases, an
 - Users who choose the edit path have a working commit authoring environment available through their normal git/editor configuration.
 - Existing shell completion behavior continues to rely on a raw generation runtime path and should remain decoupled from any interactive commit UX.
 - Clipboard-specific workflows are considered optional personal shell behavior rather than a core responsibility of `gmuse`.
-

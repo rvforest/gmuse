@@ -47,6 +47,15 @@ Notes:
 
 To use a different provider, set the appropriate API key; gmuse will auto-detect the provider from the environment.
 
+For interactive machines, you can store credentials in your OS keyring instead of exporting them in your shell:
+
+```console
+$ gmuse auth set OPENAI_API_KEY
+$ gmuse auth status
+```
+
+Environment variables still take precedence when both are present.
+
 **For OpenAI:**
 ```console
 $ export OPENAI_API_KEY="sk-..."

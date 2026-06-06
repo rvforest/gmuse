@@ -10,6 +10,7 @@ This module provides the command-line interface using Typer. It handles:
 Commands:
     msg: Generate a commit message from staged changes.
     info: Display resolved configuration for debugging.
+    auth: Manage secure API credentials.
     git-completions: Shell completion utilities.
     git-completions-run: Runtime helper for shell completions.
 
@@ -49,6 +50,7 @@ from gmuse.cli.config_resolution import resolve_config
 from gmuse.commit import generate_message, gather_context
 from gmuse.logging import get_logger
 from gmuse.prompts import build_prompt
+from gmuse.cli.auth import auth_app
 from gmuse.cli.completions import completions_app, completions_run_command
 from gmuse.cli.config import config_app
 
@@ -68,6 +70,9 @@ app.add_typer(completions_app, name="git-completions")
 
 # Register config subcommand group
 app.add_typer(config_app, name="config")
+
+# Register auth subcommand group
+app.add_typer(auth_app, name="auth")
 
 # Register git-completions-run as a top-level command
 app.command(name="git-completions-run")(completions_run_command)

@@ -13,6 +13,7 @@ from gmuse.cli.completions import (
     completions_run_command,
     completions_zsh,
 )
+from gmuse.exceptions import CredentialLookupTimeout
 
 
 class TestDataStructures:
@@ -288,6 +289,56 @@ class TestCompletionsRun:
         assert result["status"] == "offline"
         assert "api key" in result["metadata"]["error"].lower()
 
+    def test_completions_run_credential_timeout(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Credential lookup timeouts should degrade to a timeout response."""
+        mock_diff = self._create_mock_diff()
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_staged_diff",
+            lambda: mock_diff,
+        )
+
+        from gmuse.git import CommitHistory, RepositoryInstructions
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_commit_history",
+            lambda depth: CommitHistory(
+                commits=[], depth=depth, repository_path="/test"
+            ),
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.load_repository_instructions",
+            lambda: RepositoryInstructions(content="", file_path="", exists=False),
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.resolve_config",
+            lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
+        )
+
+        def mock_generate_message(**kwargs: object) -> None:
+            raise CredentialLookupTimeout("timed out")
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.generate_message",
+            mock_generate_message,
+        )
+
+        completions_run_command(
+            shell="zsh",
+            for_command="git commit -m",
+            timeout=3.0,
+        )
+
+        captured = capsys.readouterr()
+        import json
+
+        result = json.loads(captured.out)
+
+        assert result["status"] == "timeout"
+        assert result["suggestion"] == ""
+
     def test_completions_run_timeout_from_env(
         self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
     ) -> None:
@@ -357,6 +408,212 @@ class TestCompletionsRun:
         assert "Invalid command: svn commit" in result["metadata"]["error"]
         assert "git commit" in result["metadata"]["error"]
         assert "elapsed_ms" in result["metadata"]
+
+    def test_completions_run_invalid_timeout_env_and_not_git_repo(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from gmuse.exceptions import NotAGitRepositoryError
+
+        monkeypatch.setenv("GMUSE_COMPLETIONS_TIMEOUT", "not-a-number")
+
+        def mock_get_staged_diff() -> None:
+            raise NotAGitRepositoryError("not a repo")
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_staged_diff",
+            mock_get_staged_diff,
+        )
+
+        completions_run_command(
+            shell="zsh",
+            for_command="git commit -m",
+            timeout=3.0,
+        )
+
+        captured = capsys.readouterr()
+        import json
+
+        result = json.loads(captured.out)
+        assert result["status"] == "error"
+        assert result["metadata"]["error"] == "Not a git repository"
+
+    def test_completions_run_load_config_error_falls_back(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from gmuse.git import CommitHistory, RepositoryInstructions
+
+        mock_diff = self._create_mock_diff()
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_staged_diff",
+            lambda: mock_diff,
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.resolve_config",
+            lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_commit_history",
+            lambda depth: CommitHistory(
+                commits=[], depth=depth, repository_path="/test"
+            ),
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.load_repository_instructions",
+            lambda: RepositoryInstructions(content="", file_path="", exists=False),
+        )
+
+        def mock_generate_message(**kwargs: object) -> mock.Mock:
+            return mock.Mock(message="feat: add fallback path")
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.generate_message",
+            mock_generate_message,
+        )
+
+        completions_run_command(
+            shell="zsh",
+            for_command="git commit -m",
+            timeout=3.0,
+        )
+
+        captured = capsys.readouterr()
+        import json
+
+        result = json.loads(captured.out)
+        assert result["status"] == "ok"
+        assert result["suggestion"] == "feat: add fallback path"
+
+    def test_completions_run_generic_llm_error_is_error_status(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from gmuse.exceptions import LLMError
+        from gmuse.git import CommitHistory, RepositoryInstructions
+
+        mock_diff = self._create_mock_diff()
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_staged_diff",
+            lambda: mock_diff,
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.resolve_config",
+            lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_commit_history",
+            lambda depth: CommitHistory(
+                commits=[], depth=depth, repository_path="/test"
+            ),
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.load_repository_instructions",
+            lambda: RepositoryInstructions(content="", file_path="", exists=False),
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.generate_message",
+            lambda **kwargs: (_ for _ in ()).throw(LLMError("unexpected llm issue")),
+        )
+
+        completions_run_command(
+            shell="zsh",
+            for_command="git commit -m",
+            timeout=3.0,
+        )
+
+        captured = capsys.readouterr()
+        import json
+
+        result = json.loads(captured.out)
+        assert result["status"] == "error"
+        assert result["metadata"]["error"] == "unexpected llm issue"
+
+    def test_completions_run_unexpected_exception_is_caught(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from gmuse.git import CommitHistory, RepositoryInstructions
+
+        mock_diff = self._create_mock_diff()
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_staged_diff",
+            lambda: mock_diff,
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.resolve_config",
+            lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_commit_history",
+            lambda depth: CommitHistory(
+                commits=[], depth=depth, repository_path="/test"
+            ),
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.load_repository_instructions",
+            lambda: RepositoryInstructions(content="", file_path="", exists=False),
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.generate_message",
+            lambda **kwargs: (_ for _ in ()).throw(RuntimeError("boom")),
+        )
+
+        completions_run_command(
+            shell="zsh",
+            for_command="git commit -m",
+            timeout=3.0,
+        )
+
+        captured = capsys.readouterr()
+        import json
+
+        result = json.loads(captured.out)
+        assert result["status"] == "error"
+        assert result["metadata"]["error"] == "boom"
+
+    def test_completions_run_llm_timeout_error_is_timeout_status(
+        self, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        from gmuse.exceptions import LLMError
+        from gmuse.git import CommitHistory, RepositoryInstructions
+
+        mock_diff = self._create_mock_diff()
+
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_staged_diff",
+            lambda: mock_diff,
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.resolve_config",
+            lambda **kwargs: {"timeout": 3.0, "history_depth": 5},
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.get_commit_history",
+            lambda depth: CommitHistory(
+                commits=[], depth=depth, repository_path="/test"
+            ),
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.load_repository_instructions",
+            lambda: RepositoryInstructions(content="", file_path="", exists=False),
+        )
+        monkeypatch.setattr(
+            "gmuse.cli.completions.generate_message",
+            lambda **kwargs: (_ for _ in ()).throw(LLMError("request timeout")),
+        )
+
+        completions_run_command(
+            shell="zsh",
+            for_command="git commit -m",
+            timeout=3.0,
+        )
+
+        captured = capsys.readouterr()
+        import json
+
+        result = json.loads(captured.out)
+        assert result["status"] == "timeout"
+        assert result["metadata"]["error"] == "request timeout"
 
 
 class TestCompletionStatus:

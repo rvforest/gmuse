@@ -13,7 +13,7 @@ Data Classes:
 """
 
 from dataclasses import dataclass
-from typing import Final, Optional
+from typing import Any, Final, Optional, cast
 
 from gmuse.config import ConfigDict
 from gmuse.git import (
@@ -154,6 +154,7 @@ def generate_message(
     config: ConfigDict,
     hint: Optional[str] = None,
     context: Optional[GenerationContext] = None,
+    credential_lookup_timeout: float | None = None,
 ) -> GenerationResult:
     """Generate a commit message from staged changes.
 
@@ -207,6 +208,7 @@ def generate_message(
     client = LLMClient(
         model=config.get("model"),
         timeout=int(config.get("timeout") or 30),
+        credential_lookup_timeout=credential_lookup_timeout,
     )
 
     # Generate message
@@ -221,11 +223,11 @@ def generate_message(
     # Validate message
     logger.debug("Validating generated message...")
     # Use configured max_chars if set, otherwise fall back to max_message_length
-    effective_max = (
-        int(config.get("max_chars"))
-        if config.get("max_chars") is not None
-        else int(config.get("max_message_length", 1000))
-    )
+    max_chars = cast(int | None, config.get("max_chars"))
+    if max_chars is not None:
+        effective_max = max_chars
+    else:
+        effective_max = int(cast(Any, config.get("max_message_length", 1000)))
 
     validate_message(
         message,

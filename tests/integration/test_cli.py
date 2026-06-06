@@ -8,7 +8,7 @@ import os
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any
 from unittest import mock
 
 import pytest
@@ -17,30 +17,6 @@ from typer.testing import CliRunner
 from gmuse.cli.main import app
 
 runner = CliRunner()
-
-
-@pytest.fixture
-def git_repo() -> Generator[Path, None, None]:
-    """Create a temporary git repository for testing."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        repo_path = Path(tmpdir)
-
-        # Initialize git repo
-        subprocess.run(["git", "init"], cwd=repo_path, check=True, capture_output=True)
-        subprocess.run(
-            ["git", "config", "user.name", "Test User"],
-            cwd=repo_path,
-            check=True,
-            capture_output=True,
-        )
-        subprocess.run(
-            ["git", "config", "user.email", "test@example.com"],
-            cwd=repo_path,
-            check=True,
-            capture_output=True,
-        )
-
-        yield repo_path
 
 
 @pytest.fixture
@@ -176,6 +152,7 @@ class TestUserStory1:
         Acceptance 4: Given no API key, when user runs `gmuse msg`,
         then error "No API key configured...".
         """
+        api_key_name = "_".join(("OPENAI", "API", "KEY"))
         _stage_file(git_repo_with_history, "test.py", "test content")
 
         # Remove all API keys and GMUSE_MODEL
@@ -200,6 +177,8 @@ class TestUserStory1:
                 or "No LLM provider" in result.stderr
                 or "provider" in result.stderr.lower()
             )
+            assert f"gmuse auth set {api_key_name}" in result.stderr
+            assert f"export {api_key_name}='sk-...'" in result.stderr
 
     def test_message_reflects_diff_content(self, git_repo_with_history: Path) -> None:
         """

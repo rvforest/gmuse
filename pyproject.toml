@@ -37,6 +37,7 @@ dependencies = [
     "tomli>=2.0.0; python_version < '3.11'",
     "tomlkit>=0.13.2",
     "litellm>=1.86.0",
+    "keyring>=25.7.0",
 ]
 
 [project.optional-dependencies]

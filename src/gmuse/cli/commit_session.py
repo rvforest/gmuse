@@ -6,31 +6,33 @@ Provides a small review loop for generated commit drafts with actions:
 - regenerate: request a fresh draft from the generation function
 - abort: exit without committing
 
-This module is intentionally minimal and testable: side effects (git commit / editor
-invocation) are delegated to gmuse.git helpers so they can be mocked in tests.
+This module is intentionally minimal and testable: side effects (git commit /
+editor invocation) are delegated to gmuse.git helpers so they can be mocked in
+tests.
 """
-from typing import Callable, Optional
-import tempfile
-import sys
 
+import sys
+from typing import Callable, Optional
+
+from gmuse.commit import GenerationContext, GenerationResult
 from gmuse.git import commit_with_message, open_editor_with_message
-from gmuse.commit import MessageResult
 
 
 def run_commit_session(
     config: dict,
     hint: Optional[str],
-    context,
-    generate_fn: Callable[[dict, Optional[str], object], MessageResult],
+    context: GenerationContext,
+    generate_fn: Callable[[dict, Optional[str], GenerationContext], GenerationResult],
     non_interactive: bool = False,
 ) -> None:
     """Run the commit review session.
 
     Args:
-        config: Resolved configuration dict
-        hint: Optional user hint passed to generator
-        context: Context object from gather_context
-        generate_fn: Callable that returns MessageResult when called as generate_fn(config, hint, context)
+        config: Resolved configuration dict.
+        hint: Optional user hint passed to generator.
+        context: Context object from gather_context.
+        generate_fn: Callable returning a GenerationResult when called with
+            ``(config, hint, context)``.
         non_interactive: If True, accept the generated message and commit immediately
     """
     # First generation
@@ -58,31 +60,19 @@ def run_commit_session(
             return
 
         if choice in ("a", "accept"):
-            try:
-                commit_with_message(message)
-                print("Commit created")
-                return
-            except Exception as e:
-                print(f"Failed to create commit: {e}", file=sys.stderr)
-                return
+            commit_with_message(message)
+            print("Commit created")
+            return
 
         elif choice in ("e", "edit"):
-            try:
-                open_editor_with_message(message)
-                print("Editor exited — commit may have been created or aborted by git")
-                return
-            except Exception as e:
-                print(f"Failed to open editor: {e}", file=sys.stderr)
-                return
+            open_editor_with_message(message)
+            print("Editor exited — commit may have been created or aborted by git")
+            return
 
         elif choice in ("r", "regenerate"):
-            try:
-                result = generate_fn(config, hint, context)
-                message = result.message
-                continue
-            except Exception as e:
-                print(f"Regeneration failed: {e}", file=sys.stderr)
-                return
+            result = generate_fn(config, hint, context)
+            message = result.message
+            continue
 
         elif choice in ("q", "quit", "abort"):
             print("Aborted — no commit created", file=sys.stderr)

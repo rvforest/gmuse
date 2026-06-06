@@ -1,0 +1,127 @@
+"""Unit tests for the generate/commit CLI redesign."""
+
+from __future__ import annotations
+
+from unittest import mock
+
+from typer.testing import CliRunner
+
+from gmuse import commit
+from gmuse.cli import main
+
+runner = CliRunner()
+
+
+def _fake_context() -> commit.GenerationContext:
+    fake_diff = mock.Mock(
+        size_bytes=10,
+        files_changed=["file.py"],
+        lines_added=1,
+        lines_removed=0,
+        raw_diff="diff --git a/file.py b/file.py\n",
+        hash="abc123",
+        truncated=False,
+    )
+    return commit.GenerationContext(
+        diff=fake_diff,
+        history=None,
+        repo_instructions=None,
+        diff_was_truncated=False,
+    )
+
+
+def _result(message: str) -> commit.GenerationResult:
+    return commit.GenerationResult(message=message, context=_fake_context())
+
+
+def test_generate_prints_message_only(monkeypatch) -> None:
+    """generate should emit only the generated message on stdout."""
+    monkeypatch.setattr(
+        main,
+        "_load_config",
+        lambda **kwargs: {"format": "freeform", "history_depth": 5},
+    )
+    monkeypatch.setattr(main, "gather_context", lambda **kwargs: _fake_context())
+    monkeypatch.setattr(
+        main, "generate_message", lambda **kwargs: _result("feat: add api")
+    )
+
+    result = runner.invoke(main.app, ["generate"])
+
+    assert result.exit_code == 0
+    assert result.stdout == "feat: add api\n"
+    assert result.stderr == ""
+
+
+def test_msg_emits_deprecation_notice_and_preserves_stdout(monkeypatch) -> None:
+    """msg should keep stdout-compatible output while warning on stderr."""
+    monkeypatch.setattr(
+        main,
+        "_load_config",
+        lambda **kwargs: {"format": "freeform", "history_depth": 5},
+    )
+    monkeypatch.setattr(main, "gather_context", lambda **kwargs: _fake_context())
+    monkeypatch.setattr(
+        main, "generate_message", lambda **kwargs: _result("feat: add api")
+    )
+
+    result = runner.invoke(main.app, ["msg"])
+
+    assert result.exit_code == 0
+    assert result.stdout == "feat: add api\n"
+    assert "deprecated" in result.stderr.lower()
+    assert "gmuse generate" in result.stderr
+
+
+def test_msg_copy_fails_with_migration_guidance() -> None:
+    """Legacy clipboard mode should fail with actionable migration guidance."""
+    result = runner.invoke(main.app, ["msg", "--copy"])
+
+    assert result.exit_code == 2
+    assert "deprecated" in result.stderr.lower()
+    assert "clipboard" in result.stderr.lower()
+    assert "gmuse generate" in result.stderr
+
+
+def test_commit_without_yes_fails_before_loading_config(monkeypatch) -> None:
+    """Non-interactive commit should fail fast without touching git or config."""
+    load_config = mock.Mock()
+    gather_context = mock.Mock()
+
+    monkeypatch.setattr(main, "_load_config", load_config)
+    monkeypatch.setattr(main, "gather_context", gather_context)
+    monkeypatch.setattr(main.sys.stdin, "isatty", lambda: False)
+    monkeypatch.setattr(main.sys.stdout, "isatty", lambda: False)
+
+    result = runner.invoke(main.app, ["commit"])
+
+    assert result.exit_code == 2
+    assert "interactive terminal" in result.stderr
+    load_config.assert_not_called()
+    gather_context.assert_not_called()
+
+
+def test_commit_yes_delegates_to_commit_session(monkeypatch) -> None:
+    """commit --yes should pass the resolved context into the session helper."""
+    session_mock = mock.Mock()
+    context = _fake_context()
+
+    monkeypatch.setattr(
+        main,
+        "_load_config",
+        lambda **kwargs: {"format": "freeform", "history_depth": 5},
+    )
+    monkeypatch.setattr(main, "gather_context", lambda **kwargs: context)
+    monkeypatch.setattr(main, "run_commit_session", session_mock)
+
+    result = runner.invoke(main.app, ["commit", "--yes", "--hint", "ship it"])
+
+    assert result.exit_code == 0
+    session_mock.assert_called_once()
+    assert session_mock.call_args.kwargs["config"] == {
+        "format": "freeform",
+        "history_depth": 5,
+    }
+    assert session_mock.call_args.kwargs["hint"] == "ship it"
+    assert session_mock.call_args.kwargs["context"] is context
+    assert session_mock.call_args.kwargs["non_interactive"] is True

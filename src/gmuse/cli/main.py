@@ -20,6 +20,7 @@ Example:
 """
 
 import os
+import subprocess
 import sys
 from typing import Any, Optional
 
@@ -331,6 +332,27 @@ def msg(
     Emits deprecation guidance to stderr while preserving stdout output so scripts
     that rely on `gmuse msg` continue to function.
     """
+    if isinstance(hint, typer.models.OptionInfo):
+        hint = None
+    if isinstance(copy, typer.models.OptionInfo):
+        copy = False
+    if isinstance(model, typer.models.OptionInfo):
+        model = None
+    if isinstance(format, typer.models.OptionInfo):
+        format = None
+    if isinstance(history_depth, typer.models.OptionInfo):
+        history_depth = None
+    if isinstance(temperature, typer.models.OptionInfo):
+        temperature = None
+    if isinstance(max_tokens, typer.models.OptionInfo):
+        max_tokens = None
+    if isinstance(max_diff_bytes, typer.models.OptionInfo):
+        max_diff_bytes = None
+    if isinstance(include_branch, typer.models.OptionInfo):
+        include_branch = False
+    if isinstance(dry_run, typer.models.OptionInfo):
+        dry_run = False
+
     # Emit deprecation notice on stderr
     typer.secho(
         "'gmuse msg' is deprecated and will be removed in a future release. Use 'gmuse generate' instead.",
@@ -349,11 +371,7 @@ def msg(
             code=2,
         )
 
-    # Forward to generate
-    # Note: Typer won't let us simply call generate(**kwargs) due to CLI decoration; call programmatically
-    ctx = typer.Context(app)
-    ctx.exit = lambda *args, **kwargs: None  # prevent Typer from exiting the process
-    # Build arguments and call the underlying function
+    # Forward to generate while preserving the legacy command's stdout contract.
     generate(
         hint=hint,
         model=model,
@@ -394,6 +412,12 @@ def commit(
     In non-interactive scripts, use --yes to generate and commit immediately.
     """
     try:
+        if not yes and (not sys.stdin.isatty() or not sys.stdout.isatty()):
+            _error_exit(
+                "gmuse commit requires an interactive terminal. Use --yes for non-interactive commits or 'gmuse generate' for scripting.",
+                code=2,
+            )
+
         # Load config and gather context
         config = _load_config(
             model=model,
@@ -412,19 +436,14 @@ def commit(
             branch_max_length=config.get("branch_max_length", 60),
         )
 
-        # Non-interactive guard
-        if not yes and (not sys.stdin.isatty() or not sys.stdout.isatty()):
-            _error_exit(
-                "gmuse commit requires an interactive terminal. Use --yes for non-interactive commits or 'gmuse generate' for scripting.",
-                code=2,
-            )
-
         # Delegate to commit session
         run_commit_session(
             config=config,
             hint=hint,
             context=context,
-            generate_fn=lambda cfg, h, ctx: generate_message(config=cfg, hint=h, context=ctx),
+            generate_fn=lambda cfg, h, ctx: generate_message(
+                config=cfg, hint=h, context=ctx
+            ),
             non_interactive=yes,
         )
 
@@ -454,6 +473,10 @@ def commit(
             hint="This is likely a temporary issue. Try again.",
             code=2,
         )
+
+    except subprocess.CalledProcessError as e:
+        output = (e.stderr or e.stdout or str(e)).strip()
+        _error_exit(f"Git commit failed: {output}", code=1)
 
     except KeyboardInterrupt:
         typer.echo("\n\nInterrupted by user", err=True)

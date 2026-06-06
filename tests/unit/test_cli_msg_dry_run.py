@@ -243,34 +243,21 @@ class TestDryRunFlagCombinations:
     @patch("gmuse.cli.main.gather_context")
     @patch("gmuse.cli.main.build_prompt")
     @patch("gmuse.cli.main._copy_to_clipboard")
-    def test_copy_does_not_copy_during_dry_run(
+    def test_copy_fails_before_dry_run(
         self,
         mock_copy: MagicMock,
         mock_build_prompt: MagicMock,
         mock_gather_context: MagicMock,
     ) -> None:
-        """--copy should NOT copy anything when --dry-run is used."""
-        mock_diff: StagedDiff = StagedDiff(
-            raw_diff="d",
-            files_changed=["c.py"],
-            lines_added=1,
-            lines_removed=0,
-            hash="h",
-            size_bytes=10,
-        )
-        mock_context: GenerationContext = GenerationContext(
-            diff=mock_diff,
-            history=None,
-            repo_instructions=None,
-            diff_was_truncated=False,
-        )
-        mock_gather_context.return_value = mock_context
-        mock_build_prompt.return_value = ("sys", "usr")
-
+        """--copy should fail with migration guidance before dry-run work."""
         result = runner.invoke(app, ["msg", "--dry-run", "--copy"])
 
-        assert result.exit_code == 0
+        assert result.exit_code == 2
+        assert "clipboard" in result.stderr.lower()
+        assert "gmuse generate" in result.stderr
         mock_copy.assert_not_called()
+        mock_build_prompt.assert_not_called()
+        mock_gather_context.assert_not_called()
 
     @patch("gmuse.cli.main.gather_context")
     @patch("gmuse.cli.main.build_prompt")

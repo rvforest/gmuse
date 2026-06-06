@@ -97,6 +97,6 @@ Represents a user-triggered auth operation.
 
 ## Masking Rules
 
-- If credential length is 8 or more, replace all but the last 4 characters with `*`.
-- If credential length is shorter than 8, replace every character with `*`.
+- If credential length is 12 or more, replace the value with six `*` characters followed by the last 4 characters.
+- If credential length is shorter than 12, replace every character with `*`.
 - `None` remains unset and should not be shown as a masked secret.

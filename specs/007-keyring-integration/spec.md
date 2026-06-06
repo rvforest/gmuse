@@ -106,7 +106,7 @@ As a developer using zsh completions, I want the `git commit -m <TAB>` completio
 - **FR-009**: When no credentials are found via any path, System MUST exit with an error naming both setup paths.
 - **FR-010**: The tab completions invocation path MUST enforce a strict **200ms timeout** on keyring retrieval. Any failure, interactive prompt blockage, or timeout MUST be treated as "no credentials available" and exit cleanly without emitting error output to the shell.
 - **FR-011**: Valid environment variables MUST take precedence over keyring entries, preserving non-interactive compatibility.
-- **FR-012**: Credential values MUST be masked in all UI output. If a credential is 8 characters or longer, all characters except the last 4 MUST be replaced with asterisks (e.g., `****************ABCD`). If a credential is shorter than 8 characters, every character MUST be replaced with an asterisk (e.g., `*******`).
+- **FR-012**: Credential values MUST be masked in all UI output. If a credential is 12 characters or longer, it MUST be displayed as six asterisks followed by the last 4 characters (e.g., `******ABCD`). If a credential is shorter than 12 characters, every character MUST be replaced with an asterisk (e.g., `*******`).
 - **FR-013**: Overwriting an existing keyring entry via `gmuse auth set` MUST require interactive `[y/N]` confirmation. In non-interactive environments, the overwrite MUST abort and exit with an error unless an explicit `--force` flag is provided.
 
 ---

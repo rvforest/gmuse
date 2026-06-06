@@ -71,12 +71,14 @@ def normalize_env_value(value: str | None) -> str | None:
 
 def mask_secret(value: str | None) -> str | None:
     """Mask a credential value for safe display."""
-    N_STARS = 6
+    MIN_LENGTH_FOR_SUFFIX = 12
+    N_MASK_CHARS = 6
+    VISIBLE_SUFFIX_LENGTH = 4
     if value is None:
         return None
-    if len(value) < 8:
-        return "*" * N_STARS
-    return f"{'*' * N_STARS}{value[-4:]}"
+    if len(value) < MIN_LENGTH_FOR_SUFFIX:
+        return "*" * len(value)
+    return f"{'*' * N_MASK_CHARS}{value[-VISIBLE_SUFFIX_LENGTH:]}"
 
 
 def _call_keyring(operation: Callable[[], _T]) -> _T:

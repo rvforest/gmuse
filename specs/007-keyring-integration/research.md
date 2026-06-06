@@ -82,7 +82,7 @@ The existing codebase already has three important anchors:
 
 ### Decision 7 — Standardize masked output and overwrite confirmation behavior
 
-- Decision: All displayed credential values use one masking helper: values with length 8 or more show only the last 4 characters; shorter values are fully masked. Overwrites require interactive `[y/N]` confirmation unless `--force` is supplied.
+- Decision: All displayed credential values use one masking helper: values with length 12 or more show only the last 4 characters behind a fixed six-character mask prefix; shorter values are fully masked. Overwrites require interactive `[y/N]` confirmation unless `--force` is supplied.
 - Rationale:
   - Shared formatting avoids inconsistent UI and accidental leaks.
   - Explicit confirmation protects users from unintentionally replacing existing secrets.

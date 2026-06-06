@@ -64,8 +64,9 @@ class TestMaskingAndNormalization:
         assert credentials.normalize_env_value("   ") is None
         assert credentials.normalize_env_value("  secret  ") == "secret"
         assert credentials.mask_secret(None) is None
-        assert credentials.mask_secret("short") == "******"
-        assert credentials.mask_secret("12345678") == "******5678"
+        assert credentials.mask_secret("short") == "*****"
+        assert credentials.mask_secret("12345678") == "********"
+        assert credentials.mask_secret("123456789012") == "******9012"
 
 
 class TestManagedIndex:
@@ -131,7 +132,7 @@ class TestResolution:
 
         assert resolution.source == "env"
         assert resolution.raw_value == "env-secret"
-        assert resolution.masked_value == "******cret"
+        assert resolution.masked_value == "**********"
 
     def test_provider_detection_uses_keyring_fallback(
         self, monkeypatch: pytest.MonkeyPatch

@@ -66,8 +66,8 @@ For non-interactive environments, use environment variables:
 
 - Runtime status/debug output may show whether a credential source exists but MUST never print unmasked secret values.
 - Values shown in `auth status` or related diagnostics use the shared masking rule:
-  - length >= 8: mask all but the last 4 characters
-  - length < 8: mask all characters
+  - length >= 12: display `******` followed by the last 4 characters
+  - length < 12: mask all characters
 
 ## Secure Backend Contract
 

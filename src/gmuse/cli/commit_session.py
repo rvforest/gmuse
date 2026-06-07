@@ -51,7 +51,7 @@ def run_commit_session(
         print(message)
         print("\n--------------------------------\n")
 
-        print("Actions: [a]ccept, [e]dit, [r]egenerate, [q]uit")
+        print("Actions: [a]ccept, [e]dit, [r]egenerate, [x]abort")
         try:
             choice = input("Choose action: ").strip().lower()
         except EOFError:
@@ -74,10 +74,10 @@ def run_commit_session(
             message = result.message
             continue
 
-        elif choice in ("q", "quit", "abort"):
+        elif choice in ("x", "abort"):
             print("Aborted — no commit created", file=sys.stderr)
             return
 
         else:
-            print("Unrecognized action. Choose one of: a, e, r, q")
+            print("Unrecognized action. Choose one of: a, e, r, x")
             continue

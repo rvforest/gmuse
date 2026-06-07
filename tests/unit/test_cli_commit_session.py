@@ -113,7 +113,7 @@ def test_abort_exits_without_commit(
     commit_mock = mock.Mock()
 
     monkeypatch.setattr(commit_session, "commit_with_message", commit_mock)
-    monkeypatch.setattr("builtins.input", lambda _: "q")
+    monkeypatch.setattr("builtins.input", lambda _: "x")
 
     commit_session.run_commit_session({}, None, _fake_context(), generate_fn)
 
@@ -127,7 +127,7 @@ def test_invalid_choice_reprompts(
 ) -> None:
     """Invalid actions should show guidance and continue prompting."""
     generate_fn = mock.Mock(return_value=_result("feat: add tests"))
-    choices = iter(["nope", "q"])
+    choices = iter(["nope", "x"])
 
     monkeypatch.setattr("builtins.input", lambda _: next(choices))
 

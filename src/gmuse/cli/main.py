@@ -16,7 +16,7 @@ Commands:
 
 Example:
     >>> # From command line:
-    >>> # gmuse msg --hint "security fix" --copy
+    >>> # gmuse commit --hint "security fix"
 """
 
 import os
@@ -113,13 +113,14 @@ def main(
 
     Generate commit messages from staged changes using AI.
 
-    Use 'gmuse msg' to create a commit message from your staged changes.
+    Use 'gmuse commit' to generate, review, and create a commit from staged changes.
+    Use 'gmuse generate' when you need stdout-only output for scripts.
 
     Examples:
-        gmuse msg                           # Generate message
-        gmuse msg --hint "breaking change"  # With hint
-        gmuse msg --format conventional     # Conventional commits
-        gmuse msg --copy                    # Copy to clipboard
+        gmuse commit                        # Review and commit
+        gmuse commit --yes                  # Generate and commit immediately
+        gmuse generate                      # Print message only
+        gmuse generate --format conventional  # Conventional commits
         gmuse info                          # Show configuration
 
     For more information, visit: https://gmuse.readthedocs.io

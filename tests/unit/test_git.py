@@ -17,6 +17,7 @@ from gmuse.git import (
     get_staged_diff,
     is_git_repository,
     load_repository_instructions,
+    open_editor_with_message,
     truncate_diff,
 )
 
@@ -376,3 +377,25 @@ class TestLoadRepositoryInstructions:
                     assert instructions.exists is False
                 finally:
                     gmuse_file.chmod(0o644)  # Restore permissions for cleanup
+
+
+class TestCommitEditorHelpers:
+    """Tests for git commit editor helpers."""
+
+    def test_open_editor_with_message_inherits_stdio_and_removes_temp_file(
+        self,
+    ) -> None:
+        """Editor handoff should avoid captured git wrapper and short timeouts."""
+        run_mock = mock.Mock()
+
+        with mock.patch("subprocess.run", run_mock):
+            with mock.patch("gmuse.git._run_git") as run_git_mock:
+                open_editor_with_message("feat: add editor flow")
+
+        run_mock.assert_called_once()
+        args, kwargs = run_mock.call_args
+        assert args[0][:4] == ["git", "commit", "--edit", "-F"]
+        temp_path = Path(args[0][4])
+        assert kwargs == {"check": True}
+        assert not temp_path.exists()
+        run_git_mock.assert_not_called()

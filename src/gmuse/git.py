@@ -769,8 +769,9 @@ def open_editor_with_message(message: str) -> None:
     """Open the user's editor with the message prefilled and run the commit.
 
     Uses `git commit --edit -F <file>` so the editor is launched with the draft
-    message and git performs the commit after the editor exits. Caller should be
-    prepared to handle non-zero exit codes if the commit was aborted.
+    message and git performs the commit after the editor exits. Unlike the raw
+    git helpers, this intentionally inherits stdio and avoids a short timeout so
+    interactive editors can control the terminal.
 
     Raises:
         subprocess.CalledProcessError: If git commit exits non-zero.
@@ -782,8 +783,10 @@ def open_editor_with_message(message: str) -> None:
         tmp_path = f.name
 
     try:
-        # Use --edit so the user's configured editor is launched with the prefilled message
-        _run_git("commit", "--edit", "-F", tmp_path, timeout=_GIT_TIMEOUT_LONG)
+        subprocess.run(
+            ["git", "commit", "--edit", "-F", tmp_path],
+            check=True,
+        )
     finally:
         try:
             Path(tmp_path).unlink()

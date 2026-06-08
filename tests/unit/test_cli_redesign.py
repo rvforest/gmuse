@@ -198,3 +198,31 @@ def test_commit_keyboard_interrupt_exits_130(monkeypatch: pytest.MonkeyPatch) ->
 
     assert result.exit_code == 130
     assert "Interrupted by user" in result.stderr
+
+
+def test_commit_git_failure_without_output_uses_friendly_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Interactive git failures should not expose raw subprocess details."""
+    monkeypatch.setattr(
+        main,
+        "_load_config",
+        lambda **kwargs: {"format": "freeform", "history_depth": 5},
+    )
+    monkeypatch.setattr(main, "gather_context", lambda **kwargs: _fake_context())
+    monkeypatch.setattr(
+        main,
+        "run_commit_session",
+        mock.Mock(
+            side_effect=subprocess.CalledProcessError(
+                1,
+                ["git", "commit", "--edit", "-F", "/tmp/message"],
+            )
+        ),
+    )
+
+    result = runner.invoke(main.app, ["commit", "--yes"])
+
+    assert result.exit_code == 1
+    assert "git commit exited without creating a commit" in result.stderr
+    assert "Command '[" not in result.stderr

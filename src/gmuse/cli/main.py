@@ -476,7 +476,9 @@ def commit(
         )
 
     except subprocess.CalledProcessError as e:
-        output = (e.stderr or e.stdout or str(e)).strip()
+        output = (
+            e.stderr or e.stdout or "git commit exited without creating a commit"
+        ).strip()
         _error_exit(f"Git commit failed: {output}", code=1)
 
     except KeyboardInterrupt:

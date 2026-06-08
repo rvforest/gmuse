@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 from unittest import mock
 
 import pytest
@@ -74,7 +75,7 @@ def test_edit_opens_editor(
 ) -> None:
     """Edit should hand the draft off to the git editor flow."""
     generate_fn = mock.Mock(return_value=_result("feat: add tests"))
-    editor_mock = mock.Mock()
+    editor_mock = mock.Mock(return_value=commit_session.CommitOutcome.CREATED)
 
     monkeypatch.setattr(commit_session, "open_editor_with_message", editor_mock)
     monkeypatch.setattr("builtins.input", lambda _: "e")
@@ -83,7 +84,7 @@ def test_edit_opens_editor(
 
     editor_mock.assert_called_once_with("feat: add tests")
     captured = capsys.readouterr()
-    assert "Editor exited" in captured.out
+    assert "Commit created" in captured.out
 
 
 def test_eof_aborts_without_commit(
@@ -107,7 +108,7 @@ def test_eof_aborts_without_commit(
 
 
 def test_regenerate_replaces_draft_before_accept(
-    monkeypatch: pytest.MonkeyPatch,
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """Regenerate should fetch a new draft and commit that one when accepted."""
     generate_fn = mock.Mock(
@@ -123,23 +124,25 @@ def test_regenerate_replaces_draft_before_accept(
 
     assert generate_fn.call_count == 2
     commit_mock.assert_called_once_with("feat: regenerated draft")
+    captured = capsys.readouterr()
+    assert "Regenerating commit message" in captured.out
 
 
-def test_abort_exits_without_commit(
+def test_quit_exits_without_commit(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Abort should leave the repository untouched."""
+    """Quit should leave the repository untouched."""
     generate_fn = mock.Mock(return_value=_result("feat: add tests"))
     commit_mock = mock.Mock()
 
     monkeypatch.setattr(commit_session, "commit_with_message", commit_mock)
-    monkeypatch.setattr("builtins.input", lambda _: "x")
+    monkeypatch.setattr("builtins.input", lambda _: "q")
 
     commit_session.run_commit_session({}, None, _fake_context(), generate_fn)
 
     commit_mock.assert_not_called()
     captured = capsys.readouterr()
-    assert "Aborted" in captured.err
+    assert "Commit aborted" in captured.out
 
 
 def test_invalid_choice_reprompts(
@@ -147,11 +150,72 @@ def test_invalid_choice_reprompts(
 ) -> None:
     """Invalid actions should show guidance and continue prompting."""
     generate_fn = mock.Mock(return_value=_result("feat: add tests"))
-    choices = iter(["nope", "x"])
+    choices = iter(["nope", "q"])
 
     monkeypatch.setattr("builtins.input", lambda _: next(choices))
 
     commit_session.run_commit_session({}, None, _fake_context(), generate_fn)
 
     captured = capsys.readouterr()
-    assert "Unrecognized action" in captured.out
+    assert "Invalid choice" in captured.out
+    assert "a, e, r, or q" in captured.out
+    assert captured.out.count("Draft commit message") == 1
+
+
+def test_x_is_invalid_and_reprompts(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The visible quit action is q, not x."""
+    generate_fn = mock.Mock(return_value=_result("feat: add tests"))
+    choices = iter(["x", "q"])
+
+    monkeypatch.setattr("builtins.input", lambda _: next(choices))
+
+    commit_session.run_commit_session({}, None, _fake_context(), generate_fn)
+
+    captured = capsys.readouterr()
+    assert "Invalid choice" in captured.out
+    assert "Commit aborted" in captured.out
+
+
+def test_edit_blank_message_aborts(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Blank edited messages should be treated as intentional aborts."""
+    generate_fn = mock.Mock(return_value=_result("feat: add tests"))
+    editor_mock = mock.Mock(return_value=commit_session.CommitOutcome.ABORTED)
+
+    monkeypatch.setattr(commit_session, "open_editor_with_message", editor_mock)
+    monkeypatch.setattr("builtins.input", lambda _: "e")
+
+    commit_session.run_commit_session({}, None, _fake_context(), generate_fn)
+
+    captured = capsys.readouterr()
+    assert "Commit aborted" in captured.out
+    assert "Error:" not in captured.err
+
+
+def test_accept_failure_prints_git_output_without_error_wrapper(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Interactive git failures should preserve git output without subprocess text."""
+    generate_fn = mock.Mock(return_value=_result("feat: add tests"))
+    commit_mock = mock.Mock(
+        side_effect=subprocess.CalledProcessError(
+            1,
+            ["git", "commit"],
+            stderr="nothing to commit",
+        )
+    )
+
+    monkeypatch.setattr(commit_session, "commit_with_message", commit_mock)
+    monkeypatch.setattr("builtins.input", lambda _: "a")
+
+    with pytest.raises(commit_session.typer.Exit) as exc_info:
+        commit_session.run_commit_session({}, None, _fake_context(), generate_fn)
+
+    captured = capsys.readouterr()
+    assert exc_info.value.exit_code == 1
+    assert "nothing to commit" in captured.err
+    assert "Error:" not in captured.err
+    assert "Command '[" not in captured.err

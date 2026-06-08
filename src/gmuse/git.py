@@ -25,6 +25,7 @@ import re
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Final, Optional
 
@@ -146,6 +147,13 @@ class BranchInfo:
     branch_type: Optional[str]
     branch_summary: Optional[str]
     is_default: bool = False
+
+
+class CommitOutcome(Enum):
+    """Outcome from an interactive git commit operation."""
+
+    CREATED = "created"
+    ABORTED = "aborted"
 
 
 # -----------------------------------------------------------------------------
@@ -765,7 +773,7 @@ def commit_with_message(message: str) -> None:
             pass
 
 
-def open_editor_with_message(message: str) -> None:
+def open_editor_with_message(message: str) -> CommitOutcome:
     """Open the user's editor with the message prefilled and run the commit.
 
     Uses `git commit --edit -F <file>` so the editor is launched with the draft
@@ -774,7 +782,8 @@ def open_editor_with_message(message: str) -> None:
     interactive editors can control the terminal.
 
     Raises:
-        subprocess.CalledProcessError: If git commit exits non-zero.
+        subprocess.CalledProcessError: If git commit exits non-zero for reasons
+            other than an intentionally blank edited message.
     """
     import tempfile
 
@@ -787,6 +796,11 @@ def open_editor_with_message(message: str) -> None:
             ["git", "commit", "--edit", "-F", tmp_path],
             check=True,
         )
+        return CommitOutcome.CREATED
+    except subprocess.CalledProcessError:
+        if Path(tmp_path).read_text(encoding="utf-8").strip() == "":
+            return CommitOutcome.ABORTED
+        raise
     finally:
         try:
             Path(tmp_path).unlink()

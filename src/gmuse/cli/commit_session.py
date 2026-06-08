@@ -11,11 +11,24 @@ editor invocation) are delegated to gmuse.git helpers so they can be mocked in
 tests.
 """
 
+import subprocess
 import sys
-from typing import Callable, Optional
+from typing import Callable, NoReturn, Optional
+
+import typer
 
 from gmuse.commit import GenerationContext, GenerationResult
-from gmuse.git import commit_with_message, open_editor_with_message
+from gmuse.git import CommitOutcome, commit_with_message, open_editor_with_message
+
+
+def _exit_after_git_failure(error: subprocess.CalledProcessError) -> NoReturn:
+    """Preserve git's failure details without wrapping them in raw subprocess text."""
+    output = (error.stderr or error.stdout or "").strip()
+    if output:
+        print(output, file=sys.stderr)
+    else:
+        print("Commit failed", file=sys.stderr)
+    raise typer.Exit(code=1)
 
 
 def run_commit_session(
@@ -47,37 +60,54 @@ def run_commit_session(
     # Interactive loop
     while True:
         # Show current draft
-        print("\n----- DRAFT COMMIT MESSAGE -----\n")
-        print(message)
-        print("\n--------------------------------\n")
+        print("\nDraft commit message\n")
+        for line in message.splitlines():
+            print(f"  {line}")
+        print()
 
-        print("Actions: [a]ccept, [e]dit, [r]egenerate, [x]abort")
-        try:
-            choice = input("Choose action: ").strip().lower()
-        except EOFError:
-            # Treat EOF as abort
-            print("Input closed — aborting", file=sys.stderr)
-            return
+        print("Actions")
+        print("  a  accept")
+        print("  e  edit")
+        print("  r  regenerate")
+        print("  q  quit")
+        print()
 
-        if choice in ("a", "accept"):
-            commit_with_message(message)
-            print("Commit created")
-            return
+        while True:
+            try:
+                choice = input("Choose action: ").strip().lower()
+            except EOFError:
+                # Treat EOF as abort
+                print("Input closed - aborting", file=sys.stderr)
+                return
 
-        elif choice in ("e", "edit"):
-            open_editor_with_message(message)
-            print("Editor exited — commit may have been created or aborted by git")
-            return
+            if choice in ("a", "accept"):
+                try:
+                    commit_with_message(message)
+                except subprocess.CalledProcessError as e:
+                    _exit_after_git_failure(e)
+                print("Commit created")
+                return
 
-        elif choice in ("r", "regenerate"):
-            result = generate_fn(config, hint, context)
-            message = result.message
-            continue
+            if choice in ("e", "edit"):
+                try:
+                    outcome = open_editor_with_message(message)
+                except subprocess.CalledProcessError as e:
+                    _exit_after_git_failure(e)
+                else:
+                    if outcome is CommitOutcome.ABORTED:
+                        print("Commit aborted")
+                        return
+                    print("Commit created")
+                    return
 
-        elif choice in ("x", "abort"):
-            print("Aborted — no commit created", file=sys.stderr)
-            return
+            if choice in ("r", "regenerate"):
+                print("Regenerating commit message...")
+                result = generate_fn(config, hint, context)
+                message = result.message
+                break
 
-        else:
-            print("Unrecognized action. Choose one of: a, e, r, x")
-            continue
+            if choice in ("q", "quit"):
+                print("Commit aborted")
+                return
+
+            print("Invalid choice. Use a, e, r, or q.")

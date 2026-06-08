@@ -10,6 +10,7 @@ import pytest
 
 from gmuse.exceptions import NoStagedChangesError, NotAGitRepositoryError
 from gmuse.git import (
+    CommitOutcome,
     StagedDiff,
     _parse_commit_line,
     commit_with_message,
@@ -409,15 +410,28 @@ class TestCommitEditorHelpers:
 
         with mock.patch("subprocess.run", run_mock):
             with mock.patch("gmuse.git._run_git") as run_git_mock:
-                open_editor_with_message("feat: add editor flow")
+                outcome = open_editor_with_message("feat: add editor flow")
 
         run_mock.assert_called_once()
         args, kwargs = run_mock.call_args
         assert args[0][:4] == ["git", "commit", "--edit", "-F"]
         temp_path = Path(args[0][4])
         assert kwargs == {"check": True}
+        assert outcome is CommitOutcome.CREATED
         assert not temp_path.exists()
         run_git_mock.assert_not_called()
+
+    def test_open_editor_with_message_blank_message_aborts(self) -> None:
+        """An intentionally blank edited message should not surface as failure."""
+
+        def _blank_message_and_fail(args: list[str], **_: object) -> None:
+            Path(args[4]).write_text("", encoding="utf-8")
+            raise subprocess.CalledProcessError(1, args)
+
+        with mock.patch("subprocess.run", side_effect=_blank_message_and_fail):
+            outcome = open_editor_with_message("feat: add editor flow")
+
+        assert outcome is CommitOutcome.ABORTED
 
     def test_open_editor_with_message_ignores_cleanup_failure(self) -> None:
         """Editor helper should not mask git success with cleanup errors."""

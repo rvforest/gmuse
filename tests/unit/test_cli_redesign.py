@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
+import subprocess
 from unittest import mock
 
+import pytest
 from typer.testing import CliRunner
 
 from gmuse import commit
 from gmuse.cli import main
+from gmuse.exceptions import (
+    ConfigError,
+    InvalidMessageError,
+    LLMError,
+    NoStagedChangesError,
+    NotAGitRepositoryError,
+)
 
 runner = CliRunner()
 
@@ -125,3 +134,67 @@ def test_commit_yes_delegates_to_commit_session(monkeypatch) -> None:
     assert session_mock.call_args.kwargs["hint"] == "ship it"
     assert session_mock.call_args.kwargs["context"] is context
     assert session_mock.call_args.kwargs["non_interactive"] is True
+
+
+@pytest.mark.parametrize(
+    ("exc", "exit_code", "expected"),
+    [
+        (ConfigError("bad config"), 1, "bad config"),
+        (NotAGitRepositoryError("no repo"), 1, "git init"),
+        (NoStagedChangesError("no staged changes"), 1, "git add"),
+        (LLMError("provider failed"), 2, "provider failed"),
+        (InvalidMessageError("too long"), 2, "Try again"),
+        (
+            subprocess.CalledProcessError(
+                1,
+                "git commit",
+                stderr="nothing to commit",
+            ),
+            1,
+            "Git commit failed: nothing to commit",
+        ),
+    ],
+)
+def test_commit_error_branches_exit_with_expected_messages(
+    monkeypatch: pytest.MonkeyPatch,
+    exc: Exception,
+    exit_code: int,
+    expected: str,
+) -> None:
+    """commit --yes should translate expected failures into CLI errors."""
+    monkeypatch.setattr(
+        main,
+        "_load_config",
+        lambda **kwargs: {"format": "freeform", "history_depth": 5},
+    )
+    monkeypatch.setattr(main, "gather_context", lambda **kwargs: _fake_context())
+    monkeypatch.setattr(
+        main,
+        "run_commit_session",
+        mock.Mock(side_effect=exc),
+    )
+
+    result = runner.invoke(main.app, ["commit", "--yes"])
+
+    assert result.exit_code == exit_code
+    assert expected in result.stderr
+
+
+def test_commit_keyboard_interrupt_exits_130(monkeypatch: pytest.MonkeyPatch) -> None:
+    """commit should preserve the standard interrupted exit code."""
+    monkeypatch.setattr(
+        main,
+        "_load_config",
+        lambda **kwargs: {"format": "freeform", "history_depth": 5},
+    )
+    monkeypatch.setattr(main, "gather_context", lambda **kwargs: _fake_context())
+    monkeypatch.setattr(
+        main,
+        "run_commit_session",
+        mock.Mock(side_effect=KeyboardInterrupt()),
+    )
+
+    result = runner.invoke(main.app, ["commit", "--yes"])
+
+    assert result.exit_code == 130
+    assert "Interrupted by user" in result.stderr

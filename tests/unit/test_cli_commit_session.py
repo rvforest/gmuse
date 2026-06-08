@@ -86,6 +86,26 @@ def test_edit_opens_editor(
     assert "Editor exited" in captured.out
 
 
+def test_eof_aborts_without_commit(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Closed stdin should abort without creating a commit."""
+    generate_fn = mock.Mock(return_value=_result("feat: add tests"))
+    commit_mock = mock.Mock()
+
+    def _raise_eof(_: str) -> str:
+        raise EOFError
+
+    monkeypatch.setattr(commit_session, "commit_with_message", commit_mock)
+    monkeypatch.setattr("builtins.input", _raise_eof)
+
+    commit_session.run_commit_session({}, None, _fake_context(), generate_fn)
+
+    commit_mock.assert_not_called()
+    captured = capsys.readouterr()
+    assert "Input closed" in captured.err
+
+
 def test_regenerate_replaces_draft_before_accept(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

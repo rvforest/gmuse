@@ -12,6 +12,7 @@ from gmuse.exceptions import NoStagedChangesError, NotAGitRepositoryError
 from gmuse.git import (
     StagedDiff,
     _parse_commit_line,
+    commit_with_message,
     get_commit_history,
     get_repo_root,
     get_staged_diff,
@@ -382,6 +383,24 @@ class TestLoadRepositoryInstructions:
 class TestCommitEditorHelpers:
     """Tests for git commit editor helpers."""
 
+    def test_commit_with_message_uses_temp_file_and_ignores_cleanup_failure(
+        self,
+    ) -> None:
+        """Commit helper should still succeed if temp-file cleanup fails."""
+        run_git_mock = mock.Mock()
+
+        with mock.patch("gmuse.git._run_git", run_git_mock):
+            with mock.patch("pathlib.Path.unlink", side_effect=OSError("locked")):
+                commit_with_message("feat: add commit flow")
+
+        run_git_mock.assert_called_once()
+        args, kwargs = run_git_mock.call_args
+        temp_path = Path(args[2])
+        assert args[:2] == ("commit", "--file")
+        assert temp_path.exists()
+        assert kwargs["timeout"] > 0
+        temp_path.unlink()
+
     def test_open_editor_with_message_inherits_stdio_and_removes_temp_file(
         self,
     ) -> None:
@@ -399,3 +418,13 @@ class TestCommitEditorHelpers:
         assert kwargs == {"check": True}
         assert not temp_path.exists()
         run_git_mock.assert_not_called()
+
+    def test_open_editor_with_message_ignores_cleanup_failure(self) -> None:
+        """Editor helper should not mask git success with cleanup errors."""
+        run_mock = mock.Mock()
+
+        with mock.patch("subprocess.run", run_mock):
+            with mock.patch("pathlib.Path.unlink", side_effect=OSError("locked")):
+                open_editor_with_message("feat: add editor flow")
+
+        run_mock.assert_called_once()

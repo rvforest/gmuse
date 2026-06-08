@@ -87,6 +87,54 @@ def test_edit_opens_editor(
     assert "Commit created" in captured.out
 
 
+def test_edit_first_opens_editor_without_prompting(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The --edit path should hand the first generated draft to the editor."""
+    generate_fn = mock.Mock(return_value=_result("feat: add tests"))
+    editor_mock = mock.Mock(return_value=commit_session.CommitOutcome.CREATED)
+    input_mock = mock.Mock()
+
+    monkeypatch.setattr(commit_session, "open_editor_with_message", editor_mock)
+    monkeypatch.setattr("builtins.input", input_mock)
+
+    commit_session.run_commit_session(
+        {},
+        None,
+        _fake_context(),
+        generate_fn,
+        edit_first=True,
+    )
+
+    editor_mock.assert_called_once_with("feat: add tests")
+    input_mock.assert_not_called()
+    captured = capsys.readouterr()
+    assert "Commit created" in captured.out
+    assert "Draft commit message" not in captured.out
+
+
+def test_edit_first_blank_message_aborts(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """A blank message in edit-first mode should be a clean non-commit outcome."""
+    generate_fn = mock.Mock(return_value=_result("feat: add tests"))
+    editor_mock = mock.Mock(return_value=commit_session.CommitOutcome.ABORTED)
+
+    monkeypatch.setattr(commit_session, "open_editor_with_message", editor_mock)
+
+    commit_session.run_commit_session(
+        {},
+        None,
+        _fake_context(),
+        generate_fn,
+        edit_first=True,
+    )
+
+    captured = capsys.readouterr()
+    assert "Commit aborted" in captured.out
+    assert "Error:" not in captured.err
+
+
 def test_eof_aborts_without_commit(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

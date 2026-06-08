@@ -118,6 +118,7 @@ def main(
 
     Examples:
         gmuse commit                        # Review and commit
+        gmuse commit --edit                 # Generate, edit, and commit
         gmuse commit --yes                  # Generate and commit immediately
         gmuse generate                      # Print message only
         gmuse generate --format conventional  # Conventional commits
@@ -399,6 +400,11 @@ def commit(
         "-y",
         help="Non-interactive: generate and commit immediately",
     ),
+    edit: bool = typer.Option(
+        False,
+        "--edit",
+        help="Generate, open the editor with the draft, and commit",
+    ),
     model: Optional[str] = typer.Option(None, "--model", "-m"),
     format: Optional[str] = typer.Option(None, "--format", "-f"),
     history_depth: Optional[int] = typer.Option(None, "--history-depth"),
@@ -410,10 +416,14 @@ def commit(
     """Interactive commit workflow: generate, review, and create a git commit.
 
     In interactive terminals this opens a small review loop allowing accept/edit/regenerate/abort.
+    Use --edit to skip the review prompt and open the editor immediately.
     In non-interactive scripts, use --yes to generate and commit immediately.
     """
     try:
-        if not yes and (not sys.stdin.isatty() or not sys.stdout.isatty()):
+        if yes and edit:
+            _error_exit("Cannot use --yes and --edit together.", code=2)
+
+        if not yes and not _is_interactive_terminal():
             _error_exit(
                 "gmuse commit requires an interactive terminal. Use --yes for non-interactive commits or 'gmuse generate' for scripting.",
                 code=2,
@@ -446,6 +456,7 @@ def commit(
                 config=cfg, hint=h, context=ctx
             ),
             non_interactive=yes,
+            edit_first=edit,
         )
 
     except ConfigError as e:
@@ -550,6 +561,11 @@ def _load_config(
     logger.debug(f"Configuration loaded: {config}")
 
     return config
+
+
+def _is_interactive_terminal() -> bool:
+    """Return True when stdin and stdout are both attached to a TTY."""
+    return sys.stdin.isatty() and sys.stdout.isatty()
 
 
 def _copy_to_clipboard(message: str) -> None:

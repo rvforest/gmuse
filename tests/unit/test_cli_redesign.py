@@ -99,8 +99,7 @@ def test_commit_without_yes_fails_before_loading_config(monkeypatch) -> None:
 
     monkeypatch.setattr(main, "_load_config", load_config)
     monkeypatch.setattr(main, "gather_context", gather_context)
-    monkeypatch.setattr(main.sys.stdin, "isatty", lambda: False)
-    monkeypatch.setattr(main.sys.stdout, "isatty", lambda: False)
+    monkeypatch.setattr(main, "_is_interactive_terminal", lambda: False)
 
     result = runner.invoke(main.app, ["commit"])
 
@@ -134,6 +133,47 @@ def test_commit_yes_delegates_to_commit_session(monkeypatch) -> None:
     assert session_mock.call_args.kwargs["hint"] == "ship it"
     assert session_mock.call_args.kwargs["context"] is context
     assert session_mock.call_args.kwargs["non_interactive"] is True
+    assert session_mock.call_args.kwargs["edit_first"] is False
+
+
+def test_commit_edit_delegates_to_commit_session(monkeypatch) -> None:
+    """commit --edit should request edit-first mode after generating a draft."""
+    session_mock = mock.Mock()
+    context = _fake_context()
+
+    monkeypatch.setattr(
+        main,
+        "_load_config",
+        lambda **kwargs: {"format": "freeform", "history_depth": 5},
+    )
+    monkeypatch.setattr(main, "gather_context", lambda **kwargs: context)
+    monkeypatch.setattr(main, "run_commit_session", session_mock)
+    monkeypatch.setattr(main, "_is_interactive_terminal", lambda: True)
+
+    result = runner.invoke(main.app, ["commit", "--edit", "--hint", "ship it"])
+
+    assert result.exit_code == 0
+    session_mock.assert_called_once()
+    assert session_mock.call_args.kwargs["hint"] == "ship it"
+    assert session_mock.call_args.kwargs["context"] is context
+    assert session_mock.call_args.kwargs["non_interactive"] is False
+    assert session_mock.call_args.kwargs["edit_first"] is True
+
+
+def test_commit_yes_and_edit_are_mutually_exclusive(monkeypatch) -> None:
+    """commit should reject conflicting automatic commit modes before setup."""
+    load_config = mock.Mock()
+    gather_context = mock.Mock()
+
+    monkeypatch.setattr(main, "_load_config", load_config)
+    monkeypatch.setattr(main, "gather_context", gather_context)
+
+    result = runner.invoke(main.app, ["commit", "--yes", "--edit"])
+
+    assert result.exit_code == 2
+    assert "Cannot use --yes and --edit together" in result.stderr
+    load_config.assert_not_called()
+    gather_context.assert_not_called()
 
 
 @pytest.mark.parametrize(

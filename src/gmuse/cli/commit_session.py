@@ -37,6 +37,7 @@ def run_commit_session(
     context: GenerationContext,
     generate_fn: Callable[[dict, Optional[str], GenerationContext], GenerationResult],
     non_interactive: bool = False,
+    edit_first: bool = False,
 ) -> None:
     """Run the commit review session.
 
@@ -47,6 +48,7 @@ def run_commit_session(
         generate_fn: Callable returning a GenerationResult when called with
             ``(config, hint, context)``.
         non_interactive: If True, accept the generated message and commit immediately
+        edit_first: If True, open the editor with the generated draft immediately.
     """
     # First generation
     result = generate_fn(config, hint, context)
@@ -56,6 +58,18 @@ def run_commit_session(
         # Fast path: create commit and exit
         commit_with_message(message)
         return
+
+    if edit_first:
+        try:
+            outcome = open_editor_with_message(message)
+        except subprocess.CalledProcessError as e:
+            _exit_after_git_failure(e)
+        else:
+            if outcome is CommitOutcome.ABORTED:
+                print("Commit aborted")
+                return
+            print("Commit created")
+            return
 
     # Interactive loop
     while True:

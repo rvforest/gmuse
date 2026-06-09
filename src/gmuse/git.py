@@ -25,6 +25,7 @@ import re
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Final, Optional
 
@@ -146,6 +147,13 @@ class BranchInfo:
     branch_type: Optional[str]
     branch_summary: Optional[str]
     is_default: bool = False
+
+
+class CommitOutcome(Enum):
+    """Outcome from an interactive git commit operation."""
+
+    CREATED = "created"
+    ABORTED = "aborted"
 
 
 # -----------------------------------------------------------------------------
@@ -734,3 +742,67 @@ def get_current_branch(max_length: int = 60) -> Optional[BranchInfo]:
     except subprocess.TimeoutExpired:
         logger.warning("Git branch command timed out")
         return None
+
+
+# -----------------------------------------------------------------------------
+# Commit / Editor helpers
+# -----------------------------------------------------------------------------
+
+
+def commit_with_message(message: str) -> None:
+    """Create a git commit using the provided message.
+
+    Writes the message to a temporary file and calls `git commit --file=<file>`
+    which is portable across platforms and preserves multiline messages.
+
+    Raises:
+        subprocess.CalledProcessError: If git commit exits non-zero.
+    """
+    import tempfile
+
+    with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as f:
+        f.write(message)
+        tmp_path = f.name
+
+    try:
+        _run_git("commit", "--file", tmp_path, timeout=_GIT_TIMEOUT_LONG)
+    finally:
+        try:
+            Path(tmp_path).unlink()
+        except Exception:
+            pass
+
+
+def open_editor_with_message(message: str) -> CommitOutcome:
+    """Open the user's editor with the message prefilled and run the commit.
+
+    Uses `git commit --edit -F <file>` so the editor is launched with the draft
+    message and git performs the commit after the editor exits. Unlike the raw
+    git helpers, this intentionally inherits stdio and avoids a short timeout so
+    interactive editors can control the terminal.
+
+    Raises:
+        subprocess.CalledProcessError: If git commit exits non-zero for reasons
+            other than an intentionally blank edited message.
+    """
+    import tempfile
+
+    with tempfile.NamedTemporaryFile("w", delete=False, encoding="utf-8") as f:
+        f.write(message)
+        tmp_path = f.name
+
+    try:
+        subprocess.run(
+            ["git", "commit", "--edit", "-F", tmp_path],
+            check=True,
+        )
+        return CommitOutcome.CREATED
+    except subprocess.CalledProcessError:
+        if Path(tmp_path).read_text(encoding="utf-8").strip() == "":
+            return CommitOutcome.ABORTED
+        raise
+    finally:
+        try:
+            Path(tmp_path).unlink()
+        except Exception:
+            pass

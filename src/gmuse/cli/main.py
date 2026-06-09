@@ -16,10 +16,11 @@ Commands:
 
 Example:
     >>> # From command line:
-    >>> # gmuse msg --hint "security fix" --copy
+    >>> # gmuse commit --hint "security fix"
 """
 
 import os
+import subprocess
 import sys
 from typing import Any, Optional
 
@@ -53,6 +54,7 @@ from gmuse.prompts import build_prompt
 from gmuse.cli.auth import auth_app
 from gmuse.cli.completions import completions_app, completions_run_command
 from gmuse.cli.config import config_app
+from gmuse.cli.commit_session import run_commit_session
 
 logger = get_logger(__name__)
 
@@ -111,13 +113,15 @@ def main(
 
     Generate commit messages from staged changes using AI.
 
-    Use 'gmuse msg' to create a commit message from your staged changes.
+    Use 'gmuse commit' to generate, review, and create a commit from staged changes.
+    Use 'gmuse generate' when you need stdout-only output for scripts.
 
     Examples:
-        gmuse msg                           # Generate message
-        gmuse msg --hint "breaking change"  # With hint
-        gmuse msg --format conventional     # Conventional commits
-        gmuse msg --copy                    # Copy to clipboard
+        gmuse commit                        # Review and commit
+        gmuse commit --edit                 # Generate, edit, and commit
+        gmuse commit --yes                  # Generate and commit immediately
+        gmuse generate                      # Print message only
+        gmuse generate --format conventional  # Conventional commits
         gmuse info                          # Show configuration
 
     For more information, visit: https://gmuse.readthedocs.io
@@ -158,18 +162,12 @@ def info() -> None:
     typer.echo(f"  GMUSE_TIMEOUT env var: {os.getenv('GMUSE_TIMEOUT')}")
 
 
-@app.command()
-def msg(
+@app.command(name="generate")
+def generate(
     hint: Optional[str] = typer.Option(
         None,
         "--hint",
         help="Additional guidance for message generation (e.g., 'emphasize security')",
-    ),
-    copy: bool = typer.Option(
-        False,
-        "--copy",
-        "-c",
-        help="Copy generated message to clipboard",
     ),
     model: Optional[str] = typer.Option(
         None,
@@ -216,26 +214,13 @@ def msg(
 ) -> None:
     """Generate a commit message from staged changes.
 
-    This command analyzes your staged git changes and generates an appropriate
-    commit message using AI. The message is printed to stdout and can optionally
-    be copied to your clipboard.
-
-    Examples:
-        gmuse msg                        # Basic usage
-        gmuse msg --hint "security fix"  # Add context hint
-        gmuse msg --format conventional  # Use conventional commits format
-        gmuse msg --copy                 # Auto-copy to clipboard
-        gmuse msg --model claude-3-opus  # Use specific model
-        gmuse msg --temperature 0.3      # Lower temperature for more deterministic output
-        gmuse msg --max-tokens 200       # Limit response length
-        gmuse msg --include-branch       # Include branch context
-        gmuse msg --dry-run              # Preview prompt without calling LLM
+    This command is the raw stdout-only primitive intended for scripting and
+    completion use. It prints the generated message to stdout on success.
     """
     try:
-        # Load and merge configuration
+        # Load and merge configuration (clipboard/copy is intentionally not part of the raw path)
         config = _load_config(
             model=model,
-            copy=copy,
             format=format,
             history_depth=history_depth,
             temperature=temperature,
@@ -289,9 +274,190 @@ def msg(
         # Output message to stdout
         typer.echo(result.message)
 
-        # Copy to clipboard if requested
-        if config.get("copy_to_clipboard"):
-            _copy_to_clipboard(result.message)
+    except ConfigError as e:
+        _error_exit(str(e), code=1)
+
+    except NotAGitRepositoryError as e:
+        _error_exit(
+            str(e),
+            hint="Run this command inside a git repository.\nTo initialize a new repository: git init",
+            code=1,
+        )
+
+    except NoStagedChangesError as e:
+        _error_exit(
+            str(e),
+            hint="Stage your changes first:\n  git add <files>",
+            code=1,
+        )
+
+    except LLMError as e:
+        _error_exit(str(e), code=2)
+
+    except InvalidMessageError as e:
+        _error_exit(
+            f"Generated message is invalid: {e}",
+            hint="This is likely a temporary issue. Try again.",
+            code=2,
+        )
+
+    except KeyboardInterrupt:
+        typer.echo("\n\nInterrupted by user", err=True)
+        raise typer.Exit(code=130)
+
+
+# Backwards-compatible deprecated alias
+@app.command(name="msg")
+def msg(
+    hint: Optional[str] = typer.Option(
+        None,
+        "--hint",
+        help="(Deprecated) Additional guidance for message generation",
+    ),
+    copy: bool = typer.Option(
+        False,
+        "--copy",
+        "-c",
+        help="(Deprecated) Copy generated message to clipboard",
+    ),
+    model: Optional[str] = typer.Option(None, "--model", "-m"),
+    format: Optional[str] = typer.Option(None, "--format", "-f"),
+    history_depth: Optional[int] = typer.Option(None, "--history-depth"),
+    temperature: Optional[float] = typer.Option(None, "--temperature"),
+    max_tokens: Optional[int] = typer.Option(None, "--max-tokens"),
+    max_diff_bytes: Optional[int] = typer.Option(None, "--max-diff-bytes"),
+    include_branch: bool = typer.Option(False, "--include-branch"),
+    dry_run: bool = typer.Option(False, "--dry-run"),
+) -> None:
+    """Deprecated alias for `gmuse generate`.
+
+    Emits deprecation guidance to stderr while preserving stdout output so scripts
+    that rely on `gmuse msg` continue to function.
+    """
+    if isinstance(hint, typer.models.OptionInfo):
+        hint = None
+    if isinstance(copy, typer.models.OptionInfo):
+        copy = False
+    if isinstance(model, typer.models.OptionInfo):
+        model = None
+    if isinstance(format, typer.models.OptionInfo):
+        format = None
+    if isinstance(history_depth, typer.models.OptionInfo):
+        history_depth = None
+    if isinstance(temperature, typer.models.OptionInfo):
+        temperature = None
+    if isinstance(max_tokens, typer.models.OptionInfo):
+        max_tokens = None
+    if isinstance(max_diff_bytes, typer.models.OptionInfo):
+        max_diff_bytes = None
+    if isinstance(include_branch, typer.models.OptionInfo):
+        include_branch = False
+    if isinstance(dry_run, typer.models.OptionInfo):
+        dry_run = False
+
+    # Emit deprecation notice on stderr
+    typer.secho(
+        "'gmuse msg' is deprecated and will be removed in a future release. Use 'gmuse generate' instead.",
+        fg=typer.colors.YELLOW,
+        err=True,
+    )
+
+    if copy:
+        # Legacy clipboard behavior is deprecated — fail with migration guidance
+        _error_exit(
+            "Clipboard-based output is deprecated and not supported by 'gmuse generate'.",
+            hint=(
+                "To get a message for scripting: use 'gmuse generate'.\n"
+                "To copy to clipboard manually: gmuse generate | pbcopy (mac) or xclip -sel clip (linux)"
+            ),
+            code=2,
+        )
+
+    # Forward to generate while preserving the legacy command's stdout contract.
+    generate(
+        hint=hint,
+        model=model,
+        format=format,
+        history_depth=history_depth,
+        temperature=temperature,
+        max_tokens=max_tokens,
+        max_diff_bytes=max_diff_bytes,
+        include_branch=include_branch,
+        dry_run=dry_run,
+    )
+
+
+@app.command(name="commit")
+def commit(
+    hint: Optional[str] = typer.Option(
+        None,
+        "--hint",
+        help="Hint for message generation",
+    ),
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="Non-interactive: generate and commit immediately",
+    ),
+    edit: bool = typer.Option(
+        False,
+        "--edit",
+        help="Generate, open the editor with the draft, and commit",
+    ),
+    model: Optional[str] = typer.Option(None, "--model", "-m"),
+    format: Optional[str] = typer.Option(None, "--format", "-f"),
+    history_depth: Optional[int] = typer.Option(None, "--history-depth"),
+    temperature: Optional[float] = typer.Option(None, "--temperature"),
+    max_tokens: Optional[int] = typer.Option(None, "--max-tokens"),
+    max_diff_bytes: Optional[int] = typer.Option(None, "--max-diff-bytes"),
+    include_branch: bool = typer.Option(False, "--include-branch"),
+) -> None:
+    """Interactive commit workflow: generate, review, and create a git commit.
+
+    In interactive terminals this opens a small review loop allowing accept/edit/regenerate/abort.
+    Use --edit to skip the review prompt and open the editor immediately.
+    In non-interactive scripts, use --yes to generate and commit immediately.
+    """
+    try:
+        if yes and edit:
+            _error_exit("Cannot use --yes and --edit together.", code=2)
+
+        if not yes and not _is_interactive_terminal():
+            _error_exit(
+                "gmuse commit requires an interactive terminal. Use --yes for non-interactive commits or 'gmuse generate' for scripting.",
+                code=2,
+            )
+
+        # Load config and gather context
+        config = _load_config(
+            model=model,
+            format=format,
+            history_depth=history_depth,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            max_diff_bytes=max_diff_bytes,
+            include_branch=include_branch,
+        )
+
+        context = gather_context(
+            history_depth=config.get("history_depth", 5),
+            max_diff_bytes=config.get("max_diff_bytes", 20000),
+            include_branch=config.get("include_branch", False),
+            branch_max_length=config.get("branch_max_length", 60),
+        )
+
+        # Delegate to commit session
+        run_commit_session(
+            config=config,
+            hint=hint,
+            context=context,
+            generate_fn=lambda cfg, h, ctx: generate_message(
+                config=cfg, hint=h, context=ctx
+            ),
+            non_interactive=yes,
+            edit_first=edit,
+        )
 
     except ConfigError as e:
         _error_exit(str(e), code=1)
@@ -319,6 +485,12 @@ def msg(
             hint="This is likely a temporary issue. Try again.",
             code=2,
         )
+
+    except subprocess.CalledProcessError as e:
+        output = (
+            e.stderr or e.stdout or "git commit exited without creating a commit"
+        ).strip()
+        _error_exit(f"Git commit failed: {output}", code=1)
 
     except KeyboardInterrupt:
         typer.echo("\n\nInterrupted by user", err=True)
@@ -389,6 +561,11 @@ def _load_config(
     logger.debug(f"Configuration loaded: {config}")
 
     return config
+
+
+def _is_interactive_terminal() -> bool:
+    """Return True when stdin and stdout are both attached to a TTY."""
+    return sys.stdin.isatty() and sys.stdout.isatty()
 
 
 def _copy_to_clipboard(message: str) -> None:

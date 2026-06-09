@@ -1,12 +1,40 @@
 # CLI Reference
 
-## gmuse msg
+## gmuse commit
 
-Generate a commit message from staged changes.
+Generate a commit message from staged changes and use it to create a git commit.
 
 ```console
-$ gmuse msg [OPTIONS]
+$ gmuse commit [OPTIONS]
 ```
+
+By default, `gmuse commit` runs an interactive review flow. It shows the generated
+draft and lets you accept, edit, regenerate, or quit before a commit is created.
+
+### Options
+
+- `--hint TEXT` / `-h TEXT`: Provide a hint to the LLM (e.g., "security fix").
+- `--edit`: Generate a draft, open the editor immediately with that draft prefilled, and commit after the editor exits.
+- `--yes` / `-y`: Generate and commit immediately without prompting. Cannot be combined with `--edit`.
+- `--format TEXT` / `-f TEXT`: Message format: `freeform` (default), `conventional`, or `gitmoji`.
+- `--model TEXT` / `-m TEXT`: LLM model to use (overrides env/config).
+- `--history-depth INTEGER`: Number of recent commits to use for style context (0–50).
+
+If you prefer editor-first commits, create a shell alias:
+
+```console
+$ alias gmc='gmuse commit --edit'
+```
+
+## gmuse generate
+
+Generate a commit message from staged changes and write only the message to stdout.
+
+```console
+$ gmuse generate [OPTIONS]
+```
+
+Use this command for scripts, shell integrations, and completion plumbing.
 
 ### Options
 
@@ -14,15 +42,26 @@ $ gmuse msg [OPTIONS]
 - `--format TEXT` / `-f TEXT`: Message format: `freeform` (default), `conventional`, or `gitmoji`.
 - `--model TEXT` / `-m TEXT`: LLM model to use (overrides env/config).
 - `--history-depth INTEGER`: Number of recent commits to use for style context (0–50).
-- `--copy` / `-c`: Copy the generated message to clipboard.
 - `--dry-run`: Print the assembled prompt without calling the LLM provider.
+
+## gmuse msg
+
+Deprecated compatibility alias for `gmuse generate`.
+
+```console
+$ gmuse msg [OPTIONS]
+```
+
+`gmuse msg` emits a deprecation notice on stderr and preserves the stdout-only
+message output contract. Legacy clipboard mode is retired; `gmuse msg --copy`
+fails with migration guidance.
 
 **Note:** Provider selection is auto-detected from configured API keys (e.g., `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`). Empty environment values fall through to the OS keyring, and `gmuse auth` provides the secure setup path for interactive use. See [Configuration Reference](configuration.md#model) for details on provider detection.
 
 ### Dry-run example
 
 ```console
-$ gmuse msg --dry-run
+$ gmuse generate --dry-run
 ```
 
 Output:

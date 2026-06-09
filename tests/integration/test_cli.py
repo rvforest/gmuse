@@ -333,11 +333,12 @@ class TestUserStory3:
                     finally:
                         os.chdir(old_cwd)
 
-                    assert result.exit_code == 0
-                    assert "Add feature function" in result.stdout
-                    # Verify clipboard copy was called
-                    mock_pyperclip.copy.assert_called_once_with("Add feature function")
-                    assert "Copied to clipboard" in result.stderr
+                    assert result.exit_code == 2
+                    assert result.stdout == ""
+                    assert "clipboard" in result.stderr.lower()
+                    assert "gmuse generate" in result.stderr
+                    mock_client.generate.assert_not_called()
+                    mock_pyperclip.copy.assert_not_called()
 
     def test_copy_flag_pyperclip_not_installed(
         self, git_repo_with_history: Path
@@ -372,14 +373,11 @@ class TestUserStory3:
                     finally:
                         os.chdir(old_cwd)
 
-                    # Should still succeed and output the message
-                    assert result.exit_code == 0
-                    assert "Add feature function" in result.stdout
-                    # Should show warning about pyperclip
-                    assert (
-                        "pyperclip" in result.stderr.lower()
-                        or "clipboard" in result.stderr.lower()
-                    )
+                    assert result.exit_code == 2
+                    assert result.stdout == ""
+                    assert "clipboard" in result.stderr.lower()
+                    assert "gmuse generate" in result.stderr
+                    mock_client.generate.assert_not_called()
 
 
 class TestUserStory4:

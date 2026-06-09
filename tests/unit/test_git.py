@@ -10,13 +10,16 @@ import pytest
 
 from gmuse.exceptions import NoStagedChangesError, NotAGitRepositoryError
 from gmuse.git import (
+    CommitOutcome,
     StagedDiff,
     _parse_commit_line,
+    commit_with_message,
     get_commit_history,
     get_repo_root,
     get_staged_diff,
     is_git_repository,
     load_repository_instructions,
+    open_editor_with_message,
     truncate_diff,
 )
 
@@ -376,3 +379,79 @@ class TestLoadRepositoryInstructions:
                     assert instructions.exists is False
                 finally:
                     gmuse_file.chmod(0o644)  # Restore permissions for cleanup
+
+
+class TestCommitEditorHelpers:
+    """Tests for git commit editor helpers."""
+
+    def test_commit_with_message_uses_temp_file_and_ignores_cleanup_failure(
+        self,
+    ) -> None:
+        """Commit helper should still succeed if temp-file cleanup fails."""
+        run_git_mock = mock.Mock()
+
+        with mock.patch("gmuse.git._run_git", run_git_mock):
+            with mock.patch("pathlib.Path.unlink", side_effect=OSError("locked")):
+                commit_with_message("feat: add commit flow")
+
+        run_git_mock.assert_called_once()
+        args, kwargs = run_git_mock.call_args
+        temp_path = Path(args[2])
+        assert args[:2] == ("commit", "--file")
+        assert temp_path.exists()
+        assert kwargs["timeout"] > 0
+        temp_path.unlink()
+
+    def test_open_editor_with_message_inherits_stdio_and_removes_temp_file(
+        self,
+    ) -> None:
+        """Editor handoff should avoid captured git wrapper and short timeouts."""
+        run_mock = mock.Mock()
+
+        with mock.patch("subprocess.run", run_mock):
+            with mock.patch("gmuse.git._run_git") as run_git_mock:
+                outcome = open_editor_with_message("feat: add editor flow")
+
+        run_mock.assert_called_once()
+        args, kwargs = run_mock.call_args
+        assert args[0][:4] == ["git", "commit", "--edit", "-F"]
+        temp_path = Path(args[0][4])
+        assert kwargs == {"check": True}
+        assert outcome is CommitOutcome.CREATED
+        assert not temp_path.exists()
+        run_git_mock.assert_not_called()
+
+    def test_open_editor_with_message_blank_message_aborts(self) -> None:
+        """An intentionally blank edited message should not surface as failure."""
+
+        def _blank_message_and_fail(args: list[str], **_: object) -> None:
+            Path(args[4]).write_text("", encoding="utf-8")
+            raise subprocess.CalledProcessError(1, args)
+
+        with mock.patch("subprocess.run", side_effect=_blank_message_and_fail):
+            outcome = open_editor_with_message("feat: add editor flow")
+
+        assert outcome is CommitOutcome.ABORTED
+
+    def test_open_editor_with_message_nonblank_failure_reraises(self) -> None:
+        """A failed edit with message content should preserve the git failure."""
+
+        def _keep_message_and_fail(args: list[str], **_: object) -> None:
+            Path(args[4]).write_text("feat: keep message", encoding="utf-8")
+            raise subprocess.CalledProcessError(1, args, stderr="hook failed")
+
+        with mock.patch("subprocess.run", side_effect=_keep_message_and_fail):
+            with pytest.raises(subprocess.CalledProcessError) as exc_info:
+                open_editor_with_message("feat: add editor flow")
+
+        assert exc_info.value.stderr == "hook failed"
+
+    def test_open_editor_with_message_ignores_cleanup_failure(self) -> None:
+        """Editor helper should not mask git success with cleanup errors."""
+        run_mock = mock.Mock()
+
+        with mock.patch("subprocess.run", run_mock):
+            with mock.patch("pathlib.Path.unlink", side_effect=OSError("locked")):
+                open_editor_with_message("feat: add editor flow")
+
+        run_mock.assert_called_once()

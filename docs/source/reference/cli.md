@@ -20,6 +20,12 @@ draft and lets you accept, edit, regenerate, or quit before a commit is created.
 - `--model TEXT` / `-m TEXT`: LLM model to use (overrides env/config).
 - `--history-depth INTEGER`: Number of recent commits to use for style context (0–50).
 
+If you prefer editor-first commits, create a shell alias:
+
+```console
+$ alias gmc='gmuse commit --edit'
+```
+
 ## gmuse generate
 
 Generate a commit message from staged changes and write only the message to stdout.

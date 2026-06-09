@@ -47,6 +47,9 @@ myst_enable_extensions = [
 autodoc2_packages = [
     "../../src/gmuse",
 ]
+autodoc2_docstring_parser_regexes = [
+    (r"gmuse\..*", "myst"),
+]
 
 templates_path = ["_templates"]
 exclude_patterns = []  # type: ignore

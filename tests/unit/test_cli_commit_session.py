@@ -135,6 +135,36 @@ def test_edit_first_blank_message_aborts(
     assert "Error:" not in captured.err
 
 
+def test_edit_first_failure_prints_git_output_without_error_wrapper(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Edit-first git failures should preserve git output."""
+    generate_fn = mock.Mock(return_value=_result("feat: add tests"))
+    editor_mock = mock.Mock(
+        side_effect=subprocess.CalledProcessError(
+            1,
+            ["git", "commit", "--edit"],
+            stderr="hook failed",
+        )
+    )
+
+    monkeypatch.setattr(commit_session, "open_editor_with_message", editor_mock)
+
+    with pytest.raises(commit_session.typer.Exit) as exc_info:
+        commit_session.run_commit_session(
+            {},
+            None,
+            _fake_context(),
+            generate_fn,
+            edit_first=True,
+        )
+
+    captured = capsys.readouterr()
+    assert exc_info.value.exit_code == 1
+    assert "hook failed" in captured.err
+    assert "Error:" not in captured.err
+
+
 def test_eof_aborts_without_commit(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -241,6 +271,30 @@ def test_edit_blank_message_aborts(
     captured = capsys.readouterr()
     assert "Commit aborted" in captured.out
     assert "Error:" not in captured.err
+
+
+def test_edit_failure_without_output_uses_fallback(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Editor failures without git output should use the friendly fallback."""
+    generate_fn = mock.Mock(return_value=_result("feat: add tests"))
+    editor_mock = mock.Mock(
+        side_effect=subprocess.CalledProcessError(
+            1,
+            ["git", "commit", "--edit"],
+        )
+    )
+
+    monkeypatch.setattr(commit_session, "open_editor_with_message", editor_mock)
+    monkeypatch.setattr("builtins.input", lambda _: "e")
+
+    with pytest.raises(commit_session.typer.Exit) as exc_info:
+        commit_session.run_commit_session({}, None, _fake_context(), generate_fn)
+
+    captured = capsys.readouterr()
+    assert exc_info.value.exit_code == 1
+    assert "Commit failed" in captured.err
+    assert "Command '[" not in captured.err
 
 
 def test_accept_failure_prints_git_output_without_error_wrapper(

@@ -1,6 +1,7 @@
 """Interactive commit session orchestration.
 
 Provides a small review loop for generated commit drafts with actions:
+
 - accept: create commit from draft
 - edit: open user's editor with draft prefilled
 - regenerate: request a fresh draft from the generation function
@@ -47,7 +48,7 @@ def run_commit_session(
         context: Context object from gather_context.
         generate_fn: Callable returning a GenerationResult when called with
             ``(config, hint, context)``.
-        non_interactive: If True, accept the generated message and commit immediately
+        non_interactive: If True, accept the generated message and commit immediately.
         edit_first: If True, open the editor with the generated draft immediately.
     """
     # First generation

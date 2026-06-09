@@ -433,6 +433,19 @@ class TestCommitEditorHelpers:
 
         assert outcome is CommitOutcome.ABORTED
 
+    def test_open_editor_with_message_nonblank_failure_reraises(self) -> None:
+        """A failed edit with message content should preserve the git failure."""
+
+        def _keep_message_and_fail(args: list[str], **_: object) -> None:
+            Path(args[4]).write_text("feat: keep message", encoding="utf-8")
+            raise subprocess.CalledProcessError(1, args, stderr="hook failed")
+
+        with mock.patch("subprocess.run", side_effect=_keep_message_and_fail):
+            with pytest.raises(subprocess.CalledProcessError) as exc_info:
+                open_editor_with_message("feat: add editor flow")
+
+        assert exc_info.value.stderr == "hook failed"
+
     def test_open_editor_with_message_ignores_cleanup_failure(self) -> None:
         """Editor helper should not mask git success with cleanup errors."""
         run_mock = mock.Mock()

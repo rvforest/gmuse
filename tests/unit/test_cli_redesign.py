@@ -109,6 +109,28 @@ def test_commit_without_yes_fails_before_loading_config(monkeypatch) -> None:
     gather_context.assert_not_called()
 
 
+@pytest.mark.parametrize(
+    ("stdin_isatty", "stdout_isatty", "expected"),
+    [
+        (True, True, True),
+        (False, True, False),
+        (True, False, False),
+        (False, False, False),
+    ],
+)
+def test_is_interactive_terminal_requires_stdin_and_stdout_ttys(
+    monkeypatch: pytest.MonkeyPatch,
+    stdin_isatty: bool,
+    stdout_isatty: bool,
+    expected: bool,
+) -> None:
+    """Interactive commit mode should require both input and output TTYs."""
+    monkeypatch.setattr(main.sys.stdin, "isatty", lambda: stdin_isatty)
+    monkeypatch.setattr(main.sys.stdout, "isatty", lambda: stdout_isatty)
+
+    assert main._is_interactive_terminal() is expected
+
+
 def test_commit_yes_delegates_to_commit_session(monkeypatch) -> None:
     """commit --yes should pass the resolved context into the session helper."""
     session_mock = mock.Mock()

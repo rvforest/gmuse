@@ -77,6 +77,11 @@ an exact match to the original source commit message.
 
 ## Validation outcomes
 
+The foundation should keep stable top-level fields explicit. Future-facing
+fields may be present as `null` or empty lists, while deeper semantic checks may
+be limited to fixture origins and feature paths that are supported or actively
+used by checked-in suites.
+
 Validation must fail when:
 
 - required fields are absent

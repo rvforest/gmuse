@@ -1,17 +1,18 @@
-# CLI Contract: Eval Suite Validation
+# Tool Contract: Eval Suite Validation
 
 **Feature**: 009-eval-fixtures-and-suites
 **Date**: 2026-06-11
 
 ## Command purpose
 
-The maintainer validation command checks fixture, rubric, case, and suite data
-without making model, judge, network, or importer calls.
+The maintainer validation command checks fixture, rubric, case, and suite TOML
+data without making model, judge, network, or importer calls. It is a repository
+tool, not a public `gmuse` CLI command.
 
 ## Command signature
 
 ```text
-gmuse eval validate [OPTIONS]
+python -m tools.evals.gmuse_evals validate [OPTIONS]
 ```
 
 ## Options
@@ -19,8 +20,7 @@ gmuse eval validate [OPTIONS]
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `--suite` | str | `smoke` | Suite identifier to validate |
-| `--fixtures-dir` | path | project default | Fixture/case/rubric root |
-| `--json` | bool | false | Emit machine-readable validation report |
+| `--evals-dir` | path | `evals` | Fixture/rubric/case/suite root |
 | `--strict-balance` | bool | false | Treat advisory balance warnings as failures |
 | `--help` | bool | false | Show help and exit |
 
@@ -37,13 +37,17 @@ gmuse eval validate [OPTIONS]
 9. Report coverage dimensions.
 10. Exit non-zero on validation errors.
 
+The first implementation emits human-readable output only. It may use a
+structured internal validation report, but `--json` is deferred until automation
+needs a stable machine-readable contract.
+
 ## Success output
 
 ```text
 Validated suite: smoke
 Status: passed
-Cases: 3
-Fixtures: 3
+Cases: 2
+Fixtures: 2
 Warnings: 0
 ```
 
@@ -65,3 +69,5 @@ Errors:
 - The command must not call judge models.
 - The command must not clone source repositories.
 - The command must not promote baselines.
+- The command must not be exposed through the public `gmuse` console script in
+  the first foundation implementation.

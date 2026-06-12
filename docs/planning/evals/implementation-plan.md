@@ -257,14 +257,18 @@ Acceptance focus:
 
 Start with Spec 1 and keep it small:
 
-- One synthetic fixture.
-- One adapted safety fixture.
-- One real OSS fixture only if attribution requirements are clear.
+- Two synthetic fixtures: one docs/history fixture and one injection-tagged
+  comment or string fixture.
+- Root `evals/` asset directories for fixtures, rubrics, cases, and suites.
+- Maintainer-only implementation code outside `src/gmuse`, under
+  `tools/evals/gmuse_evals/`.
+- A module entrypoint such as
+  `uv run python -m tools.evals.gmuse_evals validate --suite smoke`.
 - A `smoke` suite that is a subset of `core`.
 - Manual validation only.
 
 This proves the data model and reconstruction approach before live model calls,
-judging, or baseline tooling add complexity.
+judging, real OSS curation, or baseline tooling add complexity.
 
 ## Cross-Cutting Constraints
 

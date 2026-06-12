@@ -16,12 +16,53 @@ diff machinery without requiring network access or source repository clones.
 - Store fully copied source repositories: rejected because it is too large and
   creates unnecessary licensing and review burden.
 
+## Decision: Keep eval code and eval assets separate
+
+**Rationale**: Evals are maintainer tooling, not ordinary gmuse application
+functionality. The implementation code should live under `tools/evals/` while
+reviewable fixture/rubric/case/suite TOML assets live under root `evals/`. This
+keeps `src/gmuse` focused on the installed product while still allowing the
+maintainer tool to import gmuse internals when fidelity requires it.
+
+**Alternatives considered**:
+
+- Put eval code under `src/gmuse/evals`: rejected because it makes draft
+  maintainer tooling look like packaged product functionality.
+- Put Python tooling directly inside `evals/`: rejected because it mixes code
+  with declarative eval assets.
+- Use a nox session as the primary interface: rejected for the first
+  implementation because the module entrypoint should define the tool behavior;
+  nox can be added later as a shortcut.
+
+## Decision: Use TOML with Pydantic structural validation
+
+**Rationale**: TOML is already part of gmuse's dependency set through
+`tomli`/`tomllib` and `tomlkit`, and it avoids introducing YAML parsing.
+Pydantic is already present transitively, but the implementation should add it
+as an explicit development dependency before relying on it. Pydantic should
+handle structural validation while custom validators handle eval-domain checks
+such as references, smoke/core membership, digest verification, and conventional
+type compatibility.
+
+**Alternatives considered**:
+
+- Hand-written schema validation only: rejected because nested fixture, rubric,
+  case, and suite models would create avoidable boilerplate and inconsistent
+  errors.
+- Rely on transitive Pydantic only: rejected because transitive dependencies are
+  not a stable contract for maintainer tooling.
+- YAML: rejected because it would add a parser dependency and TOML is workable
+  for multiline patch strings.
+
 ## Decision: Validate staged diff digests after reconstruction
 
 **Rationale**: The fixture is only trustworthy if the temporary repository
 produces the expected staged diff through git. Digest verification catches
 schema errors, patch drift, path mistakes, line-ending issues, and accidental
-fixture edits before live eval results depend on them.
+fixture edits before live eval results depend on them. The digest should be
+computed from the exact raw `git diff --cached` output observed by gmuse's
+production staged-diff helper, with temp repo git settings chosen to reduce
+platform variance.
 
 **Alternatives considered**:
 
@@ -29,6 +70,25 @@ fixture edits before live eval results depend on them.
   extraction will observe the same diff.
 - Compare normalized summaries only: rejected because eval accuracy depends on
   exact diff evidence, not just file counts.
+- Automatically update stored digests in the first PR: rejected because it adds
+  TOML mutation behavior before it is needed. The validator should print the
+  observed digest for intentional fixture updates.
+
+## Decision: Reconstruct synthetic history as real temporary commits
+
+**Rationale**: Commit history is a core gmuse context source. Creating actual
+synthetic commits in the temporary repository proves that future calls to
+`gmuse.git.get_commit_history()` will observe realistic history. The first
+schema only needs `subject` and optional `body`; deterministic author, email,
+and timestamps can be supplied by the validator.
+
+**Alternatives considered**:
+
+- Validate history TOML without creating commits: rejected because it does not
+  prove production git history behavior.
+- Require full author/timestamp metadata in fixture history: rejected for the
+  first implementation because gmuse currently consumes commit messages, not
+  detailed history metadata.
 
 ## Decision: Use explicit provenance categories
 
@@ -108,3 +168,33 @@ membership first.
   churn with schema changes.
 - Exclude real OSS fixtures entirely: rejected because attribution requirements
   should be validated before broader eval work.
+
+## Decision: Start with synthetic-only smoke fixtures
+
+**Rationale**: The first implementation should prove schema loading, reference
+resolution, temporary git reconstruction, synthetic history commits, digest
+verification, and coverage reporting without spending scope on real OSS curation
+or redistribution review. Two synthetic fixtures provide enough coverage: one
+ordinary docs/history fixture and one injection-tagged fixture that exercises
+safety metadata without testing model behavior.
+
+**Alternatives considered**:
+
+- Include one real OSS fixture immediately: rejected because source selection and
+  redistribution review would slow the foundation PR.
+- Use one fixture only: rejected because it would not exercise both ordinary
+  history and safety metadata paths.
+
+## Decision: Human-readable validation output first
+
+**Rationale**: The first validator is a maintainer tool for local authoring and
+review. It should return a structured internal `ValidationReport`, but the first
+CLI surface only needs actionable text output. Machine-readable `--json` output
+can be added once automation needs it.
+
+**Alternatives considered**:
+
+- Add `--json` immediately: rejected because it expands the public contract
+  before the report schema has been exercised.
+- Print only the first error: rejected because fixture authors need aggregated
+  schema, reference, provenance, and digest issues.

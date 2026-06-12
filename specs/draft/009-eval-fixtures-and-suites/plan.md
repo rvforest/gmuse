@@ -16,32 +16,37 @@ comparison, importer, or public benchmark work.
 
 **Language/Version**: Python 3.10+
 
-**Primary Dependencies**: Standard library git subprocess usage already present
-in `gmuse.git`, existing gmuse config/prompt validation knowledge, pytest, Ruff,
+**Primary Dependencies**: Typer for the maintainer tool CLI; Pydantic v2 as an
+explicit development dependency for structural TOML schema validation; existing
+`gmuse.git` staged-diff behavior for fidelity; `tomli`/`tomllib` and `tomlkit`
+for TOML parsing/editing support already present in the project; pytest, Ruff,
 pyrefly; avoid adding runtime dependencies for normal package users
 
-**Storage**: Checked-in maintainer fixture and suite files under the repository,
-plus temporary git repositories created during validation
+**Storage**: Checked-in maintainer fixture and suite TOML files under root
+`evals/`, plus temporary git repositories created during validation
 
-**Testing**: pytest unit tests for schema validation and fixture validation;
-integration tests using temporary git repositories for reconstruct/stage/digest
-behavior
+**Testing**: pytest unit tests with temporary TOML assets for schema/reference
+failure cases; integration tests using temporary git repositories for
+reconstruct/stage/digest behavior; one integration test validates the checked-in
+`evals/suites/smoke.toml` suite
 
 **Target Platform**: Local Python CLI on Linux, macOS, and Windows for
 maintainer development environments
 
-**Project Type**: Single Python package with maintainer-only CLI/tooling
+**Project Type**: Single Python package plus maintainer-only repository tooling
+outside `src/`
 
 **Performance Goals**: Validate the initial smoke suite in under 30 seconds and
 avoid network access during normal validation
 
-**Constraints**: No provider credentials, live model calls, judge calls, or
-network fixture import during validation; smoke must be a subset of core;
-fixtures must not pre-truncate diffs; real OSS fixtures must include required
-attribution
+**Constraints**: No provider credentials, live model calls, judge calls, public
+`gmuse` CLI command, or network fixture import during validation; smoke must be
+a subset of core; fixtures must not pre-truncate diffs; real OSS fixtures must
+include required attribution when introduced; initial checked-in smoke fixtures
+are synthetic-only
 
-**Scale/Scope**: Initial smoke suite with a few cases and a path toward a
-20-25 case core suite; large public benchmark and importer automation deferred
+**Scale/Scope**: Initial smoke suite with two synthetic cases and a path toward
+a 20-25 case core suite; large public benchmark and importer automation deferred
 
 ## Constitution Check
 
@@ -49,8 +54,9 @@ attribution
 
 Constitution gates for this feature:
 
-- **Code Quality Gate**: Pass. The feature can be isolated in maintainer eval
-  modules and schema helpers without changing the ordinary generation path.
+- **Code Quality Gate**: Pass. The feature can be isolated in maintainer tool
+  modules under `tools/evals/` and schema helpers without changing the ordinary
+  generation path.
 - **Testing Gate**: Pass. The plan requires unit coverage for schema validation
   and integration coverage for temporary git repository reconstruction.
 - **UX Gate**: Pass. User-facing behavior is limited to maintainer commands with
@@ -64,7 +70,8 @@ Constitution gates for this feature:
 
 Checklist:
 
-- Code Quality Gate: Yes - keep eval foundation modular and maintainer-only.
+- Code Quality Gate: Yes - keep eval foundation modular, maintainer-only, and
+  outside the installable `src/gmuse` package.
 - Testing Gate: Yes - cover schema, provenance, suite membership, and git digest checks.
 - UX Gate: Yes - validation output must identify actionable fixture and suite errors.
 - Performance Gate: Yes - no live calls or network work in normal validation.
@@ -92,30 +99,40 @@ specs/draft/009-eval-fixtures-and-suites/
 ### Source Code (repository root)
 
 ```text
-src/gmuse/
-├── evals/
-│   ├── __init__.py
-│   ├── fixtures.py        # fixture/case/rubric loading and validation
-│   ├── suites.py          # suite loading, membership checks, coverage summary
-│   └── validation.py      # temporary repo reconstruction and digest checks
-└── cli/
-    └── main.py            # maintainer eval validation command wiring if exposed through CLI
+evals/
+├── fixtures/
+├── rubrics/
+├── cases/
+└── suites/
+    ├── smoke.toml
+    └── core.toml
+
+tools/
+├── __init__.py
+└── evals/
+    ├── __init__.py
+    └── gmuse_evals/
+        ├── __init__.py
+        ├── __main__.py      # module entrypoint
+        ├── cli.py           # Typer app for maintainer commands
+        ├── models.py        # Pydantic structural models
+        ├── load.py          # TOML loading and path resolution
+        ├── validate.py      # schema, reference, provenance, coverage validation
+        └── git_reconstruct.py # temp repo reconstruction and staged diff checks
 
 tests/
 ├── unit/
-│   └── test_evals_fixtures.py
+│   └── test_eval_foundation_*.py
 └── integration/
-    └── test_evals_fixture_validation.py
-
-docs/planning/evals/
-├── requirements.md
-└── implementation-plan.md
+    └── test_eval_foundation_*.py
 ```
 
-**Structure Decision**: Keep eval support inside the existing single package but
-isolated under `gmuse.evals` so normal generation code remains unchanged.
-Fixture files and suite definitions should be checked-in maintainer assets whose
-format is documented by contracts in this spec.
+**Structure Decision**: Keep maintainer eval implementation outside `src/gmuse`
+so the installed product package is not expanded with draft eval tooling. Keep
+eval assets under root `evals/` so fixtures, rubrics, cases, and suites are
+reviewable data rather than product code. The tool may import `gmuse.git` for
+production staged-diff fidelity, using a temporary working-directory context
+rather than changing product git helpers for this first slice.
 
 ## Complexity Tracking
 
@@ -127,11 +144,18 @@ Research focus areas:
 
 - Decide how fixture patch data should be represented so validation can
   reconstruct a temporary repository without source clones.
+- Decide how TOML fixture, rubric, case, and suite files are organized under
+  root `evals/`.
+- Decide how Pydantic structural validation and custom domain validation divide
+  responsibilities.
 - Decide how real, adapted, and synthetic provenance should be validated,
   including source license evidence and maintainer redistribution-review status.
 - Decide how suite membership and coverage reporting should behave when balance
   is advisory rather than required.
 - Decide how digest verification should define the canonical staged diff.
+- Decide the first smoke fixture set: two synthetic fixtures, one with actual
+  synthetic history commits and one injection-tagged fixture that validates
+  metadata/reconstruction without model behavior.
 
 ## Phase 1 - Design & Contracts (Output: `data-model.md`, `contracts/`, `quickstart.md`)
 
@@ -148,8 +172,10 @@ Design outputs:
 
 Post-design constitution check:
 
-- Code quality remains satisfied by isolated eval modules.
-- Testing remains satisfied by schema and temp-repo validation coverage.
+- Code quality remains satisfied by isolated maintainer tool modules outside
+  `src/gmuse`.
+- Testing remains satisfied by schema, temp-repo validation coverage, and
+  validation of checked-in synthetic smoke fixtures.
 - UX remains satisfied by actionable maintainer validation output.
 - Performance remains satisfied by offline validation.
 - Security/privacy remains satisfied by provenance, fake-secret requirements,

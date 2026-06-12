@@ -45,9 +45,9 @@ cases and scoring expectations.
 cases need different provenance and review expectations, but all must be
 auditable.
 
-**Independent Test**: Add one synthetic fixture, one adapted safety fixture, and
-one real OSS fixture with complete metadata, then validate that each fixture type
-is accepted only when its required fields are present.
+**Independent Test**: Validate representative synthetic, adapted, and real
+fixture definitions and confirm each fixture type is accepted only when its
+required provenance fields are present.
 
 **Acceptance Scenarios**:
 
@@ -131,7 +131,7 @@ without failing non-required balance guidelines.
 ## Assumptions
 
 - Eval fixtures are maintainer-only assets and are not part of the normal `gmuse msg` or `gmuse commit` user workflow.
-- The first checked-in smoke suite is intentionally small and may use mostly synthetic or adapted fixtures while real OSS source selection is still being curated.
+- The first checked-in smoke suite is intentionally small and may use only synthetic fixtures while real OSS source selection is still being curated.
 - Fixture importer automation is deferred; manually authored fixtures are acceptable for proving the schema and validation foundation.
 - Validation is manual for this feature and is not a default CI gate.
 - Existing gmuse git behavior is the source of truth for staged diff extraction once a fixture is reconstructed.

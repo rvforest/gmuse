@@ -10,6 +10,12 @@ The eval system is maintainer-only tooling. It should not become part of the
 ordinary `gmuse msg` user workflow, should not require provider credentials in
 default CI, and should avoid adding runtime dependencies for normal package use.
 
+Framework direction: use Inspect AI as the local eval execution, logging, and
+scoring framework where it substantially simplifies the design. gmuse still owns
+Git-backed fixture reconstruction, production-path generation, deterministic
+hard gates, and strict safety comparison. Hosted or account-backed eval
+platforms are out of scope.
+
 ## Purpose
 
 The requirements notes describe a complete eval program: fixtures, runner,
@@ -61,7 +67,8 @@ Acceptance focus:
 
 Formal spec: `specs/draft/010-eval-runner/`
 
-Goal: Run gmuse against validated fixtures using production generation behavior.
+Goal: Run gmuse against validated fixtures using production generation behavior
+inside an Inspect task.
 
 Includes:
 
@@ -69,12 +76,15 @@ Includes:
 - Staging changes and using gmuse's existing git/context/prompt machinery.
 - Config overrides for format, history depth, branch context, hints,
   repository instructions, `max_chars`, model, temperature, and token limits.
-- Dry-run/planning mode that makes no provider calls.
+- Check mode that validates the suite, prints the run plan, executes the Inspect
+  task with deterministic local output, writes Inspect logs, and makes no
+  provider calls.
+- Live mode that requires explicit model selection, preflight display,
+  confirmation, and configured guardrails.
 - Capturing rendered prompt hashes, prompt size, estimated tokens, context
   metadata, validation outcomes, raw generated message, and operational errors.
-- JSONL per-output records.
-- JSON run summaries.
-- Artifact schema versioning.
+- Inspect log metadata for per-sample outputs.
+- Inspect-native logs as canonical execution evidence.
 
 Does not include:
 
@@ -86,28 +96,25 @@ Does not include:
 Acceptance focus:
 
 - The runner uses the same behavior as `generate_message` except for
-  instrumentation.
+  instrumentation and deterministic local output in check mode.
 - Invalid model outputs and production validation failures are preserved.
 - Deterministic checks classify format and `max_chars` failures consistently
   with gmuse validation.
 
-### 3. Live Run Budgeting And Resume
+### 3. Live Run Guardrails
 
 Formal spec: `specs/draft/011-eval-live-budgeting-resume/`
 
-Goal: Make live maintainer eval runs explicit, resumable, and cost-controlled.
+Goal: Make live maintainer eval runs explicit and bounded against runaway spend.
 
 Includes:
 
-- Required call budgets for live candidate and judge calls.
 - Run plan display before calls.
 - Interactive confirmation.
-- Non-interactive `--yes` mode that still requires budgets.
-- Incremental result writing.
-- Resume by skipping completed records.
-- Resume compatibility checks for suite, config, model list, prompt version,
-  judge config, and artifact schema.
-- Candidate call, judge call, budgeted call, and actual call accounting.
+- Non-interactive `--yes` mode that still requires guardrails.
+- Inspect/gmuse sample, token, cost, time, or concurrency limits.
+- Local Inspect logs.
+- Optional Inspect-backed rerun/resume behavior when simple and safe.
 
 Does not include:
 
@@ -116,19 +123,20 @@ Does not include:
 
 Acceptance focus:
 
-- Dry-run never makes calls.
-- Interrupted runs preserve completed records.
-- Resume rejects incompatible run settings.
+- `--plan` never makes calls.
+- Missing or exceeded guardrails fail before calls.
+- Interrupted runs preserve readable Inspect logs.
 
 ### 4. Judge And Scoring
 
 Formal spec: `specs/draft/012-eval-judge-scoring/`
 
-Goal: Add rubric-based scoring for maintainer review and regression analysis.
+Goal: Add Inspect scorer-based rubric scoring for maintainer review and
+regression analysis.
 
 Includes:
 
-- LLM-as-judge integration.
+- LLM-as-judge integration through Inspect scorers.
 - Judge calibration against manually annotated examples.
 - Judge input controls that hide candidate model identity by default.
 - Fixed judge model, judge prompt version, rubric version, and parameters per
@@ -145,7 +153,7 @@ Includes:
 - Self-judging flags.
 - Pairwise judge order controls if pairwise judge scoring is added later.
 - Optional manual annotations and overrides while preserving original judge
-  output.
+  output and Inspect log identity.
 
 Does not include:
 
@@ -158,39 +166,34 @@ Acceptance focus:
 - Per-dimension scores are preserved even when an aggregate score is computed.
 - Judge metadata is sufficient to compare runs later.
 
-### 5. Baselines And Comparison
+### 5. Safety Comparison
 
 Formal spec: `specs/draft/013-eval-baselines-comparison/`
 
-Goal: Support maintainer regression review against promoted results.
+Goal: Compare a candidate Inspect eval log against a reference Inspect eval log
+to determine whether an intended improvement introduced hard failures.
 
 Includes:
 
-- Baseline promotion command.
-- Validation before promotion.
-- Stripping debug-only fields by default.
-- Preserving generated messages, score metadata, prompt hashes, model metadata,
-  config metadata, and suite metadata.
-- Same-model regression comparison.
-- Optional different-model benchmark comparison.
-- Pairwise candidate-versus-baseline reporting.
-- Per-dimension deltas.
+- Reference-log versus candidate-log comparison.
+- Strict safety gate.
+- Pairwise case reporting.
+- Deterministic validation deltas.
 - New hard failure reporting.
-- Prompt size/token deltas.
-- First-shot success deltas.
-- Error category deltas.
+- Judge score and category deltas as evidence, not v1 gate criteria.
 - Warnings when suite, case, model, config, prompt version, judge version, or
   schema versions differ.
 
 Does not include:
 
-- Hardcoded accept/reject decisions beyond hard-failure flags.
+- Named baseline promotion and custom baseline artifacts in v1.
+- Threshold-based subjective score gates.
 - Public recommendation pages.
 
 Acceptance focus:
 
-- Baselines are intentionally promoted, not accidentally created from raw runs.
-- Comparison reports evidence and deltas without hiding per-case results.
+- New hard failures fail the strict safety gate.
+- Score-only movement is reported without failing the v1 gate.
 
 ### 6. Fixture Importer
 

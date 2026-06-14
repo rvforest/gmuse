@@ -7,6 +7,12 @@
 **Draft Note**: This specification describes proposed maintainer-only eval
 tooling. It does not describe current gmuse behavior.
 
+**Framework Alignment Update (2026-06-14)**: Adopt Inspect AI scorers/logs for
+judge execution and score recording when the spike confirms fit. gmuse owns
+deterministic hard gates, rubric definitions, and score metadata requirements.
+Custom `scored-records.jsonl` and `judge-records.jsonl` artifacts are no longer
+the preferred source of truth.
+
 **Input**: User description: "Draft the Speckit design artifacts for eval judge scoring."
 
 ---
@@ -174,10 +180,10 @@ scoring failure and can be resumed according to the live-run budget rules.
 
 ### Functional Requirements
 
-- **FR-001**: The system MUST score completed eval runner output records produced
-  by the production-path eval runner from spec 010.
-- **FR-002**: The system MUST use live-call budgeting, explicit confirmation, and
-  resume accounting from spec 011 for all live judge calls.
+- **FR-001**: The system MUST score completed Inspect sample results produced by
+  the production-path eval runner from spec 010.
+- **FR-002**: The system MUST use live-run guardrails, explicit confirmation, and
+  Inspect/gmuse limits from spec 011 for live judge calls.
 - **FR-003**: The system MUST run deterministic checks before LLM judge scoring
   wherever a check can be decided without subjective semantic evaluation.
 - **FR-004**: The system MUST treat privacy leaks, severe injection obedience,
@@ -228,10 +234,10 @@ scoring failure and can be resumed according to the live-run budget rules.
   output.
 - **FR-021**: Manual overrides MUST include reviewer identity or label,
   timestamp, changed fields, and rationale.
-- **FR-022**: Scoring output artifacts MUST be versioned and must preserve the
-  source runner identifiers needed to trace each score back to the spec 010
-  `outputs.jsonl` record or spec 011 candidate record, including suite, case,
-  fixture, model, generation config, prompt hash, and generated message.
+- **FR-022**: Scoring metadata in Inspect logs MUST preserve the source runner
+  identifiers needed to trace each score back to the spec 010 Inspect sample
+  result, including suite, case, fixture, model, generation config, prompt hash,
+  and generated message.
 - **FR-023**: The system MUST reject or clearly mark unscored records when
   candidate generation failed operationally before a generated message existed.
 - **FR-024**: The system MUST make aggregate scores secondary by documenting
@@ -241,12 +247,12 @@ scoring failure and can be resumed according to the live-run budget rules.
 
 ### Key Entities *(include if feature involves data)*
 
-- **Runner Output Record**: A completed candidate generation record from spec
+- **Inspect Sample Result**: A completed candidate generation result from spec
   010, including case identity, generated message, production validation outcome,
   prompt/context metadata, model metadata, and operational status.
-- **Scored Output Record**: A runner output enriched with deterministic checks,
-  judge result, hard failure gates, error categories, effective scores, and
-  scoring metadata.
+- **Scored Sample Result**: An Inspect sample result enriched with deterministic
+  checks, judge result, hard failure gates, error categories, effective scores,
+  and scoring metadata.
 - **Deterministic Check Result**: A non-LLM evaluation of format, validation,
   privacy, injection, or length constraints where objective evidence exists.
 - **Judge Configuration**: The fixed judge model, provider, prompt version,

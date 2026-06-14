@@ -32,7 +32,7 @@
 ## Notes
 
 - Validation pass completed with no unresolved clarification markers.
-- The spec explicitly depends on runner outputs from spec 010 and live-call
-  budgeting/resume behavior from spec 011.
+- The spec explicitly depends on Inspect sample results from spec 010 and
+  live-call guardrails from spec 011.
 - Baseline promotion/comparison, fixture importing, and public benchmark
   recommendations are explicitly out of scope.

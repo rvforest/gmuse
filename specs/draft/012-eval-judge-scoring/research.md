@@ -8,12 +8,15 @@
 **Decision**: Run deterministic checks before judge scoring for production
 validation failures, applicable `max_chars` violations, obvious extra-output
 format failures, known fake secret leakage, and strong injection-following
-markers that fixtures declare as forbidden output.
+markers that fixtures declare as forbidden output. By default, records with
+deterministic hard failures are not sent to the LLM judge; they are written as
+hard-failed scoring records without spending judge calls.
 
 **Rationale**: These checks are objective, cheap, and aligned with the eval
 requirements. Hard failures must not depend on subjective judge leniency.
-Running them first also avoids spending judge budget on outputs that are already
-unusable unless the maintainer explicitly asks for diagnostic judge scoring.
+Running them first also avoids spending live-call guardrails on
+outputs that are already unusable unless the maintainer explicitly asks for
+diagnostic judge scoring.
 
 **Alternatives considered**:
 
@@ -21,6 +24,72 @@ unusable unless the maintainer explicitly asks for diagnostic judge scoring.
   failures need zero-tolerance gates.
 - Only use production validation: rejected because privacy and injection cases
   need fixture/rubric-aware checks beyond generic commit-message validation.
+- Always judge hard-failed outputs: rejected for the default path because it
+  spends live calls on unusable records and can make zero-tolerance failures
+  appear softer than they are. A diagnostic flag can be added for explicit
+  maintainer analysis.
+
+## Inspect Scorer Adoption
+
+**Decision**: Implement deterministic gates and LLM-as-judge scoring as Inspect
+AI scorers when the framework spike confirms the required metadata can be stored
+in Inspect logs. gmuse should not create a parallel scored JSONL artifact system
+unless Inspect cannot represent required gmuse metadata.
+
+**Rationale**: Specs 010 and 011 adopt Inspect for local task execution, logs,
+and guardrails. Scoring is exactly where Inspect's scorer abstraction can remove
+custom orchestration while preserving gmuse-owned hard gates and rubrics. Using
+Inspect scorers keeps execution evidence and score evidence in the same local
+log system.
+
+**Alternatives considered**:
+
+- Custom `scored-records.jsonl` and `judge-records.jsonl`: rejected as the
+  preferred path because it duplicates Inspect scorer/log functionality.
+- Hosted/account-backed scoring platforms: rejected because evals must remain
+  local and not require hosted service accounts.
+- Use only generic framework metrics: rejected because gmuse still needs
+  deterministic commit-message validation, privacy/injection hard gates, and
+  fixture-aware rubrics.
+
+## Scoring Command Boundary
+
+**Decision**: Implement scoring as Inspect scorer configuration plus an optional
+maintainer command that consumes an existing Inspect eval log, for example
+`python -m tools.evals.gmuse_evals score --log <inspect-log> ...`, when a
+separate command is useful.
+
+**Rationale**: Candidate generation and judge scoring have different failure
+modes and are useful independently. A separate command lets maintainers run
+deterministic-only scoring offline, retry or resume judge scoring without
+touching candidate outputs, and keep failed judge work from making the candidate
+run itself feel incomplete.
+
+**Alternatives considered**:
+
+- Add scoring as an optional phase of `run --mode live`: rejected because it
+  couples candidate generation and judge scoring too tightly and makes resume
+  targets less clear.
+- Add a public `gmuse eval score` command: rejected to stay aligned with specs
+  009 and 010, which keep eval tooling in maintainer repository commands.
+
+## Scoring Artifact Layout
+
+**Decision**: Treat Inspect logs as canonical scored artifacts. If the Inspect
+spike exposes a required metadata gap, gmuse may write a compact sidecar under a
+scoring subdirectory, but sidecars are not the default design.
+
+**Rationale**: Scoring is an interpretation of immutable candidate sample
+results, and there may be multiple scoring configurations as judge prompts,
+rubrics, or models evolve. Inspect already models eval logs and scorer outputs,
+so duplicating that structure should be avoided unless necessary.
+
+**Alternatives considered**:
+
+- Keep bespoke scored records as the primary record: rejected because it fights
+  the framework adoption.
+- Store scoring evidence outside local Inspect logs: rejected because source
+  outputs and scoring should remain portable together.
 
 ## Hard Failure Semantics
 
@@ -43,12 +112,18 @@ without allowing aggregate scores to hide a hard failure.
 
 **Decision**: Judge input uses the raw staged diff, generated message, case
 rubric, selected format/config constraints, and relevant case context such as
-history, branch, hints, or repository instructions. The rendered generation
-prompt is not primary judge evidence.
+history, branch, hints, or repository instructions. The scoring command resolves
+the canonical staged diff and rubric from Inspect sample metadata and spec 009
+fixture/rubric assets rather than requiring full diffs or rubrics to be copied
+into every Inspect sample result. The rendered generation prompt is not primary
+judge evidence.
 
 **Rationale**: The judge should assess whether the output matches the underlying
 change and rubric, not whether it matches the exact prompt wording. Runner
 prompt hashes and prompt metadata from spec 010 remain traceability metadata.
+Keeping full diffs and rubrics out of ordinary sample metadata avoids
+duplicated, stale large fields while still making the judge evidence available at
+scoring time.
 
 **Alternatives considered**:
 
@@ -56,6 +131,8 @@ prompt hashes and prompt metadata from spec 010 remain traceability metadata.
   judge toward prompt compliance over diff accuracy and may increase cost.
 - Judge only the generated message and expected labels: rejected because
   accuracy cannot be assessed without the diff and rubric.
+- Embed full diffs and rubrics into every Inspect sample result: rejected because
+  Inspect sample metadata plus spec 009 assets provide a simpler source of truth.
 
 ## Judge Configuration Stability
 
@@ -173,9 +250,9 @@ LLM-as-judge setups.
 ## Manual Annotations And Overrides
 
 **Decision**: Store manual annotations and overrides as append-only review
-metadata that references scored output identifiers. Overrides produce effective
-scores/gates but never mutate original deterministic checks or original judge
-results.
+event files (`annotations.jsonl` and `overrides.jsonl`) that reference scored
+output identifiers. Overrides produce effective scores/gates but never mutate
+original deterministic checks or original judge results.
 
 **Rationale**: Human correction is useful only when auditable. Append-only
 metadata lets maintainers revise interpretation while preserving the automated
@@ -186,20 +263,79 @@ evidence that prompted the correction.
 - Edit scored JSONL records in place: rejected because it destroys provenance.
 - Allow annotations only with no score effect: rejected because judge mistakes
   sometimes need corrected effective results for summaries.
+- Maintain one mutable review-state JSON file: rejected because append-only
+  events make revisions auditable and avoid rewriting scoring records.
 
-## Budgeting And Resume Dependency
+## Live Guardrail Dependency
 
-**Decision**: Treat judge calls as live calls governed by spec 011. Scoring must
-show planned judge call counts, require explicit budgets, write incrementally,
-and skip completed compatible scored records on resume.
+**Decision**: Treat judge calls as live calls governed by spec 011 guardrails.
+Scoring must show planned judge sample count, require explicit configured limits
+for live judge work, and use Inspect logging/reuse behavior where practical.
 
 **Rationale**: Judge calls incur the same cost and interruption risks as
-candidate generation calls. Reusing spec 011 behavior keeps live evals explicit
-and cost-controlled.
+candidate generation calls. Reusing spec 011 guardrails keeps live evals
+explicit and cost-controlled without a separate custom budget ledger.
 
 **Alternatives considered**:
 
-- Add separate judge-only budget behavior: rejected because it duplicates spec
-  011 concepts.
+- Add separate judge-only budget behavior: rejected because this feature should
+  reuse spec 011 guardrail concepts.
 - Make scoring always offline: rejected because LLM-as-judge integration is in
   scope for this feature.
+
+## Candidate Operational Errors
+
+**Decision**: Include candidate operational-error inputs as explicit unscored
+sample metadata in Inspect logs.
+
+**Rationale**: Every source candidate sample should have corresponding scoring
+metadata so summaries reconcile cleanly and operational candidate failures
+remain visible during review. These samples are not judge-eligible and must not
+fabricate scores.
+
+**Alternatives considered**:
+
+- Omit candidate operational errors from scoring metadata: rejected because input
+  counts would not reconcile and failures could disappear from scoring review.
+- Send candidate operational errors to the judge: rejected because there is no
+  generated commit message to evaluate.
+
+## Calibration Requirement
+
+**Decision**: Support calibration and record whether a scoring run used a
+calibration report, but do not require calibration before every live judge
+scoring run.
+
+**Rationale**: Calibration is effectively judging the judge against
+maintainer-labeled examples. It is valuable for catching prompt/rubric regressions
+and parse failures, but making it mandatory would add friction before the scoring
+loop has proven useful. Future baseline promotion or benchmark-claim workflows
+can require calibration.
+
+**Alternatives considered**:
+
+- Require calibration for all scoring: rejected as too heavy for maintainer
+  iteration.
+- Omit calibration support from v1: rejected because judge prompt/rubric changes
+  need an auditable sanity check.
+
+## V1 Implementation Scope
+
+**Decision**: Implement the scoring core first: deterministic gates, budgeted
+judge calls, scored/unscored records, summaries, resume compatibility, and
+append-only review event formats. Calibration and review event handling should
+be contract-ready in v1, but rich calibration and review command UX can be
+deferred unless immediately needed.
+
+**Rationale**: gmuse needs practical maintainer eval evidence, not a general eval
+platform. Keeping v1 focused reduces implementation risk while preserving stable
+artifact shapes for calibration and manual review when those workflows become
+useful.
+
+**Alternatives considered**:
+
+- Build full calibration and review commands immediately: rejected as likely
+  overbuilt for the first usable scoring slice.
+- Remove calibration and manual review from artifacts: rejected because later
+  baseline promotion and comparison need to preserve whether scoring was
+  calibrated and whether human overrides affected effective scores.

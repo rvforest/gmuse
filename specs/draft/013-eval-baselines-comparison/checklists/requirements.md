@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Eval Baselines and Comparison
+# Specification Quality Checklist: Eval Safety Comparison
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-06-11
@@ -32,5 +32,7 @@
 ## Notes
 
 - Validated during drafting on 2026-06-11.
-- Scope explicitly excludes fixture importer behavior and public recommendation pages.
-- Implementation depends on result artifacts from spec 010 and scored outputs from spec 012.
+- Scope explicitly excludes fixture importer behavior, named baseline promotion
+  in v1, threshold-based subjective score gates, and public recommendation pages.
+- Implementation depends on Inspect logs from spec 010 and scoring metadata from
+  spec 012.

@@ -12,8 +12,8 @@ default CI, and should avoid adding runtime dependencies for normal package use.
 
 Framework direction: use Inspect AI as the local eval execution, logging, and
 scoring framework where it substantially simplifies the design. See
-`framework-decision.md` for rationale, ownership boundaries, and spike
-questions.
+`framework-decision.md` for the accepted boundary and `inspect-spike.md` for the
+prototype outcome.
 
 ## Purpose
 
@@ -257,17 +257,27 @@ Acceptance focus:
 
 ## Suggested First Slice
 
-Start with Spec 1 and keep it small:
+Start with Spec 1, then add only enough Inspect integration to prove the runner
+boundary:
 
-- Two synthetic fixtures: one docs/history fixture and one injection-tagged
-  comment or string fixture.
-- Root `evals/` asset directories for fixtures, rubrics, cases, and suites.
-- Maintainer-only implementation code outside `src/gmuse`, under
-  `tools/evals/gmuse_evals/`.
-- A module entrypoint such as
-  `uv run python -m tools.evals.gmuse_evals validate --suite smoke`.
-- A `smoke` suite that is a subset of `core`.
-- Manual validation only.
+- implement the fixture validator and a tiny smoke suite;
+- use two synthetic fixtures: one docs/history fixture and one injection-tagged
+  comment or string fixture;
+- create root `evals/` asset directories for fixtures, rubrics, cases, and
+  suites;
+- keep maintainer-only implementation code outside `src/gmuse`, under
+  `tools/evals/gmuse_evals/`;
+- expose a module entrypoint such as
+  `uv run python -m tools.evals.gmuse_evals validate --suite smoke`;
+- make `smoke` a subset of `core`;
+- add an Inspect adapter that converts validated cases to `Sample` objects;
+- add a lower-level gmuse generation helper for evals that preserves raw output
+  before validation raises;
+- add an Inspect task factory, gmuse solver, and deterministic hard-gate scorer;
+- keep live calls, judging, real OSS curation, and baseline promotion out of
+  this first slice;
+- compare two Inspect logs for new hard failures before adding custom artifacts
+  or baseline promotion.
 
 This proves the data model and reconstruction approach before live model calls,
 judging, real OSS curation, or baseline tooling add complexity.

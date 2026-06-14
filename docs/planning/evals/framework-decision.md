@@ -1,14 +1,14 @@
 # Maintainer Evals Framework Decision
 
-Status: draft planning decision
+Status: accepted planning decision
 
 Date: 2026-06-14
 
 ## Decision
 
-Use Inspect AI as the primary local eval framework candidate for gmuse
-maintainer evals where it substantially simplifies execution, logging, scoring,
-limits, and analysis.
+Use Inspect AI as the primary local eval framework for gmuse maintainer evals
+where it substantially simplifies execution, logging, scoring, limits, and
+analysis.
 
 Do not use hosted or account-backed eval platforms as part of the default
 maintainer workflow.
@@ -36,13 +36,24 @@ gmuse owns:
 - deterministic hard gates for validation, privacy, injection, and `max_chars`;
 - strict safety comparison between eval runs.
 
-Inspect should own, when the spike confirms fit:
+Inspect should own:
 
 - task and sample execution;
 - local eval logs as canonical execution evidence;
 - scorer orchestration;
 - model-graded judge execution;
 - native limits and analysis tools.
+
+## Spike Outcome
+
+The local Inspect spike confirmed that gmuse-shaped cases can be represented as
+Inspect samples, a gmuse-owned generation wrapper can be represented as an
+Inspect solver, deterministic hard gates can be represented as Inspect scorers,
+and Inspect logs can preserve the metadata required for strict safety
+comparison.
+
+See `inspect-spike.md` for the prototype, results, and task-planning
+implications.
 
 ## Consequences
 
@@ -73,11 +84,14 @@ Inspect should own, when the spike confirms fit:
   spend prevention, which can be satisfied by preflight display, confirmation,
   and configured limits.
 
-## Spike Questions Before Task Planning
+## Spike Questions Resolved Before Task Planning
 
-1. Can validated spec 009 cases map cleanly to Inspect samples?
-2. Can gmuse production generation be represented as an Inspect solver without
-   changing behavior?
-3. Can deterministic hard gates and judge scoring be Inspect scorers?
-4. Can Inspect logs carry the metadata required for strict safety comparison?
-5. Are Inspect limits sufficient for live-run guardrails?
+1. Validated spec 009 cases map cleanly to Inspect samples through a gmuse
+   adapter.
+2. gmuse production generation can be represented as an Inspect solver, with one
+   implementation caveat: evals need a lower-level helper that preserves raw
+   output before validation raises.
+3. Deterministic hard gates and judge scoring fit Inspect scorers.
+4. Inspect logs carry the metadata required for strict safety comparison.
+5. Inspect limits are sufficient for live-run guardrails when gmuse requires at
+   least one concrete bound before live calls.

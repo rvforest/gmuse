@@ -1,131 +1,74 @@
-# Research: Eval Live Run Budgeting And Resume
+# Research: Eval Live Guardrails
 
-## Decision: Require separate candidate and judge call budgets
+## Decision: Use guardrails, not custom provider-call accounting
 
-**Rationale**: Candidate generation and judge scoring are different cost centers
-with different provider credentials, models, and operational failure modes.
-Separate budgets make it obvious which category is allowed to spend calls and
-prevent judge work from consuming generation budget or vice versa.
-
-**Alternatives considered**:
-
-- Single total-call budget: rejected because it hides whether expensive judge
-  work or candidate generation is responsible for planned calls.
-- Optional budgets with defaults: rejected because live eval calls must be
-  manual, explicit, and cost-controlled.
-- Currency-based budget: deferred because provider prices change and this
-  feature can provide a stable safety control with call counts.
-
-## Decision: Count provider attempts against budgets
-
-**Rationale**: A provider attempt can consume rate-limit capacity, quota, or
-billable work even when the result is an operational error. Counting attempts is
-the conservative behavior and keeps retry behavior from becoming an implicit
-budget bypass if retries are added later.
+**Rationale**: The objective is to prevent runaway spend. Exact provider-call
+budget accounting is not inherently valuable if Inspect and gmuse can provide
+clear preflight planning, confirmation, and execution limits. Keeping the
+guardrail model broad lets the implementation use Inspect-native sample, token,
+cost, time, and concurrency limits where available.
 
 **Alternatives considered**:
 
-- Count only successful outputs: rejected because failed attempts can still cost
-  money and time.
-- Count completed records only: rejected because operational errors must still be
-  visible in accounting.
+- Custom `--max-calls` ledger: rejected because it duplicates framework
+  execution concerns and was only a means to the spend-control objective.
+- Currency-only budgets: rejected because provider pricing and support vary.
+- No limits beyond confirmation: rejected because copied commands and
+  non-interactive runs still need hard guardrails.
 
-## Decision: Display the same run plan for interactive and `--yes` modes
+## Decision: Always display the live plan before provider calls
 
-**Rationale**: `--yes` should remove the prompt, not the maintainer's visibility
-into run size. The plan is also useful in logs for non-interactive maintainer
-automation.
-
-**Alternatives considered**:
-
-- Suppress plan output with `--yes`: rejected because it makes accidental large
-  runs harder to audit.
-- Require interactive confirmation for all live runs: rejected because
-  maintainers may run explicit budgeted jobs from controlled automation.
-
-## Decision: Dry-run planning makes no provider calls and writes no live records
-
-**Rationale**: Dry-run is for inspecting planned work and budget requirements.
-Writing live output records during planning mode would blur record semantics and could
-confuse resume compatibility.
+**Rationale**: Maintainers should see selected suite, cases, models, sample
+count, configured limits, and Inspect log location before live work starts.
+`--yes` may skip the prompt, but it must not hide the plan.
 
 **Alternatives considered**:
 
-- Write a planning metadata artifact: rejected for this slice to keep resume based
-  only on actual live run artifacts.
-- Allow planning mode to precompute prompts through live providers: rejected
-  because planning mode must be zero-call.
+- Suppress plan output with `--yes`: rejected because logs from non-interactive
+  runs should still show what was authorized.
+- Require interactive prompts for all live runs: rejected because maintainers may
+  run explicit bounded evals in controlled automation.
 
-## Decision: Store candidate and judge records incrementally as append-only JSONL
+## Decision: `--plan` is zero-call and writes no live sample results
 
-**Rationale**: JSONL is already a natural fit for per-output eval records from
-the production-path runner. Appending one completed item at a time preserves
-work across interruption and keeps partial artifacts inspectable.
-
-**Alternatives considered**:
-
-- Rewrite one large JSON document after each item: rejected because interruption
-  during rewrite has a larger corruption surface.
-- Keep all records in memory and write at the end: rejected because it loses work
-  on interruption.
-- Store records in a database: rejected as unnecessary for maintainer-only local
-  runs and inconsistent with the no-extra-runtime-dependencies direction.
-
-## Decision: Maintain a JSON run summary alongside append-only records
-
-**Rationale**: JSONL records are durable and inspectable, but maintainers need a
-quick way to see whether a run is planned, running, interrupted, failed, or
-complete. A summary can be rewritten after each item because records remain the
-source of truth for completed work.
+**Rationale**: Planning mode is for reviewing planned work and limits. It should
+not create provider outputs or confusing partial run evidence.
 
 **Alternatives considered**:
 
-- Derive all status only from JSONL: rejected because every status check would
-  require scanning records and interpreting partial failures.
-- Put summary fields into every record: rejected because it duplicates mutable
-  aggregate state across many lines.
+- Write a custom plan artifact: rejected because Inspect logs are canonical and
+  plan display can be reproduced from the same task construction path.
 
-## Decision: Resume compatibility uses an explicit run identity fingerprint
+## Decision: Rely on Inspect logs, not custom incremental JSONL
 
-**Rationale**: Resume must reject runs that would mix incompatible results.
-Fingerprinting suite identity, fixture revisions, case selection, candidate
-models, generation config, prompt version, judge config, rubric version, and
-schema versions gives a concise compatibility check while preserving individual
-fields for explainable mismatch messages.
+**Rationale**: Spec 010 adopts Inspect as the local execution/logging framework.
+This feature should not reintroduce custom `outputs.jsonl` or `summary.json`
+state solely for live guardrails.
 
 **Alternatives considered**:
 
-- Compare only command-line strings: rejected because config files, environment
-  values, defaults, and schema versions can affect behavior without appearing in
-  the visible command.
-- Compare only output directory: rejected because the directory alone says
-  nothing about semantic compatibility.
-- Allow partial compatibility with warnings: rejected for this slice because a
-  strict resume rule is safer and simpler.
+- Extend the old custom artifact layout for live accounting: rejected because it
+  fights the framework adoption and increases maintenance.
 
-## Decision: Completed records are skipped and never overwritten on resume
+## Decision: Resume is a convenience, not a v1 requirement
 
-**Rationale**: Resume exists to avoid paying for completed work again. Preserving
-original records maintains auditability and avoids accidental mutation of prior
-generated messages or judge outputs.
+**Rationale**: Avoiding repeated generations after an interruption is useful,
+but suite sizes are expected to be small at first and spend guardrails are the
+required safety mechanism. If Inspect offers safe rerun/resume behavior, gmuse
+should use it. If not, v1 may rerun bounded samples rather than build a custom
+resume subsystem.
 
 **Alternatives considered**:
 
-- Re-run completed records by default: rejected because it wastes live calls and
-  changes result reproducibility.
-- Overwrite records when regenerated: rejected because regeneration belongs to a
-  new run or future explicit repair workflow, not resume.
+- First-class custom resume compatibility fingerprints and ledgers: rejected as
+  too much machinery for a convenience feature.
+- Delete all partial-run reuse concerns: rejected because the design should
+  remain open to thin Inspect-backed reuse.
 
-## Decision: Judge call budgeting is supported without defining judge rubrics
+## Phase 1 implications
 
-**Rationale**: The eval sequence includes a later judge and scoring slice. This
-feature can budget, plan, persist, and resume judge calls as opaque work items
-once judge configuration exists, while leaving rubric structure and scoring
-semantics to the judge feature.
-
-**Alternatives considered**:
-
-- Exclude judge calls completely: rejected because the user explicitly requested
-  candidate and judge budget controls.
-- Define judge rubric fields here: rejected because rubric design is out of
-  scope and belongs to the judge/scoring spec.
+- CLI contracts should name limits and confirmation, not `--max-calls`.
+- Data models should represent planned work and guardrails, not custom output
+  records.
+- Resume contracts should document compatibility expectations for optional
+  Inspect-backed reuse, not define gmuse-owned resume files.

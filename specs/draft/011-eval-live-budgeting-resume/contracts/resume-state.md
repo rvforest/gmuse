@@ -1,165 +1,40 @@
-# Contract: Resume State And Artifacts
+# Contract: Optional Inspect-Backed Reuse
 
-This contract defines the artifact files and compatibility checks required for a
-live eval run to resume safely.
+This contract replaces the earlier custom resume-state file contract. gmuse does
+not define `run-plan.json`, `outputs.jsonl`, `summary.json`, or a custom resume
+ledger for v1.
 
-## Artifact Layout
+## Objective
 
-```text
-<output-dir>/
-├── run.json
-├── candidate-records.jsonl
-├── judge-records.jsonl
-└── summary.json
-```
+Avoid repeating completed generations after interruption when Inspect provides a
+safe and simple rerun/resume path. This is a convenience, not a correctness or
+spend-safety requirement.
 
-`judge-records.jsonl` may be absent when judge work is not enabled.
+## Compatibility Fields
 
-## `run.json`
+Any reuse attempt must compare:
 
-Required fields:
+- suite ID and revision
+- selected case IDs
+- fixture revisions or digests
+- candidate model set
+- prompt-affecting generation config
+- prompt version
+- Inspect task/log schema version when available
+- gmuse eval metadata schema version
 
-- `run_id`
-- `created_at`
-- `artifact_schema_version`
-- `suite_id`
-- `suite_revision`
-- `fixture_revision_digest`
-- `case_selection_digest`
-- `candidate_models_digest`
-- `generation_config_digest`
-- `prompt_version`
-- `candidate_output_schema_version`
-- `judge_config_digest`
-- `rubric_version`
-- `judge_output_schema_version`
+## Rules
 
-Fields for judge identity may be null when judge work is disabled.
-
-## `candidate-records.jsonl`
-
-Each line is one candidate output record.
-
-Required fields:
-
-- `record_id`
-- `work_item_id`
-- `run_id`
-- `case_id`
-- `fixture_revision`
-- `candidate_model`
-- `generation_config_digest`
-- `prompt_version`
-- `candidate_output_schema_version`
-- `status`
-- `attempt_counted`
-- `created_at`
-
-Status values:
-
-- `completed`
-- `validation_failed`
-- `operational_error`
-
-Resume rules:
-
-- A terminal candidate record with a matching `work_item_id` is skipped.
-- Duplicate active records for the same `work_item_id` fail resume before calls.
-- Corrupt JSONL fails resume before calls.
-- Completed record content must not be overwritten by resume.
-
-## `judge-records.jsonl`
-
-Each line is one judge record.
-
-Required fields:
-
-- `record_id`
-- `work_item_id`
-- `run_id`
-- `candidate_record_id`
-- `judge_config_digest`
-- `rubric_version`
-- `judge_output_schema_version`
-- `status`
-- `attempt_counted`
-- `created_at`
-
-Status values:
-
-- `completed`
-- `operational_error`
-
-Resume rules:
-
-- A terminal judge record with a matching `work_item_id` and judge identity is
-  skipped.
-- Duplicate active judge records for the same `work_item_id` fail resume before
+- Missing or corrupt Inspect logs reject reuse before provider calls.
+- Incompatible metadata rejects reuse or forces a fresh run before provider
   calls.
-- Corrupt JSONL fails resume before calls.
-- Judge scoring fields are opaque to this feature and are validated by the judge
-  feature that owns rubric design.
+- Reuse must not overwrite generated messages in existing Inspect logs.
+- If Inspect does not provide safe partial-run reuse for a scenario, gmuse may
+  rerun bounded samples instead of implementing custom bookkeeping.
 
-## `summary.json`
+## Out of Scope
 
-Required fields:
-
-- `run_id`
-- `status`
-- `started_at`
-- `updated_at`
-- `completed_at`
-- `candidate_counts`
-- `judge_counts`
-- `resume_counts`
-- `failure_reasons`
-
-Allowed status values:
-
-- `planned`
-- `running`
-- `interrupted`
-- `failed`
-- `complete`
-
-Count groups must include:
-
-- `planned`
-- `budgeted`
-- `attempted`
-- `completed`
-- `skipped`
-- `failed`
-- `remaining`
-
-## Compatibility Checks
-
-Resume must compare the requested run to `run.json` and reject before provider
-calls when any required compatibility field differs:
-
-- `artifact_schema_version`
-- `suite_id`
-- `suite_revision`
-- `fixture_revision_digest`
-- `case_selection_digest`
-- `candidate_models_digest`
-- `generation_config_digest`
-- `prompt_version`
-- `candidate_output_schema_version`
-- `judge_config_digest`
-- `rubric_version`
-- `judge_output_schema_version`
-
-The rejection message must name each mismatched field detected before stopping.
-
-## Compatibility Outcomes
-
-- **Compatible with missing work**: Skip completed matching records, plan missing
-  work, and validate budgets for missing work only.
-- **Compatible with no missing work**: Make zero provider calls and report that
-  the run is already complete for the requested settings.
-- **Incompatible**: Make zero provider calls, preserve artifacts unchanged, and
-  report mismatch reasons.
-- **Corrupt or duplicate artifacts**: Make zero provider calls, preserve
-  artifacts unchanged, and require the maintainer to start a new run or repair
-  artifacts manually.
+- Duplicate terminal-record detection in custom JSONL files.
+- Retryable operational-error ledgers.
+- Per-attempt provider-call budget accounting.
+- Manual artifact repair workflows.

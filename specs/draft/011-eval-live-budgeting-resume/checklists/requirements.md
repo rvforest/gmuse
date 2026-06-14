@@ -1,4 +1,4 @@
-# Specification Quality Checklist: Eval Live Run Budgeting And Resume
+# Specification Quality Checklist: Eval Live Guardrails
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
 **Created**: 2026-06-11
@@ -31,8 +31,8 @@
 
 ## Notes
 
-- Scope is intentionally limited to live-call budgeting, run planning,
-  confirmation, incremental writes, and resume compatibility.
+- Scope is intentionally limited to live-run planning, confirmation, configured
+  guardrails, local Inspect logs, and optional framework-backed reuse.
 - Judge rubric design, baseline promotion/comparison, fixture importer behavior,
   and public benchmark recommendations are excluded except as dependencies or
   future work.

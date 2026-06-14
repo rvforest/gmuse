@@ -1,256 +1,101 @@
-# Contract: result artifacts
+# Contract: Inspect Log Metadata
 
 **Feature**: 010-eval-runner
 **Date**: 2026-06-11
+**Framework Alignment Update**: 2026-06-14
 
-The runner writes durable artifacts for maintainer inspection and later eval phases. Artifacts are local files, versioned, and intentionally limited to production generation outcomes plus deterministic validation.
+The runner uses Inspect AI logs as the canonical local execution artifact.
+gmuse does not define a parallel `run-plan.json`/`outputs.jsonl`/`summary.json`
+contract in this revised design. Instead, every Inspect run and sample result
+must carry enough gmuse metadata for maintainer review, judge scoring, and
+strict safety comparison.
 
-## Artifact layout
+## Log Location
 
-```text
-<output-dir>/
-├── run-plan.json
-├── outputs.jsonl
-└── summary.json
-```
+Inspect logs are written to the configured Inspect log directory. gmuse may use
+`.gmuse-evals/inspect/` as a repo-local default when no Inspect default is
+configured.
 
-`outputs.jsonl` is omitted or empty for planning mode. Planning mode may still write `run-plan.json` and `summary.json` if they are clearly marked as `mode: "plan"`.
+Generated log directories must be ignored by git unless a maintainer explicitly
+chooses to check in sanitized sample logs for tests.
 
-## `run-plan.json`
+## Run-Level Metadata
 
-### Required fields
+Each Inspect run must expose:
 
-```json
-{
-  "schema_version": "eval-run-plan.v1",
-  "run_id": "20260611T120000Z-smoke",
-  "mode": "plan",
-  "suite_ids": ["smoke"],
-  "models": ["gpt-4.1-mini"],
-  "planned_attempts": 3,
-  "attempts": [
-    {
-      "attempt_id": "0001",
-      "suite_id": "smoke",
-      "case_id": "smoke-docs-001",
-      "fixture_id": "fixture-docs-001",
-      "fixture_revision": "sha256:...",
-      "model": "gpt-4.1-mini",
-      "generation_config": {
-        "format": "conventional",
-        "history_depth": 5,
-        "include_branch": false,
-        "hint": null,
-        "repository_instructions": null,
-        "max_chars": 72,
-        "temperature": 0.2,
-        "max_tokens": 120
-      }
-    }
-  ],
-  "output_records_path": "outputs.jsonl",
-  "summary_path": "summary.json"
-}
-```
+- `gmuse_eval_schema_version`
+- `execution_mode`: `check` or `live`
+- `suite_id`
+- `suite_version`
+- selected case IDs
+- selected model IDs for live runs
+- deterministic output policy for check runs
+- effective generation defaults and overrides
+- prompt version
+- gmuse project revision when available
+- configured guardrails, such as sample, token, cost, time, or concurrency limits
+- fixture foundation schema version
 
-### Rules
+## Sample-Level Metadata
 
-- `schema_version` must change when required fields or semantics change.
-- `attempts` must include enough information to understand what execution would do without reading output records.
-- Planning mode must not include generated messages.
+Each Inspect sample result must expose:
 
-## `outputs.jsonl`
+- stable `entry_id`
+- `case_id` and `case_revision`
+- `fixture_id` and `fixture_revision` or digest
+- `rubric_id` and `rubric_version`
+- `candidate_kind`: `deterministic_check` or `live_model`
+- candidate model metadata when applicable
+- effective generation config:
+  - format
+  - history depth
+  - branch inclusion
+  - hint presence
+  - repository instruction presence
+  - `max_chars`
+  - temperature
+  - token cap
+- staged diff digest observed after reconstruction
+- generated message when generation reaches message output
+- production validation status and error categories
+- operational error category and message when setup/provider execution fails
+- prompt hash
+- prompt size in bytes
+- estimated input/output token counts when available
+- timing metadata when available
 
-Each line is one JSON object for one attempted case/model/config combination.
+## Privacy Rules
 
-### Required fields
+- Raw prompt text must not be recorded by default.
+- Raw prompts and preserved temporary repositories are allowed only behind an
+  explicit debug option and must be stored separately from ordinary Inspect run
+  metadata where practical.
+- Generated messages remain part of normal logs because they are the eval output
+  under review, including invalid messages.
 
-```json
-{
-  "schema_version": "eval-output-record.v1",
-  "run_id": "20260611T120000Z-smoke",
-  "attempt_id": "0001",
-  "suite_id": "smoke",
-  "case_id": "smoke-docs-001",
-  "fixture_id": "fixture-docs-001",
-  "fixture_revision": "sha256:...",
-  "model": "gpt-4.1-mini",
-  "generation_config": {
-    "format": "conventional",
-    "history_depth": 5,
-    "include_branch": false,
-    "hint": null,
-    "repository_instructions": null,
-    "max_chars": 72,
-    "temperature": 0.2,
-    "max_tokens": 120
-  },
-  "context_metadata": {
-    "prompt_hash": "sha256:...",
-    "prompt_size_bytes": 4096,
-    "estimated_input_tokens": 950,
-    "estimated_output_tokens": 12,
-    "diff_truncated": false,
-    "history_commit_count": 5,
-    "branch_context_included": false,
-    "repository_instructions_included": false,
-    "max_chars": 72
-  },
-  "generated_message": "docs: clarify configuration defaults",
-  "validation": {
-    "status": "passed",
-    "error_categories": [],
-    "details": null
-  },
-  "operational_error": null,
-  "timing": {
-    "started_at": "2026-06-11T12:00:00Z",
-    "completed_at": "2026-06-11T12:00:03Z",
-    "duration_ms": 3120
-  }
-}
-```
+## Check Mode Rules
 
-### Validation-failure record
+- Check mode must make zero provider calls.
+- Check mode sample results must be marked `candidate_kind =
+  deterministic_check`.
+- Check mode logs are implementation evidence, not candidate model quality
+  evidence, and judge scoring must skip them by default.
 
-```json
-{
-  "schema_version": "eval-output-record.v1",
-  "run_id": "20260611T120000Z-smoke",
-  "attempt_id": "0002",
-  "suite_id": "smoke",
-  "case_id": "smoke-fix-001",
-  "fixture_id": "fixture-fix-001",
-  "fixture_revision": "sha256:...",
-  "model": "gpt-4.1-mini",
-  "generation_config": {
-    "format": "conventional",
-    "history_depth": 5,
-    "include_branch": true,
-    "hint": null,
-    "repository_instructions": null,
-    "max_chars": 50,
-    "temperature": 0.2,
-    "max_tokens": 120
-  },
-  "context_metadata": {
-    "prompt_hash": "sha256:...",
-    "prompt_size_bytes": 6120,
-    "estimated_input_tokens": 1400,
-    "estimated_output_tokens": 20,
-    "diff_truncated": false,
-    "history_commit_count": 5,
-    "branch_context_included": true,
-    "repository_instructions_included": false,
-    "max_chars": 50
-  },
-  "generated_message": "fix: update parser to reject invalid nested configuration values",
-  "validation": {
-    "status": "failed",
-    "error_categories": ["max_chars"],
-    "details": "Generated message exceeded configured max_chars."
-  },
-  "operational_error": null,
-  "timing": {
-    "started_at": "2026-06-11T12:00:05Z",
-    "completed_at": "2026-06-11T12:00:08Z",
-    "duration_ms": 3010
-  }
-}
-```
+## Live Mode Rules
 
-### Operational-error record
+- Live mode must display the planned case/model/sample count and configured
+  guardrails before provider calls.
+- Live mode must require interactive confirmation or `--yes`.
+- Live mode sample results must be marked `candidate_kind = live_model`.
+- Provider/setup failures must be represented separately from deterministic
+  production validation failures.
 
-```json
-{
-  "schema_version": "eval-output-record.v1",
-  "run_id": "20260611T120000Z-smoke",
-  "attempt_id": "0003",
-  "suite_id": "smoke",
-  "case_id": "smoke-safety-001",
-  "fixture_id": "fixture-safety-001",
-  "fixture_revision": "sha256:...",
-  "model": "gpt-4.1-mini",
-  "generation_config": {
-    "format": "freeform",
-    "history_depth": 0,
-    "include_branch": false,
-    "hint": null,
-    "repository_instructions": null,
-    "max_chars": null,
-    "temperature": 0.2,
-    "max_tokens": 120
-  },
-  "context_metadata": {
-    "prompt_hash": "sha256:...",
-    "prompt_size_bytes": 3800,
-    "estimated_input_tokens": 850,
-    "estimated_output_tokens": null,
-    "diff_truncated": false,
-    "history_commit_count": 0,
-    "branch_context_included": false,
-    "repository_instructions_included": false,
-    "max_chars": null
-  },
-  "generated_message": null,
-  "validation": {
-    "status": "not_run",
-    "error_categories": [],
-    "details": null
-  },
-  "operational_error": {
-    "category": "timeout",
-    "message": "Provider request timed out.",
-    "provider_status": null,
-    "retryable": true
-  },
-  "timing": {
-    "started_at": "2026-06-11T12:00:10Z",
-    "completed_at": "2026-06-11T12:00:40Z",
-    "duration_ms": 30000
-  }
-}
-```
+## Downstream Consumer Rules
 
-### Rules
-
-- There must be exactly one output record for every attempted execution-mode attempt.
-- `generated_message` must be preserved for validation failures.
-- `operational_error` and `validation.status = "passed"` must not both be present.
-- Judge scores, aggregate scores, baseline IDs, pairwise comparisons, and recommendation fields are not allowed in `eval-output-record.v1`.
-- Raw prompt text is not included by default.
-
-## `summary.json`
-
-### Required fields
-
-```json
-{
-  "schema_version": "eval-run-summary.v1",
-  "run_id": "20260611T120000Z-smoke",
-  "mode": "execute",
-  "suite_ids": ["smoke"],
-  "models": ["gpt-4.1-mini"],
-  "artifact_paths": {
-    "run_plan": "run-plan.json",
-    "outputs": "outputs.jsonl",
-    "summary": "summary.json"
-  },
-  "planned_attempts": 3,
-  "completed_attempts": 3,
-  "validation_passed": 1,
-  "validation_failed": 1,
-  "operational_errors": {
-    "timeout": 1
-  },
-  "started_at": "2026-06-11T12:00:00Z",
-  "completed_at": "2026-06-11T12:00:40Z"
-}
-```
-
-### Rules
-
-- `completed_attempts` counts written output records, not quality successes.
-- `validation_failed` counts deterministic production validation failures only.
-- `operational_errors` groups setup/provider failures by category.
-- The summary must not rank models or recommend model choices.
+- Scoring specs consume Inspect logs and sample metadata directly.
+- Strict safety comparison consumes two Inspect logs and compares stable case
+  identities, hard failure gates, production validation outcomes, and selected
+  compatibility metadata.
+- If the Inspect spike identifies metadata that cannot be represented in logs,
+  gmuse may add a compact sidecar metadata file, but Inspect logs remain the
+  primary execution evidence.

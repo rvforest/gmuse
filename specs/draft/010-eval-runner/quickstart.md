@@ -1,86 +1,108 @@
-# Quickstart: production-path eval runner
+# Quickstart: Production-Path Eval Runner
 
-The eval runner is maintainer-only tooling for running gmuse against validated eval fixtures and preserving raw production-path outputs.
+The eval runner is maintainer-only tooling for running gmuse against validated
+eval fixtures through an Inspect AI task. It is invoked through the repository
+module entrypoint, not a public `gmuse eval` command.
 
 ## 1. Validate fixture and suite prerequisites
 
-Use the fixture/suite foundation from spec 009 to validate the suite before running generation.
+```bash
+uv run python -m tools.evals.gmuse_evals validate --suite smoke
+```
 
-Expected behavior:
+Expected:
 
 - suite membership resolves;
 - fixture schemas and required provenance pass validation;
 - reconstructed staged diffs match expected digests.
 
-If fixture validation fails, fix the spec 009 fixture or suite before using the runner.
-
-## 2. Preview a smoke run with no provider calls
+## 2. Run a local check with no provider calls
 
 ```bash
-gmuse eval run --suite smoke --model gpt-4.1-mini --output-dir .gmuse-evals/runs/smoke --plan
+uv run python -m tools.evals.gmuse_evals run --mode check --suite smoke
 ```
 
-Expected behavior:
+Expected:
 
-- selected suites and case IDs are shown;
-- selected model/config combinations are shown;
-- planned attempt count is shown;
-- output artifact paths are shown;
-- provider call count is zero;
-- no generated-message JSONL records are written.
+- selected case IDs and effective settings are printed;
+- temporary repositories are reconstructed;
+- gmuse uses the production git/context/prompt/validation path;
+- deterministic local output replaces only the provider response;
+- Inspect logs are written with gmuse run/sample metadata;
+- provider call count is zero.
 
-Use planning mode before any live run.
+Check logs are runner-integration evidence. They are not candidate model quality
+evidence and are skipped by judge scoring by default.
 
-## 3. Execute a smoke run with production generation behavior
+## 3. Run live candidate generation with guardrails
 
 ```bash
-gmuse eval run --suite smoke --model gpt-4.1-mini --output-dir .gmuse-evals/runs/smoke --execute
+uv run python -m tools.evals.gmuse_evals run \
+  --mode live \
+  --suite smoke \
+  --model gpt-4.1-mini \
+  --limit-samples 2 \
+  --yes
 ```
 
-Expected behavior:
+Expected:
 
+- the suite validates before provider calls;
+- planned samples and configured limits are displayed;
+- live execution starts only after confirmation or `--yes`;
 - each fixture is applied to an isolated temporary git repository;
 - fixture changes are staged and verified;
-- gmuse uses the normal production git/context/prompt/generation/validation behavior;
-- one `outputs.jsonl` record is written for each attempted case/model/config combination;
-- `summary.json` reports counts and artifact locations.
+- gmuse uses normal production generation and validation behavior;
+- one Inspect sample result is recorded for each executed case/model/config
+  entry.
 
-## 4. Inspect result artifacts
+Multiple live models are allowed, and `--limit-samples` applies to the full
+selected case/model/config matrix.
 
-```bash
-head -n 1 .gmuse-evals/runs/smoke/outputs.jsonl
-cat .gmuse-evals/runs/smoke/summary.json
-```
-
-Expected behavior:
-
-- output records include generated messages when available;
-- production validation failures preserve the raw generated message;
-- provider/setup failures are listed as operational errors;
-- prompt hashes, prompt size, token estimates, and context metadata are present;
-- raw prompt text is absent by default.
-
-## 5. Troubleshoot a failing case
+## 4. Choose an explicit log directory when needed
 
 ```bash
-gmuse eval run --suite smoke --model gpt-4.1-mini --output-dir .gmuse-evals/runs/debug --execute --preserve-debug
+uv run python -m tools.evals.gmuse_evals run \
+  --mode live \
+  --suite smoke \
+  --model gpt-4.1-mini \
+  --limit-samples 2 \
+  --log-dir .gmuse-evals/inspect/smoke-gpt-4.1-mini \
+  --yes
 ```
 
-Expected behavior:
+Expected:
 
-- temporary repository or prompt debug material may be preserved for inspection;
-- preserved paths are reported clearly;
-- this behavior happens only when explicitly requested.
+- missing log directories are created;
+- conflicting run identities fail before execution;
+- live runs do not infer state from prior check runs.
 
-## 6. Confirm scope boundaries
+## 5. Inspect result logs
 
-This runner does not:
+Use Inspect-native log viewing or gmuse log helpers.
 
-- score outputs with an LLM judge;
-- resume interrupted runs;
-- enforce live-call budgets;
-- promote baselines;
-- import fixtures;
-- publish model recommendations.
+Expected metadata:
 
-Those behaviors belong to later eval specs.
+- generated message when available;
+- production validation outcome;
+- operational errors separated from validation failures;
+- prompt hash, prompt size, token estimates, prompt version, and context
+  metadata;
+- suite, case, fixture, rubric, model, and generation config identity;
+- raw prompt text absent by default.
+
+## 6. Troubleshoot a failing case
+
+```bash
+uv run python -m tools.evals.gmuse_evals run \
+  --mode check \
+  --suite smoke \
+  --log-dir .gmuse-evals/inspect/debug-check \
+  --preserve-debug
+```
+
+Expected:
+
+- debug preservation is explicit;
+- temporary repositories or prompts are available only in debug locations;
+- ordinary Inspect logs still carry the required metadata.

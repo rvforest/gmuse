@@ -9,7 +9,7 @@ Create the maintainer-only foundation for gmuse evals by defining versioned,
 reviewable fixture, case, suite, and rubric data plus a manual validation command
 that can reconstruct temporary git repositories and verify staged diff digests
 without any model credentials. This slice proves the offline eval substrate
-before production-path runner, live-call budgeting, judge scoring, baseline
+before downstream Inspect AI-based production-path runner, scoring, strict safety
 comparison, importer, or public benchmark work.
 
 ## Technical Context
@@ -17,10 +17,13 @@ comparison, importer, or public benchmark work.
 **Language/Version**: Python 3.10+
 
 **Primary Dependencies**: Typer for the maintainer tool CLI; Pydantic v2 as an
-explicit development dependency for structural TOML schema validation; existing
-`gmuse.git` staged-diff behavior for fidelity; `tomli`/`tomllib` and `tomlkit`
-for TOML parsing/editing support already present in the project; pytest, Ruff,
-pyrefly; avoid adding runtime dependencies for normal package users
+explicit development dependency for structural TOML schema validation;
+`license-expression` for SPDX-style source license expression validation;
+existing `gmuse.git` staged-diff behavior for fidelity; `tomli`/`tomllib` and
+`tomlkit` for TOML parsing/editing support already present in the project;
+pytest, Ruff, pyrefly; avoid adding runtime dependencies for normal package
+users; expose structured in-process helpers for later Inspect AI datasets,
+solvers, and scorers without making them public product APIs
 
 **Storage**: Checked-in maintainer fixture and suite TOML files under root
 `evals/`, plus temporary git repositories created during validation
@@ -66,7 +69,8 @@ Constitution gates for this feature:
 - **Security/Privacy Gate**: Pass. Fixture metadata distinguishes fake safety
   data from real source attribution and avoids storing functional secrets.
 - **Release Discipline Gate**: Pass. Versioned schemas and suites are required
-  from the first implementation.
+  from the first implementation and must expose stable identities usable from
+  Inspect AI eval samples.
 
 Checklist:
 
@@ -76,7 +80,8 @@ Checklist:
 - UX Gate: Yes - validation output must identify actionable fixture and suite errors.
 - Performance Gate: Yes - no live calls or network work in normal validation.
 - Security/Privacy Gate: Yes - require provenance and fake/nonfunctional safety markers.
-- Release Discipline Gate: Yes - version fixture, suite, rubric, and validation artifacts.
+- Release Discipline Gate: Yes - version fixture, suite, rubric, and validation
+  artifacts; keep stable IDs/digests for downstream Inspect logs and comparison.
 
 ## Project Structure
 
@@ -117,7 +122,8 @@ tools/
         ├── cli.py           # Typer app for maintainer commands
         ├── models.py        # Pydantic structural models
         ├── load.py          # TOML loading and path resolution
-        ├── validate.py      # schema, reference, provenance, coverage validation
+        ├── validate.py      # structured validation report and validated suite data
+        ├── inspect_adapter.py # converts validated cases into Inspect samples
         └── git_reconstruct.py # temp repo reconstruction and staged diff checks
 
 tests/
@@ -132,7 +138,10 @@ so the installed product package is not expanded with draft eval tooling. Keep
 eval assets under root `evals/` so fixtures, rubrics, cases, and suites are
 reviewable data rather than product code. The tool may import `gmuse.git` for
 production staged-diff fidelity, using a temporary working-directory context
-rather than changing product git helpers for this first slice.
+rather than changing product git helpers for this first slice. The CLI is
+human-readable, but the underlying loader, validator, and reconstruction modules
+should return structured objects that spec 010 can call directly when building
+Inspect AI datasets/samples instead of parsing CLI text.
 
 ## Complexity Tracking
 
@@ -156,6 +165,10 @@ Research focus areas:
 - Decide the first smoke fixture set: two synthetic fixtures, one with actual
   synthetic history commits and one injection-tagged fixture that validates
   metadata/reconstruction without model behavior.
+- Decide the structured helper boundary that lets the Inspect-based
+  production-path runner reuse suite loading, validation reports, validated suite
+  data, and temporary repository reconstruction without shelling out to the
+  validation CLI.
 
 ## Phase 1 - Design & Contracts (Output: `data-model.md`, `contracts/`, `quickstart.md`)
 
@@ -173,7 +186,7 @@ Design outputs:
 Post-design constitution check:
 
 - Code quality remains satisfied by isolated maintainer tool modules outside
-  `src/gmuse`.
+  `src/gmuse` with shared internal helper APIs for later eval slices.
 - Testing remains satisfied by schema, temp-repo validation coverage, and
   validation of checked-in synthetic smoke fixtures.
 - UX remains satisfied by actionable maintainer validation output.

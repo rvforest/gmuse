@@ -39,7 +39,6 @@ Real fixtures require:
 - `source_owner_repo`
 - full `source_commit_sha`
 - `source_commit_url`
-- `source_license`
 - `source_license_expression` or `source_license_url`
 - `redistribution_review`
 - full `original_commit_message`
@@ -85,7 +84,7 @@ used by checked-in suites.
 Validation must fail when:
 
 - required fields are absent
-- source metadata is incomplete for real fixtures
+- source evidence metadata is incomplete for real fixtures
 - a real or adapted fixture has neither `source_license_expression` nor
   `source_license_url`
 - `redistribution_review` is missing for a real or adapted fixture

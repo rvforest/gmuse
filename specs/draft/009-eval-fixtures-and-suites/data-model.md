@@ -99,7 +99,7 @@ Represents source attribution and origin metadata.
 - `source_commit_sha: str | None`
 - `source_commit_url: str | None`
 - `source_license: str | None`
-  - Human-readable source license label when available.
+  - Optional human-readable source license label when available.
 - `source_license_expression: str | None`
   - SPDX license expression or `LicenseRef-*` reference when available.
 - `source_license_url: str | None`
@@ -114,7 +114,7 @@ Represents source attribution and origin metadata.
 **Validation Rules**:
 
 - Real fixtures require repository URL, owner/repo, full commit SHA, commit URL,
-  source license metadata, full original commit message, and import timestamp.
+  source license evidence, full original commit message, and import timestamp.
 - Real fixtures require either `source_license_expression` or
   `source_license_url`; both should be present when practical.
 - `redistribution_review` must be present for real and adapted fixtures, and

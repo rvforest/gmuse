@@ -41,6 +41,10 @@ The first implementation emits human-readable output only. It may use a
 structured internal validation report, but `--json` is deferred until automation
 needs a stable machine-readable contract.
 
+The CLI must be a thin presentation layer over structured in-process helpers so
+later eval tooling can reuse suite loading, validation results, and repository
+reconstruction without parsing CLI output.
+
 ## Success output
 
 ```text
@@ -58,7 +62,7 @@ Validated suite: smoke
 Status: failed
 
 Errors:
-- fixture real-docs-update: missing provenance.source_license
+- fixture real-docs-update: missing provenance.source_license_expression or provenance.source_license_url
 - fixture real-docs-update: missing provenance.redistribution_review
 - fixture injection-comment: staged diff digest mismatch
 ```

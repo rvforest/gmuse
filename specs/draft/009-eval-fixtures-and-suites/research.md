@@ -40,9 +40,11 @@ maintainer tool to import gmuse internals when fidelity requires it.
 `tomli`/`tomllib` and `tomlkit`, and it avoids introducing YAML parsing.
 Pydantic is already present transitively, but the implementation should add it
 as an explicit development dependency before relying on it. Pydantic should
-handle structural validation while custom validators handle eval-domain checks
-such as references, smoke/core membership, digest verification, and conventional
-type compatibility.
+handle structural validation and JSON schema generation while custom validators
+handle eval-domain checks such as references, smoke/core membership, digest
+verification, and conventional type compatibility. The same Pydantic models
+should be reusable by downstream Inspect AI adapters so fixture and suite
+identity does not drift between gmuse validation and Inspect eval logs.
 
 **Alternatives considered**:
 
@@ -114,9 +116,12 @@ creation context, and known considerations for datasets
 **Rationale**: SPDX license expressions provide a compact way to capture common
 open source licensing terms, but eval fixture validation should not pretend to
 perform legal review. Real and adapted fixtures should record an SPDX expression
-or a source license URL plus a maintainer review status. This preserves evidence
+or a source license URL plus a maintainer review status. Use the published
+`license-expression` Python package to parse and validate SPDX-style
+expressions rather than hand-parsing license strings. This preserves evidence
 for review and keeps validation honest about what it can prove
-([SPDX license expressions](https://spdx.github.io/spdx-spec/v3.0.1/annexes/spdx-license-expressions/)).
+([SPDX license expressions](https://spdx.github.io/spdx-spec/v3.0.1/annexes/spdx-license-expressions/),
+[`license-expression`](https://pypi.org/project/license-expression/)).
 
 **Alternatives considered**:
 
@@ -126,6 +131,23 @@ for review and keeps validation honest about what it can prove
   may require a license reference or review note when the license is unclear.
 - Treat license metadata as redistribution approval: rejected because metadata
   validation is not legal approval.
+
+## Decision: Keep fixture foundation framework-neutral but Inspect-ready
+
+**Rationale**: The fixture foundation is gmuse-specific because it reconstructs
+temporary Git repositories, stages changes, validates staged diff digests, and
+records provenance. Inspect AI should not own this layer. However, downstream
+runner and scoring specs should be able to consume validated fixtures as Inspect
+datasets/samples, so this feature should expose stable IDs, digests, rubrics,
+and reconstruction helpers rather than CLI-only behavior.
+
+**Alternatives considered**:
+
+- Move fixtures directly into Inspect dataset files: rejected because fixture
+  validation, provenance rules, and staged-diff fidelity are gmuse-specific and
+  should remain independently testable offline.
+- Keep only human-readable validation output: rejected because downstream
+  Inspect tasks need structured case and fixture identity without parsing text.
 
 ## Decision: Broaden injection safety tags beyond obvious text prompts
 
@@ -198,3 +220,24 @@ can be added once automation needs it.
   before the report schema has been exercised.
 - Print only the first error: rejected because fixture authors need aggregated
   schema, reference, provenance, and digest issues.
+
+## Decision: Expose structured in-process helpers for later eval slices
+
+**Rationale**: Spec 010 needs to validate suites, resolve cases, and reconstruct
+temporary repositories before running production-path generation. It should call
+the fixture foundation directly rather than shelling out to the validation CLI
+or parsing human-readable output. The first implementation should therefore
+separate the human CLI from structured helpers: `load.py` resolves TOML assets,
+`validate.py` returns a `ValidationReport` plus validated suite data, and
+`git_reconstruct.py` builds and stages temporary repositories for reuse by the
+runner.
+
+**Alternatives considered**:
+
+- Make the validation CLI the only interface: rejected because downstream eval
+  slices would need to parse text output and duplicate fixture resolution.
+- Add machine-readable `--json` immediately for runner integration: rejected
+  because in-process helpers are simpler for local tooling and do not force a
+  stable external JSON contract before automation needs one.
+- Put reusable helpers in `src/gmuse`: rejected because eval tooling remains
+  maintainer-only and should not become ordinary package functionality.

@@ -11,10 +11,9 @@ ordinary `gmuse msg` user workflow, should not require provider credentials in
 default CI, and should avoid adding runtime dependencies for normal package use.
 
 Framework direction: use Inspect AI as the local eval execution, logging, and
-scoring framework where it substantially simplifies the design. gmuse still owns
-Git-backed fixture reconstruction, production-path generation, deterministic
-hard gates, and strict safety comparison. Hosted or account-backed eval
-platforms are out of scope.
+scoring framework where it substantially simplifies the design. See
+`framework-decision.md` for rationale, ownership boundaries, and spike
+questions.
 
 ## Purpose
 

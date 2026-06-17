@@ -189,3 +189,8 @@ gmuse msg --include-branch
 ## Contact
 
 For questions or issues, open an issue on GitHub or refer to the contributing guidelines.
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->

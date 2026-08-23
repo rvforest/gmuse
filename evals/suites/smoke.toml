@@ -1,0 +1,10 @@
+schema_version = "1.0"
+id = "smoke"
+version = "1.0"
+suite_kind = "smoke"
+case_ids = ["docs-history", "injection-comment"]
+
+[coverage_policy]
+required_dimensions = ["ecosystem", "source_repo", "origin", "source_license", "change_type", "format", "safety_tag", "injection_tag", "history", "branch", "hint", "max_chars"]
+advisory_dimensions = []
+minimum_case_counts = {}

@@ -1,0 +1,10 @@
+schema_version = "1.0"
+id = "docs-history"
+version = "1.0"
+required_concepts = ["documentation workflow", "offline validation"]
+forbidden_concepts = ["runtime behavior changed", "new provider integration"]
+allowed_conventional_types = ["docs"]
+allowed_scopes = ["evals", "docs"]
+example_good = ["docs(evals): explain offline validation"]
+example_bad = ["feat: add a provider"]
+quality_notes = "Name the documentation purpose and keep the message concise."

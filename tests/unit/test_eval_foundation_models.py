@@ -1,10 +1,12 @@
 """Structural tests for the maintainer eval foundation models."""
 
 from datetime import datetime, timezone
+from typing import Literal
 
 import pytest
 from pydantic import ValidationError
 
+import tools.evals.gmuse_evals as eval_api
 from tools.evals.gmuse_evals.models import (
     CoverageSummary,
     EvalCase,
@@ -14,12 +16,21 @@ from tools.evals.gmuse_evals.models import (
     FixtureFile,
     FixtureHistoryCommit,
     FixtureProvenance,
+    SCHEMA_VERSION,
     SuiteCoveragePolicy,
     ValidationReport,
 )
 
 
-def _provenance(origin: str = "synthetic") -> FixtureProvenance:
+def test_exported_eval_apis_include_usage_examples() -> None:
+    for name in eval_api.__all__:
+        docstring = getattr(getattr(eval_api, name), "__doc__", "") or ""
+        assert "Example:" in docstring, name
+
+
+def _provenance(
+    origin: Literal["real", "adapted", "synthetic"] = "synthetic",
+) -> FixtureProvenance:
     return FixtureProvenance(origin=origin, synthetic_notes="Generated for tests")
 
 
@@ -70,17 +81,19 @@ def test_fixture_revision_and_digest_are_structurally_constrained() -> None:
 
 def test_case_and_suite_models_reject_invalid_structural_values() -> None:
     with pytest.raises(ValidationError):
-        EvalCase(
-            id="case",
-            revision=1,
-            fixture_id="fixture-one",
-            rubric_id="rubric-one",
-            formats=["unsupported"],
-            history_depth=0,
-            include_branch=False,
-            user_hint=None,
-            max_chars=None,
-            tags=[],
+        EvalCase.model_validate(
+            {
+                "id": "case",
+                "revision": 1,
+                "fixture_id": "fixture-one",
+                "rubric_id": "rubric-one",
+                "formats": ["unsupported"],
+                "history_depth": 0,
+                "include_branch": False,
+                "user_hint": None,
+                "max_chars": None,
+                "tags": [],
+            }
         )
 
     with pytest.raises(ValidationError):
@@ -122,3 +135,80 @@ def test_rubric_defaults_are_reviewable_and_explicit() -> None:
     )
 
     assert rubric.example_good == []
+
+
+def test_asset_schema_versions_are_supported_and_defaults_are_preserved() -> None:
+    assert (
+        EvalRubric(
+            id="rubric",
+            version="1.0",
+            required_concepts=[],
+            forbidden_concepts=[],
+            allowed_conventional_types=[],
+            allowed_scopes=[],
+            example_good=[],
+            example_bad=[],
+        ).schema_version
+        == SCHEMA_VERSION
+    )
+    assert (
+        EvalCase(
+            id="case",
+            revision=1,
+            fixture_id="fixture",
+            rubric_id="rubric",
+            formats=["freeform"],
+            include_branch=False,
+            tags=[],
+        ).schema_version
+        == SCHEMA_VERSION
+    )
+    assert (
+        EvalSuite(
+            id="suite",
+            version="1.0",
+            suite_kind="custom",
+            case_ids=["case"],
+            coverage_policy=SuiteCoveragePolicy(),
+        ).schema_version
+        == SCHEMA_VERSION
+    )
+
+
+@pytest.mark.parametrize("model_name", ["fixture", "rubric", "case", "suite"])
+def test_unknown_asset_schema_versions_are_rejected(model_name: str) -> None:
+    constructors = {
+        "fixture": lambda: _fixture(schema_version="999.0"),
+        "rubric": lambda: EvalRubric(
+            schema_version="999.0",
+            id="rubric",
+            version="1.0",
+            required_concepts=[],
+            forbidden_concepts=[],
+            allowed_conventional_types=[],
+            allowed_scopes=[],
+            example_good=[],
+            example_bad=[],
+        ),
+        "case": lambda: EvalCase(
+            schema_version="999.0",
+            id="case",
+            revision=1,
+            fixture_id="fixture",
+            rubric_id="rubric",
+            formats=["freeform"],
+            include_branch=False,
+            tags=[],
+        ),
+        "suite": lambda: EvalSuite(
+            schema_version="999.0",
+            id="suite",
+            version="1.0",
+            suite_kind="custom",
+            case_ids=["case"],
+            coverage_policy=SuiteCoveragePolicy(),
+        ),
+    }
+
+    with pytest.raises(ValidationError, match="schema_version"):
+        constructors[model_name]()

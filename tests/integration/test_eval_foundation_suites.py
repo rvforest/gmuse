@@ -9,6 +9,8 @@ def test_checked_in_smoke_is_a_core_subset_with_complete_references() -> None:
 
     assert smoke.report.status == "passed"
     assert core.report.status == "passed"
+    assert smoke.suite is not None
+    assert core.suite is not None
     assert set(smoke.suite.case_ids) <= set(core.suite.case_ids)
     assert {item.fixture.id for item in smoke.cases} == {
         "synthetic-docs-history",

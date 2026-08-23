@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path
-import re
 from collections.abc import Sequence
+from pathlib import Path, PurePosixPath
+import re
+from urllib.parse import urlparse
 
-from license_expression import Licensing
+from license_expression import Licensing, get_spdx_licensing
 
+from gmuse.config import DEFAULTS
 from gmuse.prompts import validate_message
 
 from .git_reconstruct import ReconstructionError, reconstruct_fixture
@@ -22,45 +24,32 @@ from .models import (
     EvalFixture,
     EvalRubric,
     EvalSuite,
+    INJECTION_LOCATION_TAGS,
+    INJECTION_PATTERN_TAGS,
+    INJECTION_TAGS,
     ValidationIssue,
     ValidationReport,
 )
 
 _FULL_SHA = re.compile(r"^[0-9a-fA-F]{40}$")
-_INJECTION_TAG_ALIASES = {
-    "direct-instruction",
-    "indirect-external-content",
-    "obfuscated-encoded",
-    "deleted-instruction",
-    "code-comment",
-    "markdown",
-    "docs",
-    "string-literal",
-    "test-fixture",
-    "config-example",
-    "direct",
-    "indirect",
-    "obfuscated",
-    "encoded",
-    "deleted",
-}
-_KNOWN_LICENSES = (
-    "Apache-2.0",
-    "BSD-2-Clause",
-    "BSD-3-Clause",
-    "ISC",
-    "LGPL-2.1-only",
-    "LGPL-3.0-only",
-    "MIT",
-    "MPL-2.0",
-    "GPL-2.0-only",
-    "GPL-3.0-only",
-)
 
 
 @dataclass(frozen=True)
 class ValidatedCase:
-    """A resolved case descriptor for downstream in-process consumers."""
+    """A case with its referenced fixture and rubric resolved.
+
+    Resolving once prevents downstream runners from duplicating ID lookup.
+
+    Attributes:
+        case: Case configuration and context options.
+        fixture: Offline fixture referenced by the case.
+        rubric: Review expectations referenced by the case.
+
+    Example:
+        >>> item = ValidatedCase(case, fixture, rubric)
+        >>> item.fixture.id == item.case.fixture_id
+        True
+    """
 
     case: EvalCase
     fixture: EvalFixture
@@ -69,11 +58,31 @@ class ValidatedCase:
 
 @dataclass(frozen=True)
 class ValidatedSuite:
-    """A suite plus resolved cases and its structured validation report."""
+    """A suite, its resolved cases, and a structured validation report.
+
+    This is the stable in-process boundary for later runner specifications.
+
+    Attributes:
+        suite: Selected suite, or ``None`` if no suite could be resolved.
+        cases: Fully resolved cases when validation passes.
+        report: Aggregated errors, warnings, and coverage.
+
+    Example:
+        >>> result = validate_suite("evals", "smoke")
+        >>> result.report.status
+        'passed'
+    """
 
     suite: EvalSuite | None
     cases: tuple[ValidatedCase, ...]
     report: ValidationReport
+
+
+def _resolved_history_depth(case: EvalCase) -> int:
+    """Resolve a nullable case depth using gmuse's current default."""
+    return int(
+        DEFAULTS["history_depth"] if case.history_depth is None else case.history_depth
+    )
 
 
 def _report(
@@ -114,7 +123,7 @@ def _add_coverage(coverage: CoverageSummary, cases: tuple[ValidatedCase, ...]) -
         values["format"].update(case.formats)
         values["safety_tag"].update(fixture.safety_tags or ["none"])
         values["injection_tag"].update(fixture.injection_tags or ["none"])
-        values["history"].add("used" if case.history_depth else "not-used")
+        values["history"].add("used" if _resolved_history_depth(case) else "not-used")
         values["branch"].add("used" if case.include_branch else "not-used")
         values["hint"].add("used" if case.user_hint else "not-used")
         values["max_chars"].add("used" if case.max_chars else "not-used")
@@ -189,6 +198,16 @@ def _validate_provenance(item: ValidatedCase) -> list[ValidationIssue]:
                 fixture.id,
             )
         )
+    for field in ("source_repository_url", "source_commit_url"):
+        value = getattr(provenance, field)
+        if value and not _is_http_url(value):
+            errors.append(
+                _issue(
+                    "invalid_source_url",
+                    f"provenance.{field} must be an absolute HTTP(S) URL",
+                    fixture.id,
+                )
+            )
     if not (provenance.source_license_expression or provenance.source_license_url):
         errors.append(
             _issue(
@@ -197,12 +216,24 @@ def _validate_provenance(item: ValidatedCase) -> list[ValidationIssue]:
                 fixture.id,
             )
         )
+    if provenance.source_license_url is not None and not _is_license_reference(
+        provenance.source_license_url
+    ):
+        errors.append(
+            _issue(
+                "invalid_license_reference",
+                "provenance.source_license_url must be an absolute HTTP(S) URL "
+                "or a safe repository-relative path",
+                fixture.id,
+            )
+        )
     if provenance.source_license_expression:
         try:
             references = re.findall(
                 r"\bLicenseRef-[A-Za-z0-9.-]+\b", provenance.source_license_expression
             )
-            licensing = Licensing(symbols=[*_KNOWN_LICENSES, *references])
+            spdx = get_spdx_licensing()
+            licensing = Licensing(symbols=[*spdx.known_symbols.values(), *references])
             validation = licensing.validate(provenance.source_license_expression)
             if validation.errors:
                 raise ValueError("; ".join(validation.errors))
@@ -231,7 +262,8 @@ def _validate_safety(item: ValidatedCase) -> list[ValidationIssue]:
     """Validate injection taxonomy and nonfunctional secret-like test data."""
     fixture = item.fixture
     errors: list[ValidationIssue] = []
-    if "injection" in fixture.safety_tags and not fixture.injection_tags:
+    is_injection = "injection" in fixture.safety_tags
+    if is_injection and not fixture.injection_tags:
         errors.append(
             _issue(
                 "missing_injection_tags",
@@ -239,7 +271,7 @@ def _validate_safety(item: ValidatedCase) -> list[ValidationIssue]:
                 fixture.id,
             )
         )
-    unknown = set(fixture.injection_tags).difference(_INJECTION_TAG_ALIASES)
+    unknown = set(fixture.injection_tags).difference(INJECTION_TAGS)
     if unknown:
         errors.append(
             _issue(
@@ -248,6 +280,32 @@ def _validate_safety(item: ValidatedCase) -> list[ValidationIssue]:
                 fixture.id,
             )
         )
+    if fixture.injection_tags and not is_injection:
+        errors.append(
+            _issue(
+                "orphan_injection_tags",
+                "injection sub-tags require the 'injection' safety tag",
+                fixture.id,
+            )
+        )
+    if is_injection and fixture.injection_tags:
+        tags = set(fixture.injection_tags)
+        if not tags.intersection(INJECTION_PATTERN_TAGS):
+            errors.append(
+                _issue(
+                    "missing_injection_pattern",
+                    "injection fixtures require a recognized pattern tag",
+                    fixture.id,
+                )
+            )
+        if not tags.intersection(INJECTION_LOCATION_TAGS):
+            errors.append(
+                _issue(
+                    "missing_injection_location",
+                    "injection fixtures require a recognized location tag",
+                    fixture.id,
+                )
+            )
     text = "\n".join(file.content for file in fixture.base_files) + fixture.patch
     secret_like = re.search(
         r"(?:sk-[A-Za-z0-9]{8,}|api[_-]?key\s*[=:]|password\s*[=:])", text, re.I
@@ -280,6 +338,42 @@ def _validate_safety(item: ValidatedCase) -> list[ValidationIssue]:
             )
         )
     return errors
+
+
+def _is_http_url(value: str) -> bool:
+    """Return whether a value is an absolute HTTP(S) URL with a host."""
+    parsed = urlparse(value)
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
+def _is_license_reference(value: str) -> bool:
+    """Accept an HTTP(S) URL or a safe repository-relative POSIX path."""
+    if not value.strip() or value != value.strip():
+        return False
+    parsed = urlparse(value)
+    if parsed.scheme:
+        return _is_http_url(value)
+    if "\\" in value:
+        return False
+    path = PurePosixPath(value)
+    return (
+        not path.is_absolute() and value not in {".", ".."} and ".." not in path.parts
+    )
+
+
+def _validate_history(item: ValidatedCase) -> list[ValidationIssue]:
+    """Ensure the requested context depth is reconstructable from fixture data."""
+    depth = _resolved_history_depth(item.case)
+    if depth <= len(item.fixture.history):
+        return []
+    return [
+        _issue(
+            "history_depth_exceeds_fixture",
+            f"resolved history_depth {depth} exceeds declared fixture history "
+            f"length {len(item.fixture.history)}",
+            item.case.id,
+        )
+    ]
 
 
 def _validate_rubric(item: ValidatedCase) -> list[ValidationIssue]:
@@ -395,8 +489,22 @@ def validate_assets(
     This foundational boundary deliberately performs no model or network work.
     Git reconstruction and domain checks are added by the story-specific
     validators while retaining this result shape.
+
+    Args:
+        assets: Loaded full-catalog or selected-graph assets.
+        suite_id: Stable ID of the suite to validate.
+        strict_balance: Promote advisory balance gaps to errors.
+        reconstruct: Rebuild and verify fixture repositories when true.
+
+    Returns:
+        Aggregated validation result suitable for CLI or in-process use.
+
+    Example:
+        >>> assets = load_assets("evals")
+        >>> validate_assets(assets, "smoke").report.status
+        'passed'
     """
-    errors: list[ValidationIssue] = []
+    errors: list[ValidationIssue] = list(assets.issues)
     warnings: list[ValidationIssue] = []
     suite = assets.suites.get(suite_id)
     if suite is None:
@@ -414,34 +522,40 @@ def validate_assets(
         return ValidatedSuite(None, (), report)
 
     resolved: list[ValidatedCase] = []
+    load_error_ids = {issue.asset_id for issue in assets.issues}
     for case_id in suite.case_ids:
         case = assets.cases.get(case_id)
         if case is None:
-            errors.append(
-                ValidationIssue(
-                    code="missing_case", asset_id=case_id, message="case does not exist"
+            if case_id not in load_error_ids:
+                errors.append(
+                    ValidationIssue(
+                        code="missing_case",
+                        asset_id=case_id,
+                        message="case does not exist",
+                    )
                 )
-            )
             continue
         fixture = assets.fixtures.get(case.fixture_id)
         if fixture is None:
-            errors.append(
-                ValidationIssue(
-                    code="missing_fixture",
-                    asset_id=case.fixture_id,
-                    message=f"referenced by case {case.id}",
+            if case.fixture_id not in load_error_ids:
+                errors.append(
+                    ValidationIssue(
+                        code="missing_fixture",
+                        asset_id=case.fixture_id,
+                        message=f"referenced by case {case.id}",
+                    )
                 )
-            )
             continue
         rubric = assets.rubrics.get(case.rubric_id)
         if rubric is None:
-            errors.append(
-                ValidationIssue(
-                    code="missing_rubric",
-                    asset_id=case.rubric_id,
-                    message=f"referenced by case {case.id}",
+            if case.rubric_id not in load_error_ids:
+                errors.append(
+                    ValidationIssue(
+                        code="missing_rubric",
+                        asset_id=case.rubric_id,
+                        message=f"referenced by case {case.id}",
+                    )
                 )
-            )
             continue
         resolved.append(ValidatedCase(case, fixture, rubric))
 
@@ -449,13 +563,20 @@ def validate_assets(
     coverage = CoverageSummary()
     _add_coverage(coverage, resolved_cases)
 
+    history_invalid_cases: set[str] = set()
     for item in resolved_cases:
         errors.extend(_validate_provenance(item))
         errors.extend(_validate_safety(item))
         errors.extend(_validate_rubric(item))
+        history_errors = _validate_history(item)
+        if history_errors:
+            history_invalid_cases.add(item.case.id)
+            errors.extend(history_errors)
     if reconstruct:
         seen_fixtures: set[str] = set()
         for item in resolved_cases:
+            if item.case.id in history_invalid_cases:
+                continue
             if item.fixture.id in seen_fixtures:
                 continue
             seen_fixtures.add(item.fixture.id)
@@ -464,13 +585,14 @@ def validate_assets(
     if suite.suite_kind == "smoke" or suite.id == "smoke":
         core = assets.suites.get("core")
         if core is None:
-            errors.append(
-                _issue(
-                    "missing_core_suite",
-                    "smoke validation requires a core suite",
-                    suite.id,
+            if "core" not in load_error_ids:
+                errors.append(
+                    _issue(
+                        "missing_core_suite",
+                        "smoke validation requires a core suite",
+                        suite.id,
+                    )
                 )
-            )
         else:
             outside_core = sorted(set(suite.case_ids).difference(core.case_ids))
             if outside_core:
@@ -488,23 +610,6 @@ def validate_assets(
     errors.extend(policy_errors)
     warnings.extend(policy_warnings)
 
-    for dimension in suite.coverage_policy.advisory_dimensions:
-        if dimension in COVERAGE_DIMENSIONS and not coverage.dimensions[dimension]:
-            issue = ValidationIssue(
-                code="advisory_coverage_gap",
-                asset_id=suite.id,
-                message=f"no coverage for advisory dimension '{dimension}'",
-            )
-            warnings.append(issue)
-            if strict_balance:
-                errors.append(
-                    ValidationIssue(
-                        code="required_coverage_gap",
-                        asset_id=issue.asset_id,
-                        message=issue.message,
-                    )
-                )
-
     report = _report(suite, errors, warnings, coverage)
     return ValidatedSuite(suite, resolved_cases if not errors else (), report)
 
@@ -515,8 +620,28 @@ def validate_suite(
     *,
     strict_balance: bool = False,
 ) -> ValidatedSuite:
-    """Load and validate a named suite without invoking providers."""
-    assets, _ = load_suite_assets(evals_dir, suite_id)
+    """Load and validate a named suite without invoking providers.
+
+    Selected-graph issues are retained in the returned report so maintainers can
+    fix multiple broken references in one pass.
+
+    Args:
+        evals_dir: Root directory containing eval assets.
+        suite_id: Stable suite ID to validate.
+        strict_balance: Promote advisory balance gaps to errors.
+
+    Returns:
+        Structured suite result with aggregated load and domain issues.
+
+    Raises:
+        EvalLoadError: If global discovery or the selected suite itself cannot
+            be parsed safely.
+
+    Example:
+        >>> validate_suite("evals", "smoke").report.status
+        'passed'
+    """
+    assets, _ = load_suite_assets(evals_dir, suite_id, strict=False)
     return validate_assets(assets, suite_id, strict_balance=strict_balance)
 
 
@@ -525,7 +650,23 @@ def add_issues(
     errors: Sequence[ValidationIssue] | None = None,
     warnings: Sequence[ValidationIssue] | None = None,
 ) -> ValidatedSuite:
-    """Return a result with additional issues while preserving its data."""
+    """Return a result with additional issues while preserving its data.
+
+    This helper lets later validation phases extend a report immutably.
+
+    Args:
+        result: Existing validated-suite result.
+        errors: Additional errors to append.
+        warnings: Additional warnings to append.
+
+    Returns:
+        A new result whose status reflects the combined error list.
+
+    Example:
+        >>> issue = ValidationIssue(message="runner check failed")
+        >>> add_issues(result, errors=[issue]).report.status
+        'failed'
+    """
     report = result.report.model_copy(
         update={
             "errors": [*result.report.errors, *(errors or ())],

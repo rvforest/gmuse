@@ -9,6 +9,10 @@ Fixture documents must be versioned and reviewable. A fixture represents the
 data needed to reconstruct a temporary git repository and stage one evaluated
 change.
 
+All fixture, rubric, case, and suite documents must declare schema version
+`1.0`; future or unknown schema versions are rejected. Rubric, case, and suite
+documents may omit the field and receive the current `1.0` default.
+
 ### Required top-level fields
 
 | Field | Required | Description |
@@ -95,6 +99,25 @@ Validation must fail when:
 - changed paths differ from expected metadata
 - allowed conventional types are incompatible with gmuse validation
 - `safety_tags` includes `injection` but `injection_tags` is empty
+- repository and commit provenance URLs are not absolute HTTP(S) URLs
+- `source_license_url` is neither an absolute HTTP(S) URL nor a safe
+  repository-relative POSIX path
+- an injection fixture does not include at least one pattern tag and one
+  location tag
+- injection sub-tags are present without the explicit `injection` safety tag
+
+Injection tags are deliberately split into two non-overlapping categories. A
+pattern describes the attack shape (`direct-instruction`,
+`indirect-external-content`, `obfuscated-encoded`, or `deleted-instruction`,
+plus their supported short aliases); a location describes where the content is
+found (`code-comment`, `markdown`, `docs`, `string-literal`, `test-fixture`, or
+`config-example`).
+
+License expressions are checked against the complete SPDX catalog supplied by
+`license-expression`; `LicenseRef-*` expressions remain supported. A
+`source_license_url` may still use the documented repository-path form. Empty,
+whitespace-only, absolute filesystem, parent-traversal, and non-HTTP(S) URL
+values are rejected.
 
 Validation does not certify that a fixture may be redistributed; it only enforces
 that source license evidence and maintainer review status are recorded.

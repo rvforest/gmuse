@@ -24,6 +24,11 @@ Expected outcome:
 - coverage dimensions are reported
 - no LLM provider credentials are required
 
+The output includes a deterministic `Coverage:` section with all twelve
+dimensions in declared order and sorted values. For example, the smoke suite
+reports `history: not-used, used` because its two cases exercise both zero and
+positive history depth.
+
 The command is maintainer-only and intentionally does not register a new
 `gmuse` product command. Fixture, rubric, case, and suite files are one TOML
 record per file under `evals/`; validation discovers them in deterministic
@@ -50,6 +55,11 @@ Expected outcome:
 The validator checks provenance metadata without claiming legal approval. Real
 and adapted fixtures need source license evidence and a separate
 `redistribution_review` value; synthetic fixtures need `synthetic_notes`.
+Repository and commit provenance URLs must be absolute `http` or `https` URLs,
+and license expressions use the complete SPDX catalog plus `LicenseRef-*`
+support. License URL evidence may instead be a safe repository-relative POSIX
+path such as `LICENSE`; blank, traversal, absolute filesystem, and unsupported
+URL forms fail validation.
 
 ## Check A Digest Failure
 
@@ -83,7 +93,20 @@ uv run python -m tools.evals.gmuse_evals validate --suite core --strict-balance
 The checked-in smoke suite must remain a subset of `core`. Injection fixtures
 must identify both the injection pattern and its location, such as
 `direct-instruction` in a `code-comment`. Secret-like values in safety cases
-must be explicitly marked fake or nonfunctional test data.
+must be explicitly marked fake or nonfunctional test data. Injection sub-tags
+without the parent `injection` safety tag are rejected so coverage cannot claim
+an injection category accidentally.
+
+The loader indexes all parseable TOML IDs and keeps duplicate-ID diagnostics
+global, but schema-validates only the selected suite graph. Thus an unrelated
+schema-invalid asset does not block `--suite smoke`; referencing that asset does
+fail with its source path and ID.
+
+Temporary repositories override digest-affecting Git settings, including diff
+prefixes, context, algorithm, color, and path quoting. They also discard
+inherited Git-specific environment variables, disable global/system config, and
+bound every Git subprocess with a timeout. Checked-in digests are therefore
+stable without allowing user Git configuration to execute diff helpers.
 
 This foundation stops at offline fixture validation. It does not clone source
 repositories, call candidate or judge models, import fixtures over the

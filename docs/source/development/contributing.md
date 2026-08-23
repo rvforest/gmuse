@@ -155,9 +155,15 @@ network calls.
 
 Real and adapted fixtures record source-license evidence separately from
 maintainer redistribution review; this metadata check is not legal approval.
-Safety fixtures must identify injection location/sub-tags and mark any
-secret-like test values fake or nonfunctional. See the feature [quickstart](../../../specs/009-eval-fixtures-and-suites/quickstart.md)
-for provenance and digest-failure examples.
+All asset documents use schema `1.0`; supported SPDX expressions, absolute
+HTTP(S) source/commit URLs, and `LicenseRef-*` values are checked during
+validation. License evidence paths must be safe and repository-relative. Safety
+fixtures must identify both an injection pattern and a location, and mark any
+secret-like test values fake or nonfunctional. Coverage is printed in a stable
+order, selected-graph errors are aggregated, and temporary repositories discard
+inherited Git configuration and Git-specific environment behavior. See the
+feature [quickstart](https://github.com/rvforest/gmuse/blob/main/specs/009-eval-fixtures-and-suites/quickstart.md)
+for provenance, digest-failure, and suite-scoped loading examples.
 
 ### Writing Tests
 

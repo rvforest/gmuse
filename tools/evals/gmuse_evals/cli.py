@@ -8,7 +8,7 @@ from collections.abc import Sequence
 import typer
 
 from .load import EvalLoadError
-from .models import ValidationIssue
+from .models import COVERAGE_DIMENSIONS, ValidationIssue
 from .validate import validate_suite
 
 app = typer.Typer(
@@ -41,7 +41,22 @@ def validate(
         help="Treat advisory coverage gaps as validation failures.",
     ),
 ) -> None:
-    """Validate a suite without model, judge, or network calls."""
+    """Validate a suite without model, judge, or network calls.
+
+    The callback stays presentation-only so later runners can call the same
+    structured validator directly.
+
+    Args:
+        suite: Stable suite identifier.
+        evals_dir: Root directory containing eval assets.
+        strict_balance: Whether advisory coverage gaps should fail validation.
+
+    Raises:
+        typer.Exit: With status one when loading or validation fails.
+
+    Example:
+        Run ``python -m tools.evals.gmuse_evals validate --suite smoke``.
+    """
     try:
         result = validate_suite(evals_dir, suite, strict_balance=strict_balance)
     except EvalLoadError as error:
@@ -62,5 +77,9 @@ def validate(
         f"Fixtures: {len({item.fixture.id for item in result.cases})}\n"
         f"Warnings: {len(report.warnings)}"
     )
+    typer.echo("Coverage:")
+    for dimension in COVERAGE_DIMENSIONS:
+        values = report.coverage.dimensions.get(dimension, [])
+        typer.echo(f"- {dimension}: {', '.join(sorted(values)) or 'none'}")
     if report.status == "failed":
         raise typer.Exit(code=1)

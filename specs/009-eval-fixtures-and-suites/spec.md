@@ -4,10 +4,10 @@
 
 **Created**: 2026-06-11
 
-**Status**: Draft
+**Status**: Implemented
 
-**Draft Note**: This specification describes proposed maintainer-only eval
-tooling. It does not describe current gmuse behavior.
+**Implementation Note**: This specification describes maintainer-only eval
+tooling. It does not change the public `gmuse` command workflow.
 
 **Input**: User description: "Create maintainer-only eval fixture and suite foundation for gmuse, split from the broader eval planning notes."
 

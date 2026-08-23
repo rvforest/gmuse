@@ -134,6 +134,150 @@
 
 ---
 
+## Phase 7: User Story 1 Review Remediation - Deterministic, Observable Offline Validation (Priority: P1) 🎯 MVP
+
+**Goal**: Close review gaps in the smoke-validation path so its CLI visibly
+reports every required coverage dimension, reconstruction is independent of
+maintainer Git configuration, and reconstructed history contains only history
+declared by the fixture.
+
+**Independent Test**: Run the smoke command with a temporary global Git config
+that enables `diff.noprefix`, mnemonic prefixes, forced color, and a non-default
+diff context; confirm the command still passes with the checked-in digests,
+prints all twelve coverage dimensions in deterministic order, and exposes no
+internal bootstrap commit through production history extraction.
+
+### Tests for User Story 1 Review Remediation ⚠️
+
+> **NOTE**: Write these tests first and confirm they fail before implementation.
+
+- [X] T040 [P] [US1] Add CLI success-output assertions for a `Coverage:` section containing every key in `COVERAGE_DIMENSIONS`, deterministic sorted values, and the existing case/fixture/warning counts in tests/integration/test_eval_foundation_cli.py
+- [X] T041 [P] [US1] Add a reconstruction regression test that points `GIT_CONFIG_GLOBAL` at a temporary config enabling `diff.noprefix`, `diff.mnemonicPrefix`, forced diff color, non-default diff context/algorithm, and `core.quotePath`; use multiline ambiguous content plus a non-ASCII path so the uncontrolled settings would alter output, then assert raw diff text, changed paths, and SHA-256 match an uncontaminated reconstruction in tests/integration/test_eval_foundation_reconstruction.py
+- [X] T042 [P] [US1] Add production-history fidelity tests asserting `gmuse.git.get_commit_history(path=...)` returns fixture-declared subjects in declared newest-first order and never returns `fixture: establish base` within any validated case depth in tests/integration/test_eval_foundation_reconstruction.py
+- [X] T043 [P] [US1] Add case/fixture compatibility and coverage tests proving `history_depth = 0` reports `not-used`, positive depth reports `used`, `null` resolves gmuse's current default depth, and a resolved depth larger than declared fixture history fails validation before reconstruction in tests/unit/test_eval_foundation_coverage.py and tests/unit/test_eval_foundation_validation.py
+
+### Implementation for User Story 1 Review Remediation
+
+- [X] T044 [US1] Make temporary repositories override all digest-affecting user/global Git settings exercised by T041 while retaining `gmuse.git.get_staged_diff(path=...)` as the extraction path in tools/evals/gmuse_evals/git_reconstruct.py (depends on T041)
+- [X] T045 [US1] Reconstruct declared history so every commit visible to production history extraction corresponds to a fixture history record, resolve `history_depth = null` through gmuse's default, reject cases that request more history than the fixture declares, and report resolved usage accurately in tools/evals/gmuse_evals/git_reconstruct.py and tools/evals/gmuse_evals/validate.py (depends on T042, T043)
+- [X] T046 [US1] Render `ValidationReport.coverage.dimensions` in `COVERAGE_DIMENSIONS` order with sorted values and stable human-readable labels in tools/evals/gmuse_evals/cli.py (depends on T040)
+
+**Checkpoint**: The smoke command has deterministic output and digests under
+supported Git environments, and its visible coverage/history claims match the
+repository state later runner work will consume.
+
+---
+
+## Phase 8: User Story 2 Review Remediation - Strict Schemas, Provenance, And Safety Metadata (Priority: P2)
+
+**Goal**: Prevent schema/provenance false positives and false negatives by
+rejecting unsupported schema versions, accepting the complete SPDX catalog,
+validating source URLs, and requiring both an injection pattern and location.
+
+**Independent Test**: Validate temporary real and injection fixtures showing
+that supported schema `1.0`, valid SPDX identifiers/expressions/exceptions, and
+well-formed source URLs pass; unknown schema versions, malformed URLs, invalid
+license expressions, or injection tags missing either category fail with
+field-specific issues.
+
+### Tests for User Story 2 Review Remediation ⚠️
+
+> **NOTE**: Write these tests first and confirm they fail before implementation.
+
+- [X] T047 [P] [US2] Add table-driven model/loader tests proving fixture, rubric, case, and suite documents accept only `SCHEMA_VERSION`, reject future/unknown declared versions such as `999.0`, and preserve current contract defaults where the schema contract permits omission in tests/unit/test_eval_foundation_models.py and tests/unit/test_eval_foundation_load.py
+- [X] T048 [P] [US2] Add provenance tests accepting valid SPDX examples outside the current allowlist (`0BSD`, `Python-2.0`, and an expression using `WITH Classpath-exception-2.0`), retaining `LicenseRef-*` support, rejecting malformed expressions, and rejecting non-absolute or non-HTTP(S) repository/commit URLs in tests/unit/test_eval_foundation_provenance.py and tests/integration/test_eval_foundation_provenance.py
+- [X] T049 [P] [US2] Add injection taxonomy tests showing a pattern-only tag list and a location-only tag list each fail, while every supported pattern family paired with a supported code/docs/string/test/config location passes in tests/unit/test_eval_foundation_rubrics.py
+
+### Implementation for User Story 2 Review Remediation
+
+- [X] T050 [US2] Constrain every declared `schema_version` to the validator's `SCHEMA_VERSION` without conflating document schema versions with fixture revisions or rubric/suite versions in tools/evals/gmuse_evals/models.py (depends on T047)
+- [X] T051 [US2] Replace the hand-maintained SPDX symbol allowlist with `license-expression`'s complete SPDX licensing data, preserve valid `LicenseRef-*` expressions, and validate `source_repository_url` plus `source_commit_url` as absolute HTTP(S) URLs while retaining the documented repository-path option for `source_license_url` in tools/evals/gmuse_evals/models.py and tools/evals/gmuse_evals/validate.py (depends on T048)
+- [X] T052 [US2] Define non-overlapping injection-pattern and injection-location tag sets once in tools/evals/gmuse_evals/models.py and require at least one recognized tag from each set for every injection fixture in tools/evals/gmuse_evals/validate.py (depends on T049)
+
+**Checkpoint**: Reviewable assets cannot silently opt into an unknown schema,
+valid SPDX evidence is not rejected by a local subset, and injection coverage
+always records both attack pattern and content location.
+
+---
+
+## Phase 9: User Story 3 Review Remediation - Suite-Scoped Asset Loading (Priority: P3)
+
+**Goal**: Preserve global asset discovery and duplicate-ID diagnostics while
+ensuring validation of one suite model-validates only that suite's transitive
+case, fixture, rubric, and smoke/core relationship records.
+
+**Independent Test**: Place a parseable, ID-bearing but schema-invalid asset
+outside the selected suite graph and confirm smoke validation passes; reference
+that same asset and confirm validation fails with its path and ID. Duplicate IDs,
+malformed requested documents, missing references, and smoke/core violations
+must remain failures.
+
+### Tests for User Story 3 Review Remediation ⚠️
+
+- [X] T053 [P] [US3] Add loader unit tests for a two-stage raw-ID index plus requested-graph model validation, covering an unreferenced parseable ID-bearing schema-invalid document, the same document when referenced, duplicate IDs, and a parseable ID-bearing selected document missing required structural fields in tests/unit/test_eval_foundation_load.py
+- [X] T054 [P] [US3] Add CLI integration coverage proving `--suite smoke` ignores schema-invalid assets outside its transitive graph but still validates the `core` membership record and fails when the invalid asset becomes referenced in tests/integration/test_eval_foundation_cli.py
+
+### Implementation for User Story 3 Review Remediation
+
+- [X] T055 [US3] Refactor suite loading into deterministic raw TOML discovery/ID indexing followed by Pydantic construction of the requested suite graph, retain `load_assets()` as the explicit full-catalog validation API, and make `load_suite_assets()` include the core suite data needed for smoke-subset checks in tools/evals/gmuse_evals/load.py and tools/evals/gmuse_evals/validate.py (depends on T053, T054)
+
+**Checkpoint**: A focused suite remains independently runnable without hiding
+errors in assets it actually references or weakening global catalog validation.
+
+---
+
+## Phase 10: Review Remediation Polish & Merge Gates
+
+**Purpose**: Align maintainer documentation with the corrected contracts,
+restore repository formatting, and prove all remediation through the required
+quality gates.
+
+- [X] T056 [P] Update the coverage-output example, deterministic Git-environment behavior, schema-version rejection, complete SPDX validation, injection pattern/location rule, and suite-scoped loading semantics in specs/009-eval-fixtures-and-suites/contracts/validation-cli.md, specs/009-eval-fixtures-and-suites/contracts/fixture-schema.md, specs/009-eval-fixtures-and-suites/quickstart.md, and docs/source/development/contributing.md
+- [X] T057 Run `uv run nox -s format`, review and retain Ruff formatting for all touched Python files, and specifically resolve the pre-existing review failures in tests/integration/test_eval_foundation_cli.py, tests/integration/test_eval_foundation_provenance.py, tests/integration/test_eval_foundation_reconstruction.py, tests/unit/test_eval_foundation_coverage.py, tests/unit/test_eval_foundation_load.py, tests/unit/test_eval_foundation_rubrics.py, and tests/unit/test_eval_foundation_validation.py
+- [X] T058 Run `uv run nox -s test`, `uv run nox -s lint`, `uv run nox -s format`, and `uv run nox -s types`; then run the checked-in smoke/core CLI commands normally and with the adversarial temporary global Git config from T041, confirming under-30-second offline execution, identical digests, visible complete coverage, zero provider credentials, and no live/network calls
+
+**Checkpoint**: All review findings are covered by regression tests, documented,
+formatted, and verified through the repository's merge gates.
+
+---
+
+## Phase 11: Holistic Review Remediation
+
+**Purpose**: Close the remaining security, validation-integrity, structured-error,
+documentation, and specification-metadata findings from the holistic branch review.
+
+- [X] T059 [P] Add failing regressions for complete Git environment isolation,
+  license-reference validation, orphan injection tags, aggregated selected-graph
+  errors, and non-duplicated advisory policy issues in
+  tests/integration/test_eval_foundation_reconstruction.py,
+  tests/unit/test_eval_foundation_provenance.py,
+  tests/unit/test_eval_foundation_rubrics.py,
+  tests/unit/test_eval_foundation_load.py, and
+  tests/unit/test_eval_foundation_coverage.py
+- [X] T060 [US1] Isolate reconstruction from inherited Git configuration and
+  Git-specific environment variables, add subprocess timeouts, and pass the
+  sanitized environment through production staged-diff extraction in
+  src/gmuse/git.py and tools/evals/gmuse_evals/git_reconstruct.py
+- [X] T061 [US2] Validate source license URL-or-repository-path evidence and
+  reject injection sub-tags without an explicit injection safety tag in
+  tools/evals/gmuse_evals/validate.py
+- [X] T062 [US3] Preserve structured, aggregated issues while loading a selected
+  suite graph and remove duplicate advisory policy reporting in
+  tools/evals/gmuse_evals/load.py and tools/evals/gmuse_evals/validate.py
+- [X] T063 Add constitution-compliant Google-style documentation, rationale,
+  and examples for exported eval foundation APIs in tools/evals/gmuse_evals/
+- [X] T064 Align promoted feature status/path metadata and document the hardened
+  validation contracts in specs/009-eval-fixtures-and-suites/ and
+  docs/source/development/contributing.md
+- [X] T065 Run focused regressions, the checked-in smoke/core commands, the full
+  Python 3.10 suite, lint, format, types, pre-commit checks, and docs
+
+**Checkpoint**: The reviewed branch is deterministic and offline under hostile
+Git configuration, rejects misleading provenance/safety metadata, aggregates
+selected-graph failures, and satisfies the project constitution.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -144,12 +288,19 @@
 - **Phase 4: US2** — depends on Phase 2; its temporary origin/rubric cases are independently testable
 - **Phase 5: US3** — depends on Phase 2; T033-T034 additionally depend on US1's checked-in cases and smoke suite
 - **Phase 6: Polish** — depends on all selected user stories
+- **Phase 7: US1 review remediation** — starts from the completed foundation; T040-T043 can be written in parallel, then T044-T046 follow their named test dependencies
+- **Phase 8: US2 review remediation** — starts from the completed foundation and can proceed alongside Phase 7 at the test level; T050-T052 follow T047-T049 respectively
+- **Phase 9: US3 review remediation** — depends on T050's schema-version behavior so requested-graph loading can distinguish unsupported documents consistently; T053-T054 precede T055
+- **Phase 10: Review remediation polish** — depends on T044-T046, T050-T052, and T055; documentation may start once the corrected behavior is settled, formatting precedes T058
 
 ### User Story Dependencies
 
 - **US1 (P1)**: Starts after Foundational with no dependency on another story and delivers offline smoke validation
 - **US2 (P2)**: Starts after Foundational and can be completed with temporary fixtures independently of US1; the final checked-in injection fixture benefits from its safety validation
 - **US3 (P3)**: Starts after Foundational for suite-policy logic; checked-in smoke/core integration depends on US1's fixture, rubric, and case assets
+- **US1 review remediation**: Independently verified by the smoke CLI under adversarial global Git configuration, complete visible coverage, and exact production history extraction
+- **US2 review remediation**: Independently verified with temporary schema, real-provenance, SPDX, URL, and injection-taxonomy documents without reconstruction or provider access
+- **US3 review remediation**: Depends on supported-schema enforcement from T050, then independently verifies selected-suite graph loading with referenced and unreferenced invalid assets
 
 ### Within Each User Story
 
@@ -158,6 +309,9 @@
 - Repository reconstruction must precede digest generation for checked-in fixtures
 - Fixture and rubric assets must exist before cases; cases must exist before suites
 - Core logic must return structured results before CLI rendering is finalized
+- Review-remediation tests T040-T043, T047-T049, and T053-T054 must fail for the reviewed behavior before their paired implementation tasks begin
+- Do not update checked-in staged-diff digests merely to accommodate inherited Git configuration; T044 must make reconstruction deterministic and existing digests may change only after an intentional raw-diff review
+- T058 is the merge gate and cannot begin until implementation, documentation, and formatting remediation are complete
 
 ---
 
@@ -169,6 +323,10 @@
 - **US2**: T021-T023 can run in parallel before T024-T026
 - **US3**: T027-T029 can run in parallel before T030-T032
 - **Polish**: T035 and T037 can run in parallel before T036 and final validation
+- **US1 review remediation**: T040-T043 target separate CLI, reconstruction, and coverage/validation test paths and can be authored in parallel; T044 and T046 edit separate implementation modules
+- **US2 review remediation**: T047-T049 cover distinct schema, provenance, and safety concerns and can be authored in parallel before T050-T052
+- **US3 review remediation**: T053 and T054 can be authored in parallel before the shared loader implementation in T055
+- **Review remediation polish**: T056 can proceed while implementation tests stabilize; T057-T058 remain sequential merge-gate work
 
 ## Parallel Example: User Story 1
 
@@ -200,6 +358,17 @@ Task: "T028 Add coverage policy tests in tests/unit/test_eval_foundation_coverag
 Task: "T029 Add strict-balance CLI tests in tests/integration/test_eval_foundation_cli.py"
 ```
 
+## Parallel Example: Review Remediation
+
+```text
+Task: "T040 Add complete CLI coverage-rendering assertions in tests/integration/test_eval_foundation_cli.py"
+Task: "T041 Add global Git configuration isolation coverage in tests/integration/test_eval_foundation_reconstruction.py"
+Task: "T047 Add unknown schema-version rejection coverage in tests/unit/test_eval_foundation_models.py and tests/unit/test_eval_foundation_load.py"
+Task: "T048 Add complete SPDX and provenance URL coverage in tests/unit/test_eval_foundation_provenance.py and tests/integration/test_eval_foundation_provenance.py"
+Task: "T049 Add injection pattern/location completeness coverage in tests/unit/test_eval_foundation_rubrics.py"
+Task: "T053 Add requested-suite graph loading coverage in tests/unit/test_eval_foundation_load.py"
+```
+
 ---
 
 ## Implementation Strategy
@@ -218,6 +387,9 @@ Task: "T029 Add strict-balance CLI tests in tests/integration/test_eval_foundati
 3. Add US2 for complete provenance, licensing-evidence, rubric, and safety review rules
 4. Add US3 for curated suite intent, subset policy, and balance handling
 5. Finish downstream adapter compatibility, documentation, quickstart scenarios, and quality gates
+6. Complete US1 review remediation first because deterministic fixture digests and visible coverage block trustworthy downstream evals
+7. Complete US2 schema/provenance/safety remediation and US3 suite-scoped loading remediation
+8. Finish review documentation, formatting, and T058 merge-gate verification
 
 ### Suggested Team Split
 

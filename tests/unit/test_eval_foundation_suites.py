@@ -1,5 +1,7 @@
 """Suite membership, format, and safety discovery tests."""
 
+from typing import Literal
+
 import pytest
 from pydantic import ValidationError
 
@@ -20,7 +22,7 @@ def _assets(
     *,
     smoke_cases: list[str] | None = None,
     core_cases: list[str] | None = None,
-    suite_kind: str = "smoke",
+    suite_kind: Literal["smoke", "core", "safety", "custom"] = "smoke",
 ) -> EvalAssets:
     fixture = EvalFixture(
         schema_version="1.0",
@@ -118,17 +120,19 @@ def test_duplicate_case_ids_and_unsupported_formats_are_rejected_structurally() 
             coverage_policy=SuiteCoveragePolicy(),
         )
     with pytest.raises(ValidationError):
-        EvalCase(
-            id="case",
-            revision=1,
-            fixture_id="fixture",
-            rubric_id="rubric",
-            formats=["shell"],
-            history_depth=0,
-            include_branch=False,
-            user_hint=None,
-            max_chars=None,
-            tags=[],
+        EvalCase.model_validate(
+            {
+                "id": "case",
+                "revision": 1,
+                "fixture_id": "fixture",
+                "rubric_id": "rubric",
+                "formats": ["shell"],
+                "history_depth": 0,
+                "include_branch": False,
+                "user_hint": None,
+                "max_chars": None,
+                "tags": [],
+            }
         )
 
 

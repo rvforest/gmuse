@@ -119,6 +119,42 @@ def test_provenance_origins_have_explicit_requirements(
     assert result.report.status == expected_status
 
 
+@pytest.mark.parametrize(
+    "source_license_url",
+    ["", "   ", "ftp://example.com/LICENSE", "../LICENSE", "/LICENSE"],
+)
+def test_real_fixture_rejects_invalid_license_references(
+    source_license_url: str,
+) -> None:
+    provenance = _real_provenance(
+        source_license_expression=None,
+        source_license_url=source_license_url,
+    )
+
+    result = validate_assets(_assets(provenance), "custom", reconstruct=False)
+
+    assert any(
+        issue.code == "invalid_license_reference" for issue in result.report.errors
+    )
+
+
+@pytest.mark.parametrize(
+    "source_license_url",
+    ["LICENSE", "docs/licenses/source.txt", "https://example.com/LICENSE"],
+)
+def test_real_fixture_accepts_url_or_safe_repository_license_path(
+    source_license_url: str,
+) -> None:
+    provenance = _real_provenance(
+        source_license_expression=None,
+        source_license_url=source_license_url,
+    )
+
+    result = validate_assets(_assets(provenance), "custom", reconstruct=False)
+
+    assert result.report.status == "passed"
+
+
 def test_real_provenance_reports_all_missing_attribution_fields() -> None:
     result = validate_assets(
         _assets(FixtureProvenance(origin="real")), "custom", reconstruct=False
@@ -141,3 +177,43 @@ def test_real_provenance_rejects_short_sha_and_invalid_spdx() -> None:
     codes = {issue.code for issue in result.report.errors}
 
     assert {"short_commit_sha", "invalid_license_expression"} <= codes
+
+
+@pytest.mark.parametrize(
+    "expression",
+    [
+        "0BSD",
+        "Python-2.0",
+        "GPL-2.0-only WITH Classpath-exception-2.0",
+        "LicenseRef-Test",
+    ],
+)
+def test_complete_spdx_catalog_and_license_refs_are_accepted(expression: str) -> None:
+    result = validate_assets(
+        _assets(_real_provenance(source_license_expression=expression)),
+        "custom",
+        reconstruct=False,
+    )
+
+    assert not any(
+        issue.code == "invalid_license_expression" for issue in result.report.errors
+    )
+
+
+@pytest.mark.parametrize("field", ["source_repository_url", "source_commit_url"])
+@pytest.mark.parametrize(
+    "value", ["github.com/example/project", "ftp://example.com/project"]
+)
+def test_repository_and_commit_urls_must_be_absolute_http_urls(
+    field: str, value: str
+) -> None:
+    result = validate_assets(
+        _assets(_real_provenance(**{field: value})),
+        "custom",
+        reconstruct=False,
+    )
+
+    assert any(
+        issue.code == "invalid_source_url" and field in issue.message
+        for issue in result.report.errors
+    )

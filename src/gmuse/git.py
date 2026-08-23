@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Final, Optional
+from typing import Final, Mapping, Optional
 
 from gmuse.exceptions import NoStagedChangesError, NotAGitRepositoryError
 from gmuse.logging import get_logger
@@ -166,6 +166,7 @@ def _run_git(
     cwd: Optional[str] = None,
     timeout: int = _GIT_TIMEOUT_SHORT,
     check: bool = True,
+    env: Optional[Mapping[str, str]] = None,
 ) -> subprocess.CompletedProcess[str]:
     """Execute a git command and return the result.
 
@@ -176,6 +177,8 @@ def _run_git(
         cwd: Working directory for the command (None = current directory)
         timeout: Command timeout in seconds
         check: If True, raise CalledProcessError on non-zero exit code
+        env: Optional complete subprocess environment. The default inherits the
+            current process environment.
 
     Returns:
         CompletedProcess with captured stdout/stderr
@@ -192,6 +195,7 @@ def _run_git(
         cwd=cwd,
         timeout=timeout,
         check=check,
+        env=env,
     )
 
 
@@ -439,7 +443,11 @@ def get_repo_root(path: Optional[Path] = None) -> Path:
         raise NotAGitRepositoryError("Git command timed out") from e
 
 
-def get_staged_diff(*, path: Optional[Path] = None) -> StagedDiff:
+def get_staged_diff(
+    *,
+    path: Optional[Path] = None,
+    git_env: Optional[Mapping[str, str]] = None,
+) -> StagedDiff:
     """Extract staged changes from git repository.
 
     Returns:
@@ -448,6 +456,9 @@ def get_staged_diff(*, path: Optional[Path] = None) -> StagedDiff:
     Args:
         path: Optional repository directory. When omitted, use the current
             working directory as before.
+        git_env: Optional complete environment for Git subprocesses. Maintainer
+            tooling uses this to isolate fixture validation from user Git
+            configuration; normal callers should leave it unset.
 
     Raises:
         NotAGitRepositoryError: If not in a git repository
@@ -470,6 +481,7 @@ def get_staged_diff(*, path: Optional[Path] = None) -> StagedDiff:
             "--cached",
             cwd=str(path) if path else None,
             timeout=_GIT_TIMEOUT_LONG,
+            env=git_env,
         )
         raw_diff = result.stdout
 
@@ -490,6 +502,7 @@ def get_staged_diff(*, path: Optional[Path] = None) -> StagedDiff:
             "--name-only",
             cwd=str(path) if path else None,
             timeout=10,
+            env=git_env,
         )
         files_changed = [f for f in result_files.stdout.strip().split("\n") if f]
     except subprocess.CalledProcessError:

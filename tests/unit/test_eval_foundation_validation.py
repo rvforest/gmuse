@@ -13,7 +13,9 @@ from tools.evals.gmuse_evals.models import (
 from tools.evals.gmuse_evals.validate import validate_assets
 
 
-def make_assets(*, digest: str = "0" * 64, paths: list[str] | None = None) -> EvalAssets:
+def make_assets(
+    *, digest: str = "0" * 64, paths: list[str] | None = None
+) -> EvalAssets:
     fixture = EvalFixture(
         schema_version="1.0",
         id="fixture",
@@ -68,7 +70,9 @@ def make_assets(*, digest: str = "0" * 64, paths: list[str] | None = None) -> Ev
         case_ids=["case"],
         coverage_policy=SuiteCoveragePolicy(),
     )
-    return EvalAssets({"fixture": fixture}, {"rubric": rubric}, {"case": case}, {"custom": suite})
+    return EvalAssets(
+        {"fixture": fixture}, {"rubric": rubric}, {"case": case}, {"custom": suite}
+    )
 
 
 def test_successful_validation_reports_expected_digest_and_coverage() -> None:
@@ -79,7 +83,9 @@ def test_successful_validation_reports_expected_digest_and_coverage() -> None:
         valid = initial.fixtures["fixture"].model_copy(
             update={"expected_staged_diff_sha256": repository.staged_diff.hash}
         )
-    assets = EvalAssets(valid and {"fixture": valid}, initial.rubrics, initial.cases, initial.suites)
+    assets = EvalAssets(
+        {"fixture": valid}, initial.rubrics, initial.cases, initial.suites
+    )
 
     result = validate_assets(assets, "custom")
 
@@ -109,3 +115,25 @@ def test_missing_references_are_aggregated() -> None:
 
     assert result.report.status == "failed"
     assert {issue.code for issue in result.report.errors} == {"missing_fixture"}
+
+
+def test_history_depth_error_skips_reconstruction(monkeypatch) -> None:
+    import tools.evals.gmuse_evals.validate as validation
+
+    assets = make_assets()
+    assets = EvalAssets(
+        assets.fixtures,
+        assets.rubrics,
+        {"case": assets.cases["case"].model_copy(update={"history_depth": 1})},
+        assets.suites,
+    )
+
+    def fail_reconstruction(_fixture):
+        raise AssertionError("reconstruction should not run")
+
+    monkeypatch.setattr(validation, "reconstruct_fixture", fail_reconstruction)
+    result = validate_assets(assets, "custom")
+
+    assert any(
+        issue.code == "history_depth_exceeds_fixture" for issue in result.report.errors
+    )

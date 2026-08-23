@@ -10,7 +10,31 @@ from .validate import ValidatedCase
 
 @dataclass(frozen=True, slots=True)
 class ValidatedCaseDescriptor:
-    """Stable case metadata consumed by future runner adapters."""
+    """Stable case metadata consumed by future runner adapters.
+
+    A framework-neutral descriptor prevents the fixture foundation from taking
+    a runtime dependency on Inspect AI.
+
+    Attributes:
+        case_id: Stable case ID.
+        case_revision: Monotonic case revision.
+        fixture_id: Stable fixture ID.
+        fixture_revision: Monotonic fixture revision.
+        rubric_id: Stable rubric ID.
+        rubric_version: Rubric contract version.
+        expected_staged_diff_sha256: Validated staged-diff digest.
+        formats: Supported generation formats.
+        history_depth: Requested history depth or the product default marker.
+        include_branch: Whether branch context is enabled.
+        user_hint: Optional user hint.
+        max_chars: Optional message length limit.
+        tags: Case classification tags.
+
+    Example:
+        >>> descriptor = validated_case_to_descriptor(validated_case)
+        >>> descriptor.to_metadata()["case_id"] == descriptor.case_id
+        True
+    """
 
     case_id: str
     case_revision: int
@@ -27,7 +51,15 @@ class ValidatedCaseDescriptor:
     tags: tuple[str, ...]
 
     def to_metadata(self) -> dict[str, Any]:
-        """Return JSON-compatible stable metadata for an eval sample."""
+        """Return JSON-compatible stable metadata for an eval sample.
+
+        Returns:
+            A new dictionary with tuple fields converted to lists.
+
+        Example:
+            >>> descriptor.to_metadata()["formats"]
+            ['freeform']
+        """
         data = asdict(self)
         data["formats"] = list(self.formats)
         data["tags"] = list(self.tags)
@@ -35,7 +67,18 @@ class ValidatedCaseDescriptor:
 
 
 def validated_case_to_descriptor(item: ValidatedCase) -> ValidatedCaseDescriptor:
-    """Convert a validated case without importing an Inspect runtime."""
+    """Convert a validated case without importing an Inspect runtime.
+
+    Args:
+        item: Fully resolved and validated case.
+
+    Returns:
+        Stable framework-neutral case metadata.
+
+    Example:
+        >>> validated_case_to_descriptor(item).case_id == item.case.id
+        True
+    """
     return ValidatedCaseDescriptor(
         case_id=item.case.id,
         case_revision=item.case.revision,
@@ -54,7 +97,18 @@ def validated_case_to_descriptor(item: ValidatedCase) -> ValidatedCaseDescriptor
 
 
 def to_inspect_sample(item: ValidatedCase) -> dict[str, Any]:
-    """Return plain sample-shaped data for a future Inspect adapter."""
+    """Return plain sample-shaped data for a future Inspect adapter.
+
+    Args:
+        item: Fully resolved and validated case.
+
+    Returns:
+        JSON-compatible sample-shaped input and metadata.
+
+    Example:
+        >>> to_inspect_sample(item)["id"] == item.case.id
+        True
+    """
     descriptor = validated_case_to_descriptor(item)
     return {
         "id": descriptor.case_id,

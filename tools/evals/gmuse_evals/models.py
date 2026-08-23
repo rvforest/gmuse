@@ -34,19 +34,40 @@ COVERAGE_DIMENSIONS = (
     "hint",
     "max_chars",
 )
-INJECTION_TAGS = (
-    "direct",
-    "indirect",
-    "obfuscated",
-    "encoded",
-    "deleted",
-    "code-comment",
-    "markdown",
-    "docs",
-    "string-literal",
-    "test-fixture",
-    "config-example",
+INJECTION_PATTERN_TAGS = frozenset(
+    {
+        "direct",
+        "direct-instruction",
+        "indirect",
+        "indirect-external-content",
+        "obfuscated",
+        "obfuscated-encoded",
+        "encoded",
+        "deleted",
+        "deleted-instruction",
+    }
 )
+INJECTION_LOCATION_TAGS = frozenset(
+    {
+        "code-comment",
+        "markdown",
+        "docs",
+        "string-literal",
+        "test-fixture",
+        "config-example",
+    }
+)
+INJECTION_TAGS = INJECTION_PATTERN_TAGS | INJECTION_LOCATION_TAGS
+
+
+def _validate_schema_version(value: str) -> str:
+    """Require asset documents to use the current schema contract."""
+    if value != SCHEMA_VERSION:
+        raise ValueError(
+            f"unsupported schema_version {value!r}; expected {SCHEMA_VERSION!r}"
+        )
+    return value
+
 
 FormatName = Literal["freeform", "conventional", "gitmoji"]
 FixtureOrigin = Literal["real", "adapted", "synthetic"]
@@ -55,13 +76,31 @@ SuiteKind = Literal["smoke", "core", "safety", "custom"]
 
 
 class EvalModel(BaseModel):
-    """Base model that rejects accidental, unversioned asset fields."""
+    """Base model that rejects accidental, unversioned asset fields.
+
+    Strict shared configuration prevents silent schema drift across asset kinds.
+
+    Example:
+        >>> class Record(EvalModel):
+        ...     id: str
+        >>> Record.model_validate({"id": "one", "extra": True})
+        Traceback (most recent call last):
+        ...
+        pydantic_core._pydantic_core.ValidationError: ...
+    """
 
     model_config = ConfigDict(extra="forbid", validate_assignment=True)
 
 
 class FixtureFile(EvalModel):
-    """A safe, relative file to materialize before applying a fixture patch."""
+    """A safe file to materialize before applying a fixture patch.
+
+    Relative POSIX paths keep fixture reconstruction portable and contained.
+
+    Example:
+        >>> FixtureFile(path="README.md", content="# Example\n")
+        FixtureFile(path='README.md', content='# Example\\n', executable=False)
+    """
 
     path: str = Field(min_length=1)
     content: str
@@ -82,7 +121,14 @@ class FixtureFile(EvalModel):
 
 
 class FixtureHistoryCommit(EvalModel):
-    """A prior synthetic commit used to provide realistic history context."""
+    """A prior commit message used to reconstruct style context.
+
+    Explicit history records keep later eval runs reproducible.
+
+    Example:
+        >>> FixtureHistoryCommit(subject="docs: explain validation")
+        FixtureHistoryCommit(subject='docs: explain validation', body=None, source_commit_sha=None)
+    """
 
     subject: str = Field(min_length=1)
     body: str | None = None
@@ -90,7 +136,14 @@ class FixtureHistoryCommit(EvalModel):
 
 
 class FixtureProvenance(EvalModel):
-    """Origin and attribution metadata for a fixture."""
+    """Origin and attribution metadata for a fixture.
+
+    The record separates source evidence from redistribution review status.
+
+    Example:
+        >>> FixtureProvenance(origin="synthetic", synthetic_notes="Fictional data")
+        FixtureProvenance(origin='synthetic', ...)
+    """
 
     origin: FixtureOrigin
     source_repository_url: str | None = None
@@ -108,7 +161,14 @@ class FixtureProvenance(EvalModel):
 
 
 class EvalFixture(EvalModel):
-    """Offline data needed to reconstruct and stage one evaluated change."""
+    """Offline data needed to reconstruct one evaluated change.
+
+    A fixture preserves exact Git evidence so candidate runs remain auditable.
+
+    Example:
+        >>> data = {"schema_version": "1.0", "id": "example", ...}
+        >>> fixture = EvalFixture.model_validate(data)
+    """
 
     schema_version: str = Field(min_length=1)
     id: str = Field(min_length=1)
@@ -127,6 +187,12 @@ class EvalFixture(EvalModel):
     branch_name: str | None = None
     repository_instructions: str | None = None
     selection_rationale: str = Field(min_length=1)
+
+    @field_validator("schema_version")
+    @classmethod
+    def validate_schema_version(cls, value: str) -> str:
+        """Reject fixture documents from unsupported schema revisions."""
+        return _validate_schema_version(value)
 
     @field_validator("expected_staged_diff_sha256")
     @classmethod
@@ -159,9 +225,17 @@ class EvalFixture(EvalModel):
 
 
 class EvalRubric(EvalModel):
-    """Reviewable expectations for an acceptable generated message."""
+    """Reviewable expectations for an acceptable generated message.
 
-    schema_version: str = SCHEMA_VERSION
+    Rubrics keep scoring intent versioned independently from fixture content.
+
+    Example:
+        >>> rubric = EvalRubric(id="docs", version="1.0", ...)
+        >>> rubric.allowed_conventional_types
+        ['docs']
+    """
+
+    schema_version: str = Field(default=SCHEMA_VERSION, validate_default=True)
     id: str = Field(min_length=1)
     version: str = Field(min_length=1)
     required_concepts: list[str]
@@ -173,11 +247,25 @@ class EvalRubric(EvalModel):
     quality_notes: str | None = None
     safety_notes: str | None = None
 
+    @field_validator("schema_version")
+    @classmethod
+    def validate_schema_version(cls, value: str) -> str:
+        """Reject rubric documents from unsupported schema revisions."""
+        return _validate_schema_version(value)
+
 
 class EvalCase(EvalModel):
-    """Bind a fixture and rubric to generation context options."""
+    """Bind a fixture and rubric to generation context options.
 
-    schema_version: str = SCHEMA_VERSION
+    Cases avoid duplicating fixture content across formats and context settings.
+
+    Example:
+        >>> case = EvalCase(id="docs", fixture_id="fixture", rubric_id="rubric", ...)
+        >>> case.formats
+        ['freeform']
+    """
+
+    schema_version: str = Field(default=SCHEMA_VERSION, validate_default=True)
     id: str = Field(min_length=1)
     revision: int = Field(gt=0)
     fixture_id: str = Field(min_length=1)
@@ -189,9 +277,22 @@ class EvalCase(EvalModel):
     max_chars: int | None = Field(default=None, gt=0)
     tags: list[str]
 
+    @field_validator("schema_version")
+    @classmethod
+    def validate_schema_version(cls, value: str) -> str:
+        """Reject case documents from unsupported schema revisions."""
+        return _validate_schema_version(value)
+
 
 class SuiteCoveragePolicy(EvalModel):
-    """Required and advisory coverage rules for a suite."""
+    """Required and advisory coverage rules for a suite.
+
+    Policies let small suites warn while mature suites enforce balance.
+
+    Example:
+        >>> SuiteCoveragePolicy(advisory_dimensions=["format"])
+        SuiteCoveragePolicy(required_dimensions=[], advisory_dimensions=['format'], minimum_case_counts={})
+    """
 
     required_dimensions: list[str] = Field(default_factory=list)
     advisory_dimensions: list[str] = Field(default_factory=list)
@@ -207,14 +308,28 @@ class SuiteCoveragePolicy(EvalModel):
 
 
 class EvalSuite(EvalModel):
-    """A named, versioned set of ordered eval case IDs."""
+    """A named, versioned set of ordered eval case IDs.
 
-    schema_version: str = SCHEMA_VERSION
+    Stable suite membership makes focused smoke, core, and safety runs reusable.
+
+    Example:
+        >>> suite = EvalSuite(id="smoke", version="1.0", suite_kind="smoke", ...)
+        >>> suite.id
+        'smoke'
+    """
+
+    schema_version: str = Field(default=SCHEMA_VERSION, validate_default=True)
     id: str = Field(min_length=1)
     version: str = Field(min_length=1)
     suite_kind: SuiteKind
     case_ids: list[str] = Field(min_length=1)
     coverage_policy: SuiteCoveragePolicy
+
+    @field_validator("schema_version")
+    @classmethod
+    def validate_schema_version(cls, value: str) -> str:
+        """Reject suite documents from unsupported schema revisions."""
+        return _validate_schema_version(value)
 
     @field_validator("case_ids")
     @classmethod
@@ -226,7 +341,14 @@ class EvalSuite(EvalModel):
 
 
 class ValidationIssue(EvalModel):
-    """One actionable validation error or warning."""
+    """One actionable validation error or warning.
+
+    Structured issues support both human CLI rendering and future automation.
+
+    Example:
+        >>> ValidationIssue(message="missing fixture", asset_id="case-1").render()
+        'case-1: missing fixture'
+    """
 
     code: str = "validation_error"
     message: str = Field(min_length=1)
@@ -234,13 +356,31 @@ class ValidationIssue(EvalModel):
     asset_id: str | None = None
 
     def render(self) -> str:
-        """Return a compact human-readable issue description."""
+        """Return a compact human-readable issue description.
+
+        Asset IDs take precedence over source paths to keep CLI output concise.
+
+        Returns:
+            Issue text prefixed by an asset ID or path when available.
+
+        Example:
+            >>> ValidationIssue(message="missing", asset_id="fixture").render()
+            'fixture: missing'
+        """
         prefix = self.asset_id or self.path
         return f"{prefix}: {self.message}" if prefix else self.message
 
 
 class CoverageSummary(EvalModel):
-    """Deterministically ordered values observed across validated cases."""
+    """Deterministically ordered coverage observed across validated cases.
+
+    A fixed dimension order makes reports stable and straightforward to compare.
+
+    Example:
+        >>> summary = CoverageSummary()
+        >>> list(summary.dimensions)[0]
+        'ecosystem'
+    """
 
     dimensions: dict[str, list[str]] = Field(
         default_factory=lambda: {dimension: [] for dimension in COVERAGE_DIMENSIONS}
@@ -260,7 +400,15 @@ class CoverageSummary(EvalModel):
 
 
 class ValidationReport(EvalModel):
-    """Structured result shared by the CLI and future eval runners."""
+    """Structured result shared by the CLI and future eval runners.
+
+    The report prevents downstream tools from having to parse CLI text.
+
+    Example:
+        >>> report = ValidationReport(...)
+        >>> report.status in {"passed", "failed"}
+        True
+    """
 
     schema_version: str = Field(min_length=1)
     suite_id: str = Field(min_length=1)

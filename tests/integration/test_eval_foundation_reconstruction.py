@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from gmuse.git import get_commit_history
 from tools.evals.gmuse_evals.git_reconstruct import (
     ReconstructionError,
     reconstruct_fixture,
@@ -52,7 +53,9 @@ def fixture(**overrides: object) -> EvalFixture:
     return EvalFixture.model_validate(values)
 
 
-def test_reconstruction_is_deterministic_and_uses_production_diff(tmp_path: Path) -> None:
+def test_reconstruction_is_deterministic_and_uses_production_diff(
+    tmp_path: Path,
+) -> None:
     del tmp_path  # The helper owns its isolated temporary repository.
     first = fixture()
     with reconstruct_fixture(first) as repository:
@@ -85,7 +88,9 @@ def test_reconstruction_is_deterministic_and_uses_production_diff(tmp_path: Path
 def test_reconstruction_preserves_executable_base_file_mode() -> None:
     executable = fixture(
         id="executable",
-        base_files=[FixtureFile(path="script.sh", content="#!/bin/sh\n", executable=False)],
+        base_files=[
+            FixtureFile(path="script.sh", content="#!/bin/sh\n", executable=False)
+        ],
         patch="""diff --git a/script.sh b/script.sh
 old mode 100644
 new mode 100755
@@ -108,3 +113,82 @@ def test_reconstruction_reports_patch_failures() -> None:
     with pytest.raises(ReconstructionError, match="patch"):
         with reconstruct_fixture(broken):
             pass
+
+
+def test_reconstruction_isolated_from_digest_affecting_global_git_config(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    unicode_patch = """diff --git a/docs/café.md b/docs/café.md
+--- a/docs/café.md
++++ b/docs/café.md
+@@ -1,5 +1,7 @@
+ line one
+ line two
+ line three
+ line four
+ line five
++line six
++line seven
+"""
+    isolated = fixture(
+        id="global-config",
+        base_files=[
+            FixtureFile(
+                path="docs/café.md",
+                content="line one\nline two\nline three\nline four\nline five\n",
+            )
+        ],
+        patch=unicode_patch,
+    )
+    global_config = tmp_path / "gitconfig"
+    global_config.write_text(
+        """[diff]
+    noprefix = true
+    mnemonicPrefix = true
+    context = 1
+    algorithm = patience
+    external = false
+[color]
+    ui = always
+[core]
+    quotePath = false
+""",
+        encoding="utf-8",
+    )
+
+    with reconstruct_fixture(isolated) as clean:
+        expected = (
+            clean.staged_diff.raw_diff,
+            clean.staged_diff.files_changed,
+            clean.staged_diff.hash,
+        )
+
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(global_config))
+    monkeypatch.setenv("GIT_EXTERNAL_DIFF", "false")
+    with reconstruct_fixture(isolated) as configured:
+        observed = (
+            configured.staged_diff.raw_diff,
+            configured.staged_diff.files_changed,
+            configured.staged_diff.hash,
+        )
+
+    assert observed == expected
+
+
+def test_reconstruction_history_matches_declared_newest_first_order() -> None:
+    history = [
+        FixtureHistoryCommit(subject="docs: newest"),
+        FixtureHistoryCommit(subject="docs: middle"),
+        FixtureHistoryCommit(subject="docs: oldest"),
+    ]
+    historical = fixture(id="history-order", history=history)
+
+    with reconstruct_fixture(historical) as repository:
+        observed = get_commit_history(depth=3, path=repository.path)
+
+    assert [commit.message for commit in observed.commits] == [
+        item.subject for item in history
+    ]
+    assert all(
+        commit.message != "fixture: establish base" for commit in observed.commits
+    )

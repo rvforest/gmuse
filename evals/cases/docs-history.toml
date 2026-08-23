@@ -1,0 +1,11 @@
+schema_version = "1.0"
+id = "docs-history"
+revision = 1
+fixture_id = "synthetic-docs-history"
+rubric_id = "docs-history"
+formats = ["freeform", "conventional"]
+history_depth = 1
+include_branch = true
+user_hint = "Prefer the documentation purpose over implementation details."
+max_chars = 72
+tags = ["docs", "history", "branch", "hint", "smoke"]

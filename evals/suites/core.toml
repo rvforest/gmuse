@@ -1,0 +1,10 @@
+schema_version = "1.0"
+id = "core"
+version = "1.0"
+suite_kind = "core"
+case_ids = ["docs-history", "injection-comment"]
+
+[coverage_policy]
+required_dimensions = ["ecosystem", "source_repo", "origin", "change_type", "format"]
+advisory_dimensions = ["safety_tag", "injection_tag", "history", "branch", "hint", "max_chars"]
+minimum_case_counts = {}

@@ -439,11 +439,15 @@ def get_repo_root(path: Optional[Path] = None) -> Path:
         raise NotAGitRepositoryError("Git command timed out") from e
 
 
-def get_staged_diff() -> StagedDiff:
+def get_staged_diff(*, path: Optional[Path] = None) -> StagedDiff:
     """Extract staged changes from git repository.
 
     Returns:
         StagedDiff object with diff content and metadata
+
+    Args:
+        path: Optional repository directory. When omitted, use the current
+            working directory as before.
 
     Raises:
         NotAGitRepositoryError: If not in a git repository
@@ -454,14 +458,19 @@ def get_staged_diff() -> StagedDiff:
         >>> print(diff.files_changed)
         ['src/main.py', 'tests/test_main.py']
     """
-    if not is_git_repository():
+    if not is_git_repository(path):
         raise NotAGitRepositoryError(
             "Not a git repository. Run gmuse from within a git repository."
         )
 
     # Get the diff content
     try:
-        result = _run_git("diff", "--cached", timeout=_GIT_TIMEOUT_LONG)
+        result = _run_git(
+            "diff",
+            "--cached",
+            cwd=str(path) if path else None,
+            timeout=_GIT_TIMEOUT_LONG,
+        )
         raw_diff = result.stdout
 
         if not raw_diff.strip():
@@ -475,7 +484,13 @@ def get_staged_diff() -> StagedDiff:
 
     # Get list of changed files
     try:
-        result_files = _run_git("diff", "--cached", "--name-only", timeout=10)
+        result_files = _run_git(
+            "diff",
+            "--cached",
+            "--name-only",
+            cwd=str(path) if path else None,
+            timeout=10,
+        )
         files_changed = [f for f in result_files.stdout.strip().split("\n") if f]
     except subprocess.CalledProcessError:
         files_changed = []
@@ -502,7 +517,7 @@ def get_staged_diff() -> StagedDiff:
     )
 
 
-def get_commit_history(depth: int = 5) -> CommitHistory:
+def get_commit_history(depth: int = 5, *, path: Optional[Path] = None) -> CommitHistory:
     """Fetch recent commit messages for style context.
 
     Args:
@@ -519,12 +534,12 @@ def get_commit_history(depth: int = 5) -> CommitHistory:
         >>> for commit in history.commits:
         ...     print(commit.message)
     """
-    if not is_git_repository():
+    if not is_git_repository(path):
         raise NotAGitRepositoryError(
             "Not a git repository. Run gmuse from within a git repository."
         )
 
-    repo_root = get_repo_root()
+    repo_root = get_repo_root(path)
 
     try:
         # Format: hash|author|timestamp|message
@@ -532,6 +547,7 @@ def get_commit_history(depth: int = 5) -> CommitHistory:
             "log",
             f"-n{depth}",
             "--format=%H|%an|%aI|%s",
+            cwd=str(path) if path else None,
             timeout=_GIT_TIMEOUT_LONG,
         )
 

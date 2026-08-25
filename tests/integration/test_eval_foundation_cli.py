@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from click import unstyle
 from typer.testing import CliRunner
 
 from tools.evals.gmuse_evals.cli import app
@@ -10,11 +11,12 @@ from tools.evals.gmuse_evals.models import COVERAGE_DIMENSIONS
 
 def test_cli_exposes_offline_validation_options() -> None:
     result = CliRunner().invoke(app, ["validate", "--help"])
+    output = unstyle(result.stdout)
 
     assert result.exit_code == 0
-    assert "--suite" in result.stdout
-    assert "--evals-dir" in result.stdout
-    assert "--strict-balance" in result.stdout
+    assert "--suite" in output
+    assert "--evals-dir" in output
+    assert "--strict-balance" in output
 
 
 def test_cli_renders_complete_sorted_coverage() -> None:

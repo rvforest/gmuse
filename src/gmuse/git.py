@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Final, Optional
+from typing import Final, Mapping, Optional
 
 from gmuse.exceptions import NoStagedChangesError, NotAGitRepositoryError
 from gmuse.logging import get_logger
@@ -166,6 +166,7 @@ def _run_git(
     cwd: Optional[str] = None,
     timeout: int = _GIT_TIMEOUT_SHORT,
     check: bool = True,
+    env: Optional[Mapping[str, str]] = None,
 ) -> subprocess.CompletedProcess[str]:
     """Execute a git command and return the result.
 
@@ -176,6 +177,8 @@ def _run_git(
         cwd: Working directory for the command (None = current directory)
         timeout: Command timeout in seconds
         check: If True, raise CalledProcessError on non-zero exit code
+        env: Optional complete subprocess environment. The default inherits the
+            current process environment.
 
     Returns:
         CompletedProcess with captured stdout/stderr
@@ -192,6 +195,7 @@ def _run_git(
         cwd=cwd,
         timeout=timeout,
         check=check,
+        env=env,
     )
 
 
@@ -439,11 +443,22 @@ def get_repo_root(path: Optional[Path] = None) -> Path:
         raise NotAGitRepositoryError("Git command timed out") from e
 
 
-def get_staged_diff() -> StagedDiff:
+def get_staged_diff(
+    *,
+    path: Optional[Path] = None,
+    git_env: Optional[Mapping[str, str]] = None,
+) -> StagedDiff:
     """Extract staged changes from git repository.
 
     Returns:
         StagedDiff object with diff content and metadata
+
+    Args:
+        path: Optional repository directory. When omitted, use the current
+            working directory as before.
+        git_env: Optional complete environment for Git subprocesses. Maintainer
+            tooling uses this to isolate fixture validation from user Git
+            configuration; normal callers should leave it unset.
 
     Raises:
         NotAGitRepositoryError: If not in a git repository
@@ -454,14 +469,20 @@ def get_staged_diff() -> StagedDiff:
         >>> print(diff.files_changed)
         ['src/main.py', 'tests/test_main.py']
     """
-    if not is_git_repository():
+    if not is_git_repository(path):
         raise NotAGitRepositoryError(
             "Not a git repository. Run gmuse from within a git repository."
         )
 
     # Get the diff content
     try:
-        result = _run_git("diff", "--cached", timeout=_GIT_TIMEOUT_LONG)
+        result = _run_git(
+            "diff",
+            "--cached",
+            cwd=str(path) if path else None,
+            timeout=_GIT_TIMEOUT_LONG,
+            env=git_env,
+        )
         raw_diff = result.stdout
 
         if not raw_diff.strip():
@@ -475,7 +496,14 @@ def get_staged_diff() -> StagedDiff:
 
     # Get list of changed files
     try:
-        result_files = _run_git("diff", "--cached", "--name-only", timeout=10)
+        result_files = _run_git(
+            "diff",
+            "--cached",
+            "--name-only",
+            cwd=str(path) if path else None,
+            timeout=10,
+            env=git_env,
+        )
         files_changed = [f for f in result_files.stdout.strip().split("\n") if f]
     except subprocess.CalledProcessError:
         files_changed = []
@@ -502,7 +530,7 @@ def get_staged_diff() -> StagedDiff:
     )
 
 
-def get_commit_history(depth: int = 5) -> CommitHistory:
+def get_commit_history(depth: int = 5, *, path: Optional[Path] = None) -> CommitHistory:
     """Fetch recent commit messages for style context.
 
     Args:
@@ -519,12 +547,12 @@ def get_commit_history(depth: int = 5) -> CommitHistory:
         >>> for commit in history.commits:
         ...     print(commit.message)
     """
-    if not is_git_repository():
+    if not is_git_repository(path):
         raise NotAGitRepositoryError(
             "Not a git repository. Run gmuse from within a git repository."
         )
 
-    repo_root = get_repo_root()
+    repo_root = get_repo_root(path)
 
     try:
         # Format: hash|author|timestamp|message
@@ -532,6 +560,7 @@ def get_commit_history(depth: int = 5) -> CommitHistory:
             "log",
             f"-n{depth}",
             "--format=%H|%an|%aI|%s",
+            cwd=str(path) if path else None,
             timeout=_GIT_TIMEOUT_LONG,
         )
 

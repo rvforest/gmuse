@@ -1,7 +1,7 @@
 # Implementation Plan: Eval Fixtures And Suites
 
 **Branch**: `009-eval-fixtures-and-suites` | **Date**: 2026-06-11 | **Spec**: ../009-eval-fixtures-and-suites/spec.md
-**Input**: Feature specification from `specs/draft/009-eval-fixtures-and-suites/spec.md`
+**Input**: Feature specification from `specs/009-eval-fixtures-and-suites/spec.md`
 
 ## Summary
 
@@ -88,7 +88,7 @@ Checklist:
 ### Documentation (this feature)
 
 ```text
-specs/draft/009-eval-fixtures-and-suites/
+specs/009-eval-fixtures-and-suites/
 ├── plan.md
 ├── research.md
 ├── data-model.md

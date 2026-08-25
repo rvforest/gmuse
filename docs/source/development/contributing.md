@@ -137,6 +137,34 @@ You can view the status of these checks on your pull request page under the "Che
 
 ## Testing
 
+### Maintainer-only eval fixtures
+
+The offline eval foundation lives under `tools/evals/` and `evals/`; it is not
+part of the public `gmuse` CLI. After changing a fixture, case, rubric, or
+suite, validate it without provider credentials:
+
+```bash
+uv run python -m tools.evals.gmuse_evals validate --suite smoke
+```
+
+Use `--suite core` for the curated superset and `--strict-balance` when
+advisory coverage gaps should fail the command. Validation reconstructs a
+temporary Git repository, applies and stages the complete patch, and compares
+the exact staged-diff digest and changed paths. It makes no model, judge, or
+network calls.
+
+Real and adapted fixtures record source-license evidence separately from
+maintainer redistribution review; this metadata check is not legal approval.
+All asset documents use schema `1.0`; supported SPDX expressions, absolute
+HTTP(S) source/commit URLs, and `LicenseRef-*` values are checked during
+validation. License evidence paths must be safe and repository-relative. Safety
+fixtures must identify both an injection pattern and a location, and mark any
+secret-like test values fake or nonfunctional. Coverage is printed in a stable
+order, selected-graph errors are aggregated, and temporary repositories discard
+inherited Git configuration and Git-specific environment behavior. See
+`specs/009-eval-fixtures-and-suites/quickstart.md` for provenance,
+digest-failure, and suite-scoped loading examples.
+
 ### Writing Tests
 
 We use [pytest](https://docs.pytest.org/) for testing. Place your tests in the `tests/` directory, mirroring the structure of the `src/` directory.

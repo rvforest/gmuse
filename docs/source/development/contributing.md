@@ -161,9 +161,9 @@ validation. License evidence paths must be safe and repository-relative. Safety
 fixtures must identify both an injection pattern and a location, and mark any
 secret-like test values fake or nonfunctional. Coverage is printed in a stable
 order, selected-graph errors are aggregated, and temporary repositories discard
-inherited Git configuration and Git-specific environment behavior. See the
-feature [quickstart](https://github.com/rvforest/gmuse/blob/main/specs/009-eval-fixtures-and-suites/quickstart.md)
-for provenance, digest-failure, and suite-scoped loading examples.
+inherited Git configuration and Git-specific environment behavior. See
+`specs/009-eval-fixtures-and-suites/quickstart.md` for provenance,
+digest-failure, and suite-scoped loading examples.
 
 ### Writing Tests
 

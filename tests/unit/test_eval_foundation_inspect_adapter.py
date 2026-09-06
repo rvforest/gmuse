@@ -1,22 +1,21 @@
-"""Compatibility tests for the framework-neutral validated-case adapter."""
+"""Tests for the framework-neutral resolved-case adapter."""
 
+from tests.eval_helpers import make_case, make_profile, make_rubric
 from tools.evals.gmuse_evals.inspect_adapter import (
-    ValidatedCaseDescriptor,
+    EvalCaseDescriptor,
+    resolved_case_to_descriptor,
     to_inspect_sample,
-    validated_case_to_descriptor,
 )
 from tools.evals.gmuse_evals.models import (
-    EvalCase,
     EvalFixture,
-    EvalRubric,
     FixtureFile,
     FixtureProvenance,
 )
-from tools.evals.gmuse_evals.validate import ValidatedCase
+from tools.evals.gmuse_evals.results import ResolvedCase
 
 
-def test_descriptor_preserves_stable_identity_and_review_metadata() -> None:
-    fixture = EvalFixture(
+def _fixture() -> EvalFixture:
+    return EvalFixture(
         schema_version="1.0",
         id="fixture-id",
         revision=3,
@@ -31,88 +30,64 @@ def test_descriptor_preserves_stable_identity_and_review_metadata() -> None:
         expected_staged_diff_sha256="a" * 64,
         expected_files_changed=[],
         history=[],
-        branch_name=None,
-        repository_instructions=None,
         selection_rationale="adapter test",
     )
-    rubric = EvalRubric(
-        id="rubric-id",
-        version="2.1",
-        required_concepts=["docs"],
-        forbidden_concepts=[],
-        allowed_conventional_types=["docs"],
-        allowed_scopes=["guide"],
-        example_good=["docs: update guide"],
-        example_bad=[],
+
+
+def test_descriptor_preserves_canonical_identity_and_review_metadata() -> None:
+    fixture = _fixture()
+    profile = make_profile()
+    rubric = make_rubric(
+        "rubric-id", profile_id=profile.id, include_max_chars_gate=True
     )
-    case = EvalCase(
-        id="case-id",
-        revision=4,
-        fixture_id=fixture.id,
-        rubric_id=rubric.id,
+    rubric.revision = 2
+    case = make_case(
+        fixture,
+        rubric,
+        case_id="case-id",
         formats=["conventional"],
-        history_depth=0,
-        include_branch=False,
-        user_hint=None,
         max_chars=72,
         tags=["docs"],
     )
+    case.revision = 4
 
-    descriptor = validated_case_to_descriptor(ValidatedCase(case, fixture, rubric))
+    descriptor = resolved_case_to_descriptor(
+        ResolvedCase(
+            case=case,
+            fixture=fixture,
+            rubric=rubric,
+            scoring_profile=profile,
+        )
+    )
 
-    assert isinstance(descriptor, ValidatedCaseDescriptor)
+    assert isinstance(descriptor, EvalCaseDescriptor)
     assert descriptor.case_id == "case-id"
     assert descriptor.case_revision == 4
     assert descriptor.fixture_revision == 3
-    assert descriptor.expected_staged_diff_sha256 == "a" * 64
-    assert descriptor.rubric_version == "2.1"
+    assert descriptor.rubric_revision == 2
+    assert descriptor.scoring_profile_id == profile.id
+    assert len(descriptor.rubric_digest) == 64
+    assert len(descriptor.scoring_profile_digest) == 64
+    assert descriptor.scoring_profile_revision == 1
+    assert "rubric_version" not in descriptor.to_metadata()
+    assert "scoring_profile_version" not in descriptor.to_metadata()
 
 
 def test_inspect_sample_is_plain_data_without_inspect_dependency() -> None:
-    fixture = EvalFixture(
-        schema_version="1.0",
-        id="fixture",
-        revision=1,
-        origin="synthetic",
-        provenance=FixtureProvenance(origin="synthetic", synthetic_notes="test"),
-        ecosystem="python",
-        change_type="docs",
-        safety_tags=[],
-        injection_tags=[],
-        base_files=[],
-        patch="",
-        expected_staged_diff_sha256="b" * 64,
-        expected_files_changed=[],
-        history=[],
-        branch_name=None,
-        repository_instructions=None,
-        selection_rationale="adapter test",
-    )
-    rubric = EvalRubric(
-        id="rubric",
-        version="1.0",
-        required_concepts=[],
-        forbidden_concepts=[],
-        allowed_conventional_types=[],
-        allowed_scopes=[],
-        example_good=[],
-        example_bad=[],
-    )
-    case = EvalCase(
-        id="case",
-        revision=1,
-        fixture_id=fixture.id,
-        rubric_id=rubric.id,
-        formats=["freeform"],
-        history_depth=None,
-        include_branch=False,
-        user_hint=None,
-        max_chars=None,
-        tags=[],
-    )
+    fixture = _fixture()
+    profile = make_profile()
+    rubric = make_rubric(profile_id=profile.id)
+    case = make_case(fixture, rubric, history_depth=None)
 
-    sample = to_inspect_sample(ValidatedCase(case, fixture, rubric))
+    sample = to_inspect_sample(
+        ResolvedCase(
+            case=case,
+            fixture=fixture,
+            rubric=rubric,
+            scoring_profile=profile,
+        )
+    )
 
     assert sample["id"] == "case"
-    assert sample["metadata"]["fixture_id"] == "fixture"
+    assert sample["metadata"]["fixture_id"] == "fixture-id"
     assert sample["metadata"]["rubric_id"] == "rubric"

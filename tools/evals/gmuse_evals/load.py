@@ -13,7 +13,14 @@ except ModuleNotFoundError:  # pragma: no cover
 
 from pydantic import BaseModel, ValidationError
 
-from .models import EvalCase, EvalFixture, EvalRubric, EvalSuite, ValidationIssue
+from .models import (
+    EvalCase,
+    EvalFixture,
+    EvalRubric,
+    EvalSuite,
+    ScoringProfile,
+    ValidationIssue,
+)
 
 
 class EvalLoadError(ValueError):
@@ -30,7 +37,7 @@ class EvalLoadError(ValueError):
     """
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class EvalAssets:
     """Eval records and selected-graph load issues indexed by stable IDs.
 
@@ -39,18 +46,22 @@ class EvalAssets:
 
     Attributes:
         fixtures: Fixture records keyed by fixture ID.
+        scoring_profiles: Scoring profiles keyed by profile ID.
         rubrics: Rubric records keyed by rubric ID.
         cases: Case records keyed by case ID.
         suites: Suite records keyed by suite ID.
         issues: Structural or reference issues found during graph loading.
 
     Example:
-        >>> assets = EvalAssets({}, {}, {}, {})
+        >>> assets = EvalAssets(
+        ...     fixtures={}, scoring_profiles={}, rubrics={}, cases={}, suites={}
+        ... )
         >>> assets.issues
         ()
     """
 
     fixtures: dict[str, EvalFixture]
+    scoring_profiles: dict[str, ScoringProfile]
     rubrics: dict[str, EvalRubric]
     cases: dict[str, EvalCase]
     suites: dict[str, EvalSuite]
@@ -75,6 +86,7 @@ class _RawCatalog:
 
 _ASSET_MODELS: dict[str, type[BaseModel]] = {
     "fixtures": EvalFixture,
+    "scoring_profiles": ScoringProfile,
     "rubrics": EvalRubric,
     "cases": EvalCase,
     "suites": EvalSuite,
@@ -85,9 +97,9 @@ def discover_asset_files(evals_dir: Path | str, kind: str) -> list[Path]:
     """Return sorted TOML paths for one asset kind.
 
     Args:
-        evals_dir: Root containing ``fixtures``, ``rubrics``, ``cases`` and
-            ``suites`` directories.
-        kind: One of the four asset directory names.
+        evals_dir: Root containing ``fixtures``, ``scoring_profiles``,
+            ``rubrics``, ``cases`` and ``suites`` directories.
+        kind: One of the five asset directory names.
 
     Raises:
         EvalLoadError: If the directory is missing or unsupported.
@@ -218,7 +230,7 @@ def load_assets(evals_dir: Path | str = "evals") -> EvalAssets:
     Full-catalog validation is useful for repository-wide maintenance checks.
 
     Args:
-        evals_dir: Root directory containing all four asset directories.
+        evals_dir: Root directory containing all five asset directories.
 
     Returns:
         Fully model-validated assets indexed by stable ID.
@@ -234,6 +246,7 @@ def load_assets(evals_dir: Path | str = "evals") -> EvalAssets:
     root = Path(evals_dir)
     return EvalAssets(
         fixtures=_load_kind(root, "fixtures"),
+        scoring_profiles=_load_kind(root, "scoring_profiles"),
         rubrics=_load_kind(root, "rubrics"),
         cases=_load_kind(root, "cases"),
         suites=_load_kind(root, "suites"),
@@ -281,7 +294,7 @@ def load_suite_assets(
     suite = _build_raw_model(catalog, "suites", suite_id)
     suites = {suite.id: suite}
     issues: list[ValidationIssue] = []
-    if suite.suite_kind == "smoke" or suite.id == "smoke":
+    if suite.suite_kind == "smoke":
         if "core" not in catalog.records["suites"]:
             issues.append(
                 ValidationIssue(
@@ -298,8 +311,10 @@ def load_suite_assets(
     cases: dict[str, EvalCase] = {}
     fixtures: dict[str, EvalFixture] = {}
     rubrics: dict[str, EvalRubric] = {}
+    scoring_profiles: dict[str, ScoringProfile] = {}
     attempted_fixtures: set[str] = set()
     attempted_rubrics: set[str] = set()
+    attempted_profiles: set[str] = set()
     for case_id in suite.case_ids:
         case = _try_build_raw_model(catalog, "cases", case_id, issues)
         if case is None:
@@ -315,8 +330,25 @@ def load_suite_assets(
             rubric = _try_build_raw_model(catalog, "rubrics", case.rubric_id, issues)
             if rubric is not None:
                 rubrics[rubric.id] = rubric
+                if rubric.scoring_profile_id not in attempted_profiles:
+                    attempted_profiles.add(rubric.scoring_profile_id)
+                    profile = _try_build_raw_model(
+                        catalog,
+                        "scoring_profiles",
+                        rubric.scoring_profile_id,
+                        issues,
+                    )
+                    if profile is not None:
+                        scoring_profiles[profile.id] = profile
 
-    assets = EvalAssets(fixtures, rubrics, cases, suites, tuple(issues))
+    assets = EvalAssets(
+        fixtures=fixtures,
+        scoring_profiles=scoring_profiles,
+        rubrics=rubrics,
+        cases=cases,
+        suites=suites,
+        issues=tuple(issues),
+    )
     if strict and issues:
         raise EvalLoadError("; ".join(issue.render() for issue in issues))
     return assets, suite

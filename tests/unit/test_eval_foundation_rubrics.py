@@ -2,17 +2,14 @@
 
 import pytest
 
-from tools.evals.gmuse_evals.load import EvalAssets
+from tests.eval_helpers import make_assets, make_case, make_profile, make_rubric
+from tools.evals.gmuse_evals.load import load_assets
 from tools.evals.gmuse_evals.models import (
     INJECTION_LOCATION_TAGS,
     INJECTION_PATTERN_TAGS,
-    EvalCase,
     EvalFixture,
-    EvalRubric,
-    EvalSuite,
     FixtureFile,
     FixtureProvenance,
-    SuiteCoveragePolicy,
 )
 from tools.evals.gmuse_evals.validate import validate_assets
 
@@ -23,9 +20,8 @@ def assets(
     injection_tags: list[str] | None = None,
     synthetic_notes: str = "fictional test data",
     safety_notes: str | None = None,
-    allowed_types: list[str] | None = None,
     patch: str = "",
-) -> EvalAssets:
+):
     fixture = EvalFixture(
         schema_version="1.0",
         id="rubric-fixture",
@@ -43,61 +39,17 @@ def assets(
         expected_staged_diff_sha256="0" * 64,
         expected_files_changed=[],
         history=[],
-        branch_name=None,
-        repository_instructions=None,
         selection_rationale="Exercises rubric semantics.",
     )
-    rubric = EvalRubric(
-        id="rubric",
-        version="1.0",
-        required_concepts=["test"],
-        forbidden_concepts=[],
-        allowed_conventional_types=allowed_types or ["test"],
-        allowed_scopes=["safety"],
-        example_good=["test(safety): cover fixture"],
-        example_bad=["feat: expose secret"],
-        safety_notes=safety_notes,
-    )
-    case = EvalCase(
-        id="case",
-        revision=1,
-        fixture_id=fixture.id,
-        rubric_id=rubric.id,
+    profile = make_profile()
+    rubric = make_rubric(profile_id=profile.id, safety_notes=safety_notes)
+    case = make_case(
+        fixture,
+        rubric,
         formats=["conventional"],
-        history_depth=0,
-        include_branch=False,
-        user_hint=None,
-        max_chars=None,
         tags=["safety"] if safety_tags else [],
     )
-    suite = EvalSuite(
-        id="custom",
-        version="1.0",
-        suite_kind="custom",
-        case_ids=[case.id],
-        coverage_policy=SuiteCoveragePolicy(),
-    )
-    return EvalAssets(
-        {fixture.id: fixture}, {rubric.id: rubric}, {case.id: case}, {suite.id: suite}
-    )
-
-
-def test_gmuse_conventional_types_and_scopes_are_accepted() -> None:
-    result = validate_assets(
-        assets(allowed_types=["fix", "test"]), "custom", reconstruct=False
-    )
-
-    assert result.report.status == "passed"
-
-
-def test_unsupported_conventional_type_is_reported() -> None:
-    result = validate_assets(
-        assets(allowed_types=["build"]), "custom", reconstruct=False
-    )
-
-    assert "unsupported_conventional_type" in {
-        issue.code for issue in result.report.errors
-    }
+    return make_assets(fixture, profile=profile, rubric=rubric, case=case)
 
 
 def test_injection_requires_complete_tags_and_safety_notes() -> None:
@@ -106,9 +58,10 @@ def test_injection_requires_complete_tags_and_safety_notes() -> None:
         "custom",
         reconstruct=False,
     )
-    codes = {issue.code for issue in result.report.errors}
 
-    assert {"missing_injection_tags", "missing_safety_notes"} <= codes
+    assert {"missing_injection_tags", "missing_safety_notes"} <= {
+        issue.code for issue in result.report.errors
+    }
 
 
 def test_injection_subtags_require_explicit_injection_safety_tag() -> None:
@@ -118,7 +71,7 @@ def test_injection_subtags_require_explicit_injection_safety_tag() -> None:
         reconstruct=False,
     )
 
-    assert any(issue.code == "orphan_injection_tags" for issue in result.report.errors)
+    assert "orphan_injection_tags" in {issue.code for issue in result.report.errors}
 
 
 def test_injection_location_and_fake_secret_markers_are_validated() -> None:
@@ -186,3 +139,41 @@ def test_supported_injection_patterns_require_supported_locations(
     )
 
     assert result.report.status == "passed"
+
+
+def test_failed_deterministic_gate_requires_unusable_example() -> None:
+    loaded = load_assets("evals")
+    loaded.rubrics["docs-history"].examples[0].expected_gate_ids = ["message-valid"]
+
+    result = validate_assets(loaded, "smoke", reconstruct=False)
+
+    assert "failed_gate_requires_unusable" in {
+        issue.code for issue in result.report.errors
+    }
+
+
+def test_failure_example_must_reference_a_major_failure() -> None:
+    loaded = load_assets("evals")
+    rubric = loaded.rubrics["docs-history"]
+    rubric.failure_conditions[0].severity = "minor"
+
+    result = validate_assets(loaded, "smoke", reconstruct=False)
+
+    assert "missing_failure_example" in {issue.code for issue in result.report.errors}
+
+
+def test_max_chars_gate_must_match_case_configuration() -> None:
+    fixture = assets().fixtures["rubric-fixture"]
+    profile = make_profile()
+    rubric = make_rubric(profile_id=profile.id, include_max_chars_gate=True)
+    case = make_case(fixture, rubric, max_chars=None)
+
+    result = validate_assets(
+        make_assets(fixture, profile=profile, rubric=rubric, case=case),
+        "custom",
+        reconstruct=False,
+    )
+
+    assert "inapplicable_max_chars_gate" in {
+        issue.code for issue in result.report.errors
+    }

@@ -17,6 +17,9 @@ Any reuse attempt must compare:
 - suite ID and revision
 - selected case IDs
 - fixture revisions or digests
+- rubric ID, version, and digest
+- scoring-profile ID, version, and digest
+- immutable assessment-evidence reference
 - candidate model set
 - prompt-affecting generation config
 - prompt version
@@ -28,6 +31,8 @@ Any reuse attempt must compare:
 - Missing or corrupt Inspect logs reject reuse before provider calls.
 - Incompatible metadata rejects reuse or forces a fresh run before provider
   calls.
+- A changed profile, rubric, or evidence reference is incompatible even when
+  the selected cases and fixture digests are unchanged.
 - Reuse must not overwrite generated messages in existing Inspect logs.
 - If Inspect does not provide safe partial-run reuse for a scenario, gmuse may
   rerun bounded samples instead of implementing custom bookkeeping.

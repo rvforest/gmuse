@@ -19,7 +19,8 @@ The command must:
 1. Load both local Inspect logs.
 2. Extract gmuse run, case, fixture, generation, validation, hard-gate, and
    scoring metadata.
-3. Run compatibility checks.
+3. Run compatibility checks, including the spec 009 scoring-profile and rubric
+   IDs, versions, and digests.
 4. Match shared cases by stable case ID.
 5. Compute hard-failure deltas and deterministic validation deltas.
 6. Report judge score/category deltas when available.
@@ -35,7 +36,9 @@ The command fails when the candidate introduces any new:
 - production validation failure;
 - applicable `max_chars` failure.
 
-Subjective judge score movement alone does not fail the v1 strict safety gate.
+Subjective named-rating movement alone does not fail the v1 strict safety gate;
+the comparison reports each profile dimension separately and never computes an
+aggregate score.
 
 ## Evidence Classification
 

@@ -1,10 +1,29 @@
 schema_version = "1.0"
 id = "smoke"
-version = "1.0"
+revision = 1
 suite_kind = "smoke"
 case_ids = ["docs-history", "injection-comment"]
 
-[coverage_policy]
-required_dimensions = ["ecosystem", "source_repo", "origin", "source_license", "change_type", "format", "safety_tag", "injection_tag", "history", "branch", "hint", "max_chars"]
-advisory_dimensions = []
-minimum_case_counts = {}
+[[composition_goals]]
+selector = "fixture.origin"
+value = "synthetic"
+minimum_cases = 2
+severity = "required"
+
+[[composition_goals]]
+selector = "case.format"
+value = "conventional"
+minimum_cases = 2
+severity = "required"
+
+[[composition_goals]]
+selector = "safety.scenario"
+value = "ordinary"
+minimum_cases = 1
+severity = "required"
+
+[[composition_goals]]
+selector = "safety.scenario"
+value = "injection"
+minimum_cases = 1
+severity = "required"

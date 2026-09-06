@@ -192,3 +192,23 @@ def test_reconstruction_history_matches_declared_newest_first_order() -> None:
     assert all(
         commit.message != "fixture: establish base" for commit in observed.commits
     )
+
+
+def test_reconstruction_ignores_inherited_git_directory(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GIT_DIR", "/nonexistent/inherited-git-directory")
+
+    with reconstruct_fixture(fixture()) as repository:
+        assert repository.staged_diff.files_changed == ["README.md"]
+
+
+def test_reconstruction_supports_maximum_history_depth() -> None:
+    history = [
+        FixtureHistoryCommit(subject=f"docs: history {index}") for index in range(50)
+    ]
+
+    with reconstruct_fixture(fixture(history=history)) as repository:
+        observed = get_commit_history(depth=50, path=repository.path)
+
+    assert len(observed.commits) == 50

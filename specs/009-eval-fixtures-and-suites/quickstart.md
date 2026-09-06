@@ -1,7 +1,7 @@
-# Quickstart: Eval Fixtures And Suites
+# Quickstart: Validate Eval Assets
 
-This quickstart validates the maintainer-only fixture foundation. It does not
-make model calls and does not require provider credentials.
+This guide checks the maintainer-only fixture foundation. It makes no provider,
+candidate-model, judge-model, or network calls.
 
 ## Prerequisites
 
@@ -9,7 +9,7 @@ make model calls and does not require provider credentials.
 - Git
 - `uv sync`
 
-## Validate The Smoke Suite
+## 1. Validate the smoke suite
 
 ```bash
 uv run python -m tools.evals.gmuse_evals validate --suite smoke
@@ -17,97 +17,105 @@ uv run python -m tools.evals.gmuse_evals validate --suite smoke
 
 Expected outcome:
 
-- fixture, rubric, case, and suite schemas are valid
-- temporary repositories are reconstructed
-- evaluated changes are staged
-- staged diff digests match expected metadata
-- coverage dimensions are reported
-- no LLM provider credentials are required
+- versioned fixture, scoring-profile, rubric, case, and suite assets are
+  valid;
+- temporary repositories reconstruct and stage the evaluated changes;
+- staged-change paths and digests match;
+- a `Suite composition` report explains what the two cases exercise;
+- no credentials are needed.
 
-The output includes a deterministic `Coverage:` section with all twelve
-dimensions in declared order and sorted values. For example, the smoke suite
-reports `history: not-used, used` because its two cases exercise both zero and
-positive history depth.
+Read the report as a description of the suite, not of model performance:
 
-The command is maintainer-only and intentionally does not register a new
-`gmuse` product command. Fixture, rubric, case, and suite files are one TOML
-record per file under `evals/`; validation discovers them in deterministic
-order and uses the IDs inside the documents as references.
+```text
+Suite composition
 
-Machine-readable `--json` output is intentionally deferred for the first
-foundation implementation.
+Changes
+- Documentation: 1 case
+- Tests: 1 case
 
-## Check A Provenance Failure
+Output formats
+- Freeform: 2 cases
+- Conventional: 2 cases
+- Gitmoji: 1 case
 
-Create or edit a real OSS fixture so that required attribution metadata is
-missing, then run:
+Context variations
+- Commit history enabled: 1 case
+- Commit history disabled: 1 case
 
-```bash
-uv run python -m tools.evals.gmuse_evals validate --suite smoke
+Safety scenarios
+- Ordinary change: 1 case
+- Direct instruction in code comment: 1 case
+
+Fixture sources
+- Synthetic: 2 cases
 ```
 
-Expected outcome:
+A count may appear in more than one group because one case has several
+attributes. For example, a case that supports freeform and conventional formats
+contributes one case to each format entry. This is not a contradiction.
 
-- validation exits non-zero
-- output identifies the fixture and missing provenance field
-- no model or judge calls are made
+## 2. Read one rubric as a maintainer
 
-The validator checks provenance metadata without claiming legal approval. Real
-and adapted fixtures need source license evidence and a separate
-`redistribution_review` value; synthetic fixtures need `synthetic_notes`.
-Repository and commit provenance URLs must be absolute `http` or `https` URLs,
-and license expressions use the complete SPDX catalog plus `LicenseRef-*`
-support. License URL evidence may instead be a safe repository-relative POSIX
-path such as `LICENSE`; blank, traversal, absolute filesystem, and unsupported
-URL forms fail validation.
+Follow these documents:
 
-## Check A Digest Failure
+1. [commit-message-v1 profile](contracts/scoring-profile-schema.md)
+2. [docs-history rubric](../../evals/rubrics/docs-history.toml)
+3. [docs-history case](../../evals/cases/docs-history.toml)
+4. [docs-history fixture](../../evals/fixtures/synthetic-docs-history.toml)
 
-Edit fixture patch data without updating the expected staged diff digest, then
-run:
+The profile defines the common meaning of ratings 1–4 and usability labels. The
+rubric explains which observable evidence matters for this particular change.
+Its two annotated examples demonstrate one usable output and one important
+failure; they are calibration examples, not strings a generated message must
+duplicate.
 
-```bash
-uv run python -m tools.evals.gmuse_evals validate --suite smoke
-```
+## 3. Check composition-goal behavior safely
 
-Expected outcome:
-
-- validation exits non-zero
-- output identifies the fixture with the digest mismatch
-- the report includes expected and observed digest values
-
-The digest is the SHA-256 of the exact `git diff --cached` text returned by
-gmuse's production staged-diff helper. Do not normalize, truncate, or manually
-rewrite the patch to make a mismatch disappear; update the fixture digest only
-after reviewing the intentional patch change.
-
-## Suite policy and safety checks
-
-Validate the curated core suite and promote advisory coverage gaps when needed:
+Copy the assets to a temporary directory and make a goal impossible:
 
 ```bash
-uv run python -m tools.evals.gmuse_evals validate --suite core
-uv run python -m tools.evals.gmuse_evals validate --suite core --strict-balance
+review_dir="$(mktemp -d)"
+cp -R evals "$review_dir/evals"
+$EDITOR "$review_dir/evals/suites/core.toml"
+
+uv run python -m tools.evals.gmuse_evals validate \
+  --suite core \
+  --evals-dir "$review_dir/evals"
 ```
 
-The checked-in smoke suite must remain a subset of `core`. Injection fixtures
-must identify both the injection pattern and its location, such as
-`direct-instruction` in a `code-comment`. Secret-like values in safety cases
-must be explicitly marked fake or nonfunctional test data. Injection sub-tags
-without the parent `injection` safety tag are rejected so coverage cannot claim
-an injection category accidentally.
+For example, make an advisory goal require two `gitmoji` cases when only one
+exists. Validation succeeds with a warning that names the selector, value,
+observed case count, required count, and advisory severity. Required goals
+fail regardless of this flag.
 
-The loader indexes all parseable TOML IDs and keeps duplicate-ID diagnostics
-global, but schema-validates only the selected suite graph. Thus an unrelated
-schema-invalid asset does not block `--suite smoke`; referencing that asset does
-fail with its source path and ID.
+Promote that warning deliberately:
 
-Temporary repositories override digest-affecting Git settings, including diff
-prefixes, context, algorithm, color, and path quoting. They also discard
-inherited Git-specific environment variables, disable global/system config, and
-bound every Git subprocess with a timeout. Checked-in digests are therefore
-stable without allowing user Git configuration to execute diff helpers.
+```bash
+uv run python -m tools.evals.gmuse_evals validate \
+  --suite core \
+  --evals-dir "$review_dir/evals" \
+  --strict-composition
+```
 
-This foundation stops at offline fixture validation. It does not clone source
-repositories, call candidate or judge models, import fixtures over the
-network, compare baselines, or make benchmark recommendations.
+The command exits non-zero. This demonstrates a suite-content policy, not a
+model-quality failure.
+
+## 4. Check a rubric failure safely
+
+In a fresh copied asset directory, change a criterion's `dimension` to an
+unknown value or make an example reference a nonexistent failure condition.
+Validation must exit non-zero and identify the rubric, field, and invalid
+reference.
+
+## 5. Check a staged-change failure safely
+
+In a fresh copied asset directory, change a fixture patch without changing its
+expected digest. Validation must exit non-zero and identify the fixture with
+the expected and observed staged-change digests.
+
+## Boundaries
+
+This feature validates source assets and communicates their intended scenario
+composition. It does not generate commit messages, judge their semantics,
+calculate ratings, determine semantic instruction obedience, or recommend
+models. Those behaviors belong to later runner and scoring work.

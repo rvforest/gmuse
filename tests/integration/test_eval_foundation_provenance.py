@@ -1,14 +1,23 @@
 """Temporary TOML asset flows for origin-aware validation."""
 
 from pathlib import Path
+import shutil
 
 from tools.evals.gmuse_evals.load import load_assets
 from tools.evals.gmuse_evals.validate import validate_assets
 
 
 def _write_common_assets(root: Path, provenance: str) -> None:
-    for directory in ("fixtures", "rubrics", "cases", "suites"):
+    for directory in ("fixtures", "scoring_profiles", "rubrics", "cases", "suites"):
         (root / directory).mkdir()
+    shutil.copy(
+        "evals/scoring_profiles/commit-message-v1.toml",
+        root / "scoring_profiles" / "commit-message-v1.toml",
+    )
+    shutil.copy(
+        "evals/rubrics/docs-history.toml",
+        root / "rubrics" / "docs-history.toml",
+    )
     provenance_note = (
         f'{provenance}_notes = "temporary notes"' if provenance == "synthetic" else ""
     )
@@ -37,25 +46,12 @@ origin = "{provenance}"
 ''',
         encoding="utf-8",
     )
-    (root / "rubrics" / "rubric.toml").write_text(
-        """schema_version = "1.0"
-id = "rubric"
-version = "1.0"
-required_concepts = []
-forbidden_concepts = []
-allowed_conventional_types = ["docs"]
-allowed_scopes = []
-example_good = []
-example_bad = []
-""",
-        encoding="utf-8",
-    )
     (root / "cases" / "case.toml").write_text(
         """schema_version = "1.0"
 id = "case"
 revision = 1
 fixture_id = "fixture"
-rubric_id = "rubric"
+rubric_id = "docs-history"
 formats = ["freeform"]
 history_depth = 0
 include_branch = false
@@ -67,14 +63,9 @@ tags = []
     (root / "suites" / "custom.toml").write_text(
         """schema_version = "1.0"
 id = "custom"
-version = "1.0"
+revision = 1
 suite_kind = "custom"
 case_ids = ["case"]
-
-[coverage_policy]
-required_dimensions = []
-advisory_dimensions = []
-minimum_case_counts = {}
 """,
         encoding="utf-8",
     )

@@ -5,15 +5,14 @@ from typing import Literal
 import pytest
 from pydantic import ValidationError
 
+from tests.eval_helpers import make_case, make_profile, make_rubric
 from tools.evals.gmuse_evals.load import EvalAssets
 from tools.evals.gmuse_evals.models import (
     EvalCase,
     EvalFixture,
-    EvalRubric,
     EvalSuite,
     FixtureFile,
     FixtureProvenance,
-    SuiteCoveragePolicy,
 )
 from tools.evals.gmuse_evals.validate import validate_assets
 
@@ -43,50 +42,39 @@ def _assets(
         repository_instructions=None,
         selection_rationale="suite test",
     )
-    rubric = EvalRubric(
-        id="rubric",
-        version="1.0",
-        required_concepts=[],
-        forbidden_concepts=[],
-        allowed_conventional_types=["test"],
-        allowed_scopes=[],
-        example_good=[],
-        example_bad=[],
+    profile = make_profile()
+    rubric = make_rubric(
+        profile_id=profile.id,
         safety_notes="Safety cases contain only inert test content."
         if suite_kind == "safety"
         else None,
     )
-    case = EvalCase(
-        id="case-one",
-        revision=1,
-        fixture_id="fixture",
-        rubric_id="rubric",
-        formats=["freeform"],
-        history_depth=0,
-        include_branch=False,
-        user_hint=None,
-        max_chars=None,
+    case = make_case(
+        fixture,
+        rubric,
+        case_id="case-one",
         tags=["safety"] if suite_kind == "safety" else [],
     )
     core = EvalSuite(
+        schema_version="1.0",
         id="core",
-        version="1.0",
+        revision=1,
         suite_kind="core",
         case_ids=core_cases or ["case-one"],
-        coverage_policy=SuiteCoveragePolicy(),
     )
     selected = EvalSuite(
+        schema_version="1.0",
         id="smoke" if suite_kind == "smoke" else "safety",
-        version="1.0",
+        revision=1,
         suite_kind=suite_kind,
         case_ids=smoke_cases or ["case-one"],
-        coverage_policy=SuiteCoveragePolicy(),
     )
     return EvalAssets(
-        {fixture.id: fixture},
-        {rubric.id: rubric},
-        {case.id: case},
-        {core.id: core, selected.id: selected},
+        fixtures={fixture.id: fixture},
+        rubrics={rubric.id: rubric},
+        cases={case.id: case},
+        suites={core.id: core, selected.id: selected},
+        scoring_profiles={profile.id: profile},
     )
 
 
@@ -113,15 +101,16 @@ def test_missing_case_reference_fails_before_reconstruction() -> None:
 def test_duplicate_case_ids_and_unsupported_formats_are_rejected_structurally() -> None:
     with pytest.raises(ValidationError):
         EvalSuite(
+            schema_version="1.0",
             id="core",
-            version="1.0",
+            revision=1,
             suite_kind="core",
             case_ids=["case-one", "case-one"],
-            coverage_policy=SuiteCoveragePolicy(),
         )
     with pytest.raises(ValidationError):
         EvalCase.model_validate(
             {
+                "schema_version": "1.0",
                 "id": "case",
                 "revision": 1,
                 "fixture_id": "fixture",
@@ -140,4 +129,4 @@ def test_safety_suite_cases_remain_discoverable_by_intent() -> None:
     result = validate_assets(_assets(suite_kind="safety"), "safety", reconstruct=False)
 
     assert result.report.status == "passed"
-    assert result.cases[0].case.tags == ["safety"]
+    assert result.resolved_cases[0].case.tags == ["safety"]

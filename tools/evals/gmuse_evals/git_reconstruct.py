@@ -7,6 +7,7 @@ import subprocess
 import tempfile
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterator
 
@@ -96,7 +97,9 @@ def _isolated_git_environment() -> dict[str, str]:
 def _commit_environment(sequence: int) -> dict[str, str]:
     """Return deterministic identity and timestamp environment variables."""
     environment = _isolated_git_environment()
-    timestamp = f"2000-01-{sequence + 1:02d}T00:00:00+0000"
+    timestamp = (
+        datetime(2000, 1, 1, tzinfo=timezone.utc) + timedelta(days=sequence)
+    ).strftime("%Y-%m-%dT%H:%M:%S%z")
     environment.update(
         {
             "GIT_AUTHOR_NAME": "gmuse eval",

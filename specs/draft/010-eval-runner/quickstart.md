@@ -88,7 +88,9 @@ Expected metadata:
 - operational errors separated from validation failures;
 - prompt hash, prompt size, token estimates, prompt version, and context
   metadata;
-- suite, case, fixture, rubric, model, and generation config identity;
+- suite, case, fixture, rubric, scoring-profile, and generation config identity,
+  including revisions/digests;
+- an immutable, privacy-reviewed assessment-evidence reference;
 - raw prompt text absent by default.
 
 ## 6. Troubleshoot a failing case

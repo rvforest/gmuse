@@ -61,3 +61,37 @@ def git_repo(tmp_path: Path) -> Path:
     )
 
     return repo_path
+
+
+@pytest.fixture
+def evals_dir(tmp_path: Path) -> Path:
+    """Return a temporary root containing every evaluator asset catalog.
+
+    The profile catalog is intentionally included alongside fixtures, rubrics,
+    cases, and suites so tests exercise the complete selected asset graph.
+    """
+    root = tmp_path / "evals"
+    for directory in (
+        "fixtures",
+        "scoring_profiles",
+        "rubrics",
+        "cases",
+        "suites",
+    ):
+        (root / directory).mkdir(parents=True)
+    return root
+
+
+@pytest.fixture
+def eval_asset_dirs(evals_dir: Path) -> dict[str, Path]:
+    """Return all temporary evaluator catalog paths keyed by asset kind."""
+    return {
+        directory: evals_dir / directory
+        for directory in (
+            "fixtures",
+            "scoring_profiles",
+            "rubrics",
+            "cases",
+            "suites",
+        )
+    }

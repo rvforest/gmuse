@@ -379,11 +379,16 @@ def _parse_branch_info(
 # -----------------------------------------------------------------------------
 
 
-def is_git_repository(path: Optional[Path] = None) -> bool:
+def is_git_repository(
+    path: Optional[Path] = None,
+    *,
+    git_env: Optional[Mapping[str, str]] = None,
+) -> bool:
     """Check if the current/specified directory is a git repository.
 
     Args:
-        path: Directory to check, defaults to current directory
+        path: Directory to check, defaults to current directory.
+        git_env: Optional complete environment for Git subprocesses.
 
     Returns:
         True if directory is a git repository, False otherwise
@@ -400,17 +405,23 @@ def is_git_repository(path: Optional[Path] = None) -> bool:
             "--git-dir",
             cwd=str(path) if path else None,
             check=False,
+            env=git_env,
         )
         return result.returncode == 0
     except (subprocess.TimeoutExpired, FileNotFoundError):
         return False
 
 
-def get_repo_root(path: Optional[Path] = None) -> Path:
+def get_repo_root(
+    path: Optional[Path] = None,
+    *,
+    git_env: Optional[Mapping[str, str]] = None,
+) -> Path:
     """Get the root directory of the git repository.
 
     Args:
-        path: Directory to start from, defaults to current directory
+        path: Directory to start from, defaults to current directory.
+        git_env: Optional complete environment for Git subprocesses.
 
     Returns:
         Path to repository root
@@ -423,7 +434,7 @@ def get_repo_root(path: Optional[Path] = None) -> Path:
         >>> print(root)
         /home/user/my-project
     """
-    if not is_git_repository(path):
+    if not is_git_repository(path, git_env=git_env):
         raise NotAGitRepositoryError(
             "Not a git repository. Run gmuse from within a git repository."
         )
@@ -433,6 +444,7 @@ def get_repo_root(path: Optional[Path] = None) -> Path:
             "rev-parse",
             "--show-toplevel",
             cwd=str(path) if path else None,
+            env=git_env,
         )
         return Path(result.stdout.strip())
     except subprocess.CalledProcessError as e:
@@ -469,7 +481,7 @@ def get_staged_diff(
         >>> print(diff.files_changed)
         ['src/main.py', 'tests/test_main.py']
     """
-    if not is_git_repository(path):
+    if not is_git_repository(path, git_env=git_env):
         raise NotAGitRepositoryError(
             "Not a git repository. Run gmuse from within a git repository."
         )
@@ -530,11 +542,18 @@ def get_staged_diff(
     )
 
 
-def get_commit_history(depth: int = 5, *, path: Optional[Path] = None) -> CommitHistory:
+def get_commit_history(
+    depth: int = 5,
+    *,
+    path: Optional[Path] = None,
+    git_env: Optional[Mapping[str, str]] = None,
+) -> CommitHistory:
     """Fetch recent commit messages for style context.
 
     Args:
         depth: Number of commits to fetch (default: 5)
+        path: Optional repository directory.
+        git_env: Optional complete environment for Git subprocesses.
 
     Returns:
         CommitHistory object with recent commits
@@ -547,12 +566,12 @@ def get_commit_history(depth: int = 5, *, path: Optional[Path] = None) -> Commit
         >>> for commit in history.commits:
         ...     print(commit.message)
     """
-    if not is_git_repository(path):
+    if not is_git_repository(path, git_env=git_env):
         raise NotAGitRepositoryError(
             "Not a git repository. Run gmuse from within a git repository."
         )
 
-    repo_root = get_repo_root(path)
+    repo_root = get_repo_root(path, git_env=git_env)
 
     try:
         # Format: hash|author|timestamp|message
@@ -562,6 +581,7 @@ def get_commit_history(depth: int = 5, *, path: Optional[Path] = None) -> Commit
             "--format=%H|%an|%aI|%s",
             cwd=str(path) if path else None,
             timeout=_GIT_TIMEOUT_LONG,
+            env=git_env,
         )
 
         commits = [

@@ -22,8 +22,8 @@ automated pass/fail gate.
 
 **Alternatives considered**:
 
-- Threshold gate over aggregate judge scores: rejected for v1 because it can
-  over-trust subjective scoring.
+- Threshold gate over subjective judge ratings: rejected for v1 because it can
+  over-trust uncalibrated scoring.
 - Case-count improvement gate: rejected for v1 because it requires mature
   scoring calibration and policy choices.
 

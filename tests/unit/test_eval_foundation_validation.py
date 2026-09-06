@@ -1,14 +1,11 @@
 """Unit tests for structured fixture and suite validation."""
 
+from tests.eval_helpers import make_case, make_rubric, make_suite
 from tools.evals.gmuse_evals.load import EvalAssets
 from tools.evals.gmuse_evals.models import (
-    EvalCase,
     EvalFixture,
-    EvalRubric,
-    EvalSuite,
     FixtureFile,
     FixtureProvenance,
-    SuiteCoveragePolicy,
 )
 from tools.evals.gmuse_evals.validate import validate_assets
 
@@ -41,41 +38,29 @@ def make_assets(
         repository_instructions=None,
         selection_rationale="test",
     )
-    rubric = EvalRubric(
-        id="rubric",
-        version="1.0",
-        required_concepts=["documentation"],
-        forbidden_concepts=[],
-        allowed_conventional_types=["docs"],
-        allowed_scopes=[],
-        example_good=[],
-        example_bad=[],
-    )
-    case = EvalCase(
-        id="case",
-        revision=1,
-        fixture_id="fixture",
-        rubric_id="rubric",
+    rubric = make_rubric(include_max_chars_gate=True)
+    case = make_case(
+        fixture,
+        rubric,
         formats=["freeform", "conventional"],
         history_depth=0,
-        include_branch=False,
-        user_hint=None,
         max_chars=72,
         tags=["docs"],
     )
-    suite = EvalSuite(
-        id="custom",
-        version="1.0",
-        suite_kind="custom",
-        case_ids=["case"],
-        coverage_policy=SuiteCoveragePolicy(),
-    )
+    suite = make_suite(case)
+    from tests.eval_helpers import make_profile
+
+    profile = make_profile()
     return EvalAssets(
-        {"fixture": fixture}, {"rubric": rubric}, {"case": case}, {"custom": suite}
+        fixtures={"fixture": fixture},
+        rubrics={"rubric": rubric},
+        cases={"case": case},
+        suites={"custom": suite},
+        scoring_profiles={profile.id: profile},
     )
 
 
-def test_successful_validation_reports_expected_digest_and_coverage() -> None:
+def test_successful_validation_reports_expected_digest_and_composition() -> None:
     initial = make_assets()
     from tools.evals.gmuse_evals.git_reconstruct import reconstruct_fixture
 
@@ -84,14 +69,20 @@ def test_successful_validation_reports_expected_digest_and_coverage() -> None:
             update={"expected_staged_diff_sha256": repository.staged_diff.hash}
         )
     assets = EvalAssets(
-        {"fixture": valid}, initial.rubrics, initial.cases, initial.suites
+        fixtures={"fixture": valid},
+        rubrics=initial.rubrics,
+        cases=initial.cases,
+        suites=initial.suites,
+        scoring_profiles=initial.scoring_profiles,
     )
 
     result = validate_assets(assets, "custom")
 
     assert result.report.status == "passed"
     assert result.report.errors == []
-    assert result.report.coverage.dimensions["format"] == ["conventional", "freeform"]
+    formats = result.report.composition.group("Output formats")
+    assert formats is not None
+    assert [entry.label for entry in formats.entries] == ["Freeform", "Conventional"]
 
 
 def test_digest_and_changed_path_mismatches_are_actionable() -> None:
@@ -108,7 +99,13 @@ def test_missing_references_are_aggregated() -> None:
         update={"fixture_id": "missing-fixture", "rubric_id": "missing-rubric"}
     )
     result = validate_assets(
-        EvalAssets(assets.fixtures, assets.rubrics, {"case": case}, assets.suites),
+        EvalAssets(
+            fixtures=assets.fixtures,
+            rubrics=assets.rubrics,
+            cases={"case": case},
+            suites=assets.suites,
+            scoring_profiles=assets.scoring_profiles,
+        ),
         "custom",
         reconstruct=False,
     )
@@ -122,16 +119,17 @@ def test_history_depth_error_skips_reconstruction(monkeypatch) -> None:
 
     assets = make_assets()
     assets = EvalAssets(
-        assets.fixtures,
-        assets.rubrics,
-        {"case": assets.cases["case"].model_copy(update={"history_depth": 1})},
-        assets.suites,
+        fixtures=assets.fixtures,
+        rubrics=assets.rubrics,
+        cases={"case": assets.cases["case"].model_copy(update={"history_depth": 1})},
+        suites=assets.suites,
+        scoring_profiles=assets.scoring_profiles,
     )
 
     def fail_reconstruction(_fixture):
         raise AssertionError("reconstruction should not run")
 
-    monkeypatch.setattr(validation, "reconstruct_fixture", fail_reconstruction)
+    monkeypatch.setattr(validation, "validate_reconstruction", fail_reconstruction)
     result = validate_assets(assets, "custom")
 
     assert any(

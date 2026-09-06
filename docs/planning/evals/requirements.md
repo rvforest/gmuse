@@ -156,13 +156,13 @@ Case rubrics may include:
 - Forbidden concepts.
 - Allowed conventional types.
 - Optional allowed scopes.
-- `example_good` messages.
-- `example_bad` messages.
+- Usable annotated example messages.
+- Annotated failure example messages.
 - Quality notes.
 - Safety notes.
 
 Original commit messages from curated source commits should be imported as
-initial `example_good` candidates by default, because the core suite will use
+initial usable annotated-example candidates by default, because the core suite will use
 intentionally selected high-quality commits. The original message must still be
 preserved in source metadata even if it is edited or removed from the rubric.
 
@@ -175,10 +175,10 @@ V1 must include LLM-as-judge integration.
 Requirements:
 
 - Use deterministic checks before judge scoring where possible.
-- Use one fixed judge model, prompt, rubric version, and parameters across all
+- Use one fixed judge model, prompt, rubric revision, and parameters across all
   candidate models in the same benchmark comparison.
 - Prefer a judge model distinct from the candidate model.
-- Record judge model, judge prompt version, rubric version, parameters, and
+- Record judge model, judge prompt version, rubric revision, parameters, and
   structured judge output.
 - Flag self-judged results.
 - Avoid strong user-facing recommendations from self-judged results.
@@ -186,7 +186,7 @@ Requirements:
 - Support optional manual annotations and score/pass-fail overrides while
   preserving original judge output.
 - Support judge calibration against a small manually annotated set for each judge
-  prompt/rubric version before relying on scores for promoted regression
+  prompt version/rubric revision before relying on scores for promoted regression
   evidence.
 - Hide candidate model/provider identity from ordinary judge prompts where
   practical, and record any diagnostic mode that exposes it.
@@ -334,7 +334,7 @@ Importer requirements:
 - Pin imports to exact full commit SHAs, not branches.
 - Capture required source attribution metadata.
 - Preserve the full original commit message.
-- Import the original commit message subject as an initial `example_good`
+- Import the original commit message subject as an initial usable example
   candidate by default.
 - Capture a configurable number of prior commit messages, defaulting to gmuse's
   default history depth.
@@ -549,7 +549,7 @@ Comparison tooling should support:
 
 - Same-model regression comparison.
 - Different-model benchmark comparison.
-- Clear warnings when model, prompt version, suite version, judge version, or
+- Clear warnings when model, prompt version, suite revision, judge version, or
   config differ.
 
 Regression comparison should report evidence and deltas, not make hardcoded
@@ -615,7 +615,7 @@ Requirements:
 - Suites must have versions.
 - Rubrics and judge prompts must have versions.
 - Fixtures should have stable IDs and may have revisions.
-- Results must record suite version, fixture/case ID, rubric version, judge
+- Results must record suite revision, fixture/case ID, rubric revision, judge
   prompt version, gmuse package/git version, and gmuse `PROMPT_VERSION`.
 - Prompt-affecting changes should update `PROMPT_VERSION`.
 - Comparison tooling should flag changed prompt hashes, especially if

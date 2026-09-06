@@ -91,20 +91,19 @@ def test_loader_rejects_unknown_schema_versions(tmp_path: Path) -> None:
 
 
 def _write_suite_graph(root: Path) -> None:
-    for directory in ("fixtures", "rubrics", "cases", "suites"):
+    for directory in ("fixtures", "scoring_profiles", "rubrics", "cases", "suites"):
         (root / directory).mkdir()
     (root / "fixtures" / "selected.toml").write_text(FIXTURE, encoding="utf-8")
+    (root / "scoring_profiles" / "profile.toml").write_text(
+        Path("evals/scoring_profiles/commit-message-v1.toml").read_text(
+            encoding="utf-8"
+        ),
+        encoding="utf-8",
+    )
     (root / "rubrics" / "selected.toml").write_text(
-        """schema_version = "1.0"
-id = "rubric-one"
-version = "1.0"
-required_concepts = []
-forbidden_concepts = []
-allowed_conventional_types = ["docs"]
-allowed_scopes = []
-example_good = []
-example_bad = []
-""",
+        Path("evals/rubrics/docs-history.toml")
+        .read_text(encoding="utf-8")
+        .replace('id = "docs-history"', 'id = "rubric-one"', 1),
         encoding="utf-8",
     )
     (root / "cases" / "selected.toml").write_text(
@@ -116,6 +115,7 @@ rubric_id = "rubric-one"
 formats = ["freeform"]
 history_depth = 0
 include_branch = false
+max_chars = 72
 tags = []
 """,
         encoding="utf-8",
@@ -124,14 +124,9 @@ tags = []
         (root / "suites" / f"{suite_id}.toml").write_text(
             f'''schema_version = "1.0"
 id = "{suite_id}"
-version = "1.0"
+revision = 1
 suite_kind = "{kind}"
 case_ids = ["case-one"]
-
-[coverage_policy]
-required_dimensions = []
-advisory_dimensions = []
-minimum_case_counts = {{}}
 ''',
             encoding="utf-8",
         )
@@ -212,3 +207,14 @@ tags = []
         "fixture-missing",
         "rubric-missing",
     }
+
+
+def test_checked_in_final_schema_catalog_loads_all_five_asset_kinds() -> None:
+    """Keep a representative profile/rubric/case/suite graph loadable."""
+    assets = load_assets("evals")
+
+    assert set(assets.scoring_profiles) == {"commit-message-v1"}
+    assert assets.rubrics["docs-history"].scoring_profile_id == "commit-message-v1"
+    assert len(assets.rubrics["docs-history"].examples) == 2
+    assert assets.cases["docs-history"].rubric_id == "docs-history"
+    assert assets.suites["smoke"].composition_goals

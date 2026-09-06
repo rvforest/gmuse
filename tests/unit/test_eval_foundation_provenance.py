@@ -4,15 +4,12 @@ from datetime import datetime, timezone
 
 import pytest
 
+from tests.eval_helpers import make_case, make_profile, make_rubric, make_suite
 from tools.evals.gmuse_evals.load import EvalAssets
 from tools.evals.gmuse_evals.models import (
-    EvalCase,
     EvalFixture,
-    EvalRubric,
-    EvalSuite,
     FixtureFile,
     FixtureProvenance,
-    SuiteCoveragePolicy,
 )
 from tools.evals.gmuse_evals.validate import validate_assets
 
@@ -37,40 +34,16 @@ def _assets(provenance: FixtureProvenance) -> EvalAssets:
         repository_instructions=None,
         selection_rationale="Checks origin-specific provenance.",
     )
-    rubric = EvalRubric(
-        id="provenance-rubric",
-        version="1.0",
-        required_concepts=[],
-        forbidden_concepts=[],
-        allowed_conventional_types=["docs"],
-        allowed_scopes=[],
-        example_good=[],
-        example_bad=[],
-    )
-    case = EvalCase(
-        id="provenance-case",
-        revision=1,
-        fixture_id=fixture.id,
-        rubric_id=rubric.id,
-        formats=["freeform"],
-        history_depth=0,
-        include_branch=False,
-        user_hint=None,
-        max_chars=None,
-        tags=[],
-    )
-    suite = EvalSuite(
-        id="custom",
-        version="1.0",
-        suite_kind="custom",
-        case_ids=[case.id],
-        coverage_policy=SuiteCoveragePolicy(),
-    )
+    profile = make_profile()
+    rubric = make_rubric("provenance-rubric", profile_id=profile.id)
+    case = make_case(fixture, rubric, case_id="provenance-case")
+    suite = make_suite(case)
     return EvalAssets(
-        {fixture.id: fixture},
-        {rubric.id: rubric},
-        {case.id: case},
-        {suite.id: suite},
+        fixtures={fixture.id: fixture},
+        rubrics={rubric.id: rubric},
+        cases={case.id: case},
+        suites={suite.id: suite},
+        scoring_profiles={profile.id: profile},
     )
 
 

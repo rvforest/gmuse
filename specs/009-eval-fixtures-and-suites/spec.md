@@ -2,136 +2,286 @@
 
 **Feature Branch**: `009-eval-fixtures-and-suites`
 
-**Created**: 2026-06-11
+**Created**: 2026-09-06
 
-**Status**: Implemented
+**Status**: Planned
 
-**Implementation Note**: This specification describes maintainer-only eval
-tooling. It does not change the public `gmuse` command workflow.
-
-**Input**: User description: "Create maintainer-only eval fixture and suite foundation for gmuse, split from the broader eval planning notes."
+**Input**: Create a maintainer-only evaluation-fixture foundation whose reports
+and reviewable data are understandable to maintainers who are new to LLM
+evaluation. Use established evaluation practices for transparent suite
+composition, explicit scoring criteria, deterministic gates, and calibration-
+ready examples.
 
 ## User Scenarios & Testing *(mandatory)*
 
-### User Story 1 - Validate A Smoke Suite Offline (Priority: P1)
+### User Story 1 - Understand a validated suite at a glance (Priority: P1)
 
-As a gmuse maintainer, I want to validate a tiny checked-in smoke suite without
-model credentials so that I can prove eval fixture structure and reconstruction
-work before any live eval runs exist.
+As a gmuse maintainer who is new to evaluation tooling, I want the validation
+report to explain what kinds of cases a suite contains in plain language so that
+I can tell whether the suite exercises the situations I care about without
+having to inspect its data files or learn internal terminology.
 
-**Why this priority**: All later eval runner, judge, and baseline work depends on
-trustworthy fixture and suite data.
+**Why this priority**: A report that passes validation but does not communicate
+what the suite represents cannot support informed review or high-level product
+guidance.
 
-**Independent Test**: Run the manual validation command against the smoke suite
-and confirm it validates schemas, reconstructs temporary repositories, stages
-patches, verifies diff digests, and reports coverage without making provider
-calls.
+**Independent Test**: Validate the checked-in smoke suite and confirm that a
+reader can identify the number of cases by change type, output format, context
+variation, safety scenario, and fixture source from the report alone.
 
 **Acceptance Scenarios**:
 
-1. **Given** a valid smoke suite with a synthetic fixture, **When** the maintainer validates it, **Then** validation succeeds without model credentials and reports fixture, case, format, and safety coverage.
-2. **Given** a fixture whose reconstructed staged diff does not match its expected digest, **When** the maintainer validates the suite, **Then** validation fails and identifies the affected fixture and expected versus observed digest.
-3. **Given** a real OSS fixture missing required attribution metadata, **When** the maintainer validates the suite, **Then** validation fails before the fixture can be used in eval runs.
+1. **Given** a suite containing both history-enabled and history-disabled
+   cases, **When** a maintainer validates it, **Then** the report presents each
+   state with its case count rather than presenting the two states as an
+   unexplained comma-separated pair.
+2. **Given** a suite containing normal and injection-safety cases, **When** a
+   maintainer validates it, **Then** the report groups the scenarios under
+   clear, human-readable headings and identifies the injection pattern and
+   location where applicable.
+3. **Given** a valid suite, **When** validation completes, **Then** the report
+   calls this information suite composition and clearly distinguishes it from
+   validation status and model-quality results.
+4. **Given** an invalid fixture or suite reference, **When** validation
+   completes, **Then** its actionable errors remain visible alongside any
+   available composition summary without implying that the suite passed.
 
 ---
 
-### User Story 2 - Author Reviewable Fixtures And Rubrics (Priority: P2)
+### User Story 2 - Author a rubric that explains future scoring (Priority: P1)
 
-As a gmuse maintainer, I want fixtures and rubrics to be explicit, versioned, and
-reviewable so that future eval results can be traced back to stable source
-cases and scoring expectations.
+As a gmuse maintainer, I want to read a case's evaluation guidance and predict
+how several plausible commit messages would be assessed so that I can review
+or author evaluation data with confidence before automated scoring exists.
 
-**Why this priority**: Real commits, adapted fixtures, and synthetic safety
-cases need different provenance and review expectations, but all must be
-auditable.
+**Why this priority**: A list of vague required or forbidden concepts does not
+provide a usable mental model for a future human or model-based grader.
 
-**Independent Test**: Validate representative synthetic, adapted, and real
-fixture definitions and confirm each fixture type is accepted only when its
-required provenance fields are present.
+**Independent Test**: Review a checked-in ordinary case and a safety case,
+then use their scoring guidance to classify representative messages as passing
+or failing deterministic gates and to explain their expected assessment without
+requiring an exact match to an example message.
 
 **Acceptance Scenarios**:
 
-1. **Given** a synthetic fixture with no external source commit, **When** it is validated, **Then** it must be marked synthetic and must not require source repository metadata.
-2. **Given** an adapted fixture, **When** it is validated, **Then** it must include adaptation notes that explain what changed from the original source.
-3. **Given** a real OSS fixture, **When** it is validated, **Then** it must include repository URL, owner/repo, commit SHA, commit URL, source license expression or license reference, full original commit message, import timestamp, and selection rationale.
+1. **Given** a case with subjective quality expectations, **When** a maintainer
+   reads its evaluation guidance, **Then** they can identify the reusable
+   assessment dimensions, the meaning of each rating level, and the case-
+   specific evidence that affects each dimension.
+2. **Given** a generated message that violates an objective safety, format,
+   privacy, or length constraint, **When** it is assessed in a future scoring
+   run, **Then** the guidance identifies it as a deterministic gate rather than
+   concealing it inside a subjective quality score.
+3. **Given** a case-specific success criterion or failure condition, **When**
+   a maintainer reads it, **Then** it states the observable behavior, the
+   assessment dimension or error category it affects, and its importance.
+4. **Given** annotated example messages, **When** a maintainer uses them for
+   guidance, **Then** each example includes an expected assessment and rationale
+   but does not require generated messages to match its wording.
 
 ---
 
-### User Story 3 - Organize Curated Suites By Intent (Priority: P3)
+### User Story 3 - Curate suites with meaningful composition goals (Priority: P2)
 
-As a gmuse maintainer, I want suites to identify smoke, core, and safety cases so
-that later eval commands can run focused subsets without duplicating fixtures.
+As a gmuse maintainer, I want a suite to express which specific scenarios need
+representation so that the small smoke suite stays useful and the future core
+suite can become balanced without misleading generic coverage rules.
 
-**Why this priority**: Suite organization controls later runner behavior and
-prevents smoke cases from becoming a separate, inconsistent fixture set.
+**Why this priority**: A policy that merely confirms that a field has any value
+does not show whether a suite contains the cases needed for regression or
+safety confidence.
 
-**Independent Test**: Validate a suite definition where `smoke` is a subset of
-`core`, safety-tagged cases are discoverable, and coverage warnings are reported
-without failing non-required balance guidelines.
+**Independent Test**: Validate a suite with value-specific composition goals and
+confirm that the report shows counts for the requested scenarios, warns or
+fails at the documented threshold, and does not treat an inapplicable value as
+evidence that a requested scenario is represented.
 
 **Acceptance Scenarios**:
 
-1. **Given** a smoke suite that references only core cases, **When** validation runs, **Then** the suite passes the smoke/core relationship check.
-2. **Given** a smoke suite that references a case outside core, **When** validation runs, **Then** validation fails with a clear suite membership error.
-3. **Given** an imbalanced core suite where balance is advisory, **When** validation runs, **Then** validation emits warnings rather than failing.
+1. **Given** a composition goal requiring a minimum number of cases with a
+   particular context setting or safety scenario, **When** the suite falls below
+   that threshold, **Then** validation identifies the missing scenario, the
+   observed count, and the required count.
+2. **Given** an advisory composition goal, **When** the suite falls below its
+   threshold, **Then** validation warns by default and the maintainer can elect
+   to treat the warning as a failure.
+3. **Given** a smoke suite, **When** validation runs, **Then** it remains a
+   subset of the core suite and can use a deliberately small set of
+   composition goals.
+4. **Given** a value such as "not applicable" or "not used", **When** a
+   composition goal asks for a different value, **Then** the former does not
+   satisfy the goal.
 
 ### Edge Cases
 
-- Fixture patch data cannot be applied to the temporary repository.
-- A fixture applies cleanly but produces a staged diff with different path order,
-  line endings, or metadata than expected.
-- A case declares a conventional commit type that gmuse does not currently
-  validate.
-- A suite references a missing case, fixture, rubric, or unsupported format.
-- A real OSS fixture includes a short SHA rather than a full commit SHA.
-- A safety case includes realistic fake secrets that must be marked as
-  nonfunctional test data.
+- A suite has no resolved cases because its selected graph is invalid; the
+  report must not present empty or placeholder values as meaningful composition.
+- A case exercises multiple output formats; its report must show the count for
+  each format without implying that the formats are mutually exclusive.
+- A case has no safety scenario; the report must communicate that it is an
+  ordinary case without treating "none" as safety coverage.
+- A criterion cannot be evaluated from the staged change and permitted case
+  context; validation must reject or flag it as unsuitable for reliable
+  assessment.
+- An example message is high quality but uses different wording from another
+  valid message; the rubric must allow both rather than treating examples as
+  golden answers.
+- A message passes every objective gate but is vague, inaccurate, or poorly
+  scoped; its subjective assessment must remain visible.
+- A message receives strong subjective ratings but violates a hard gate; the
+  hard gate must take precedence.
+- Fixture reconstruction, provenance, path, digest, and reference failures
+  continue to be reported with actionable diagnostics.
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: The eval foundation MUST define versioned fixture, case, suite, and rubric schemas.
-- **FR-002**: Fixtures MUST be offline and self-contained after they are checked in.
-- **FR-003**: Fixture validation MUST reconstruct a temporary git repository, stage the evaluated changes, and verify that the staged diff digest matches fixture metadata.
-- **FR-004**: Fixtures MUST preserve original changed file paths and MUST NOT pre-truncate diffs.
-- **FR-005**: Real OSS fixtures MUST include source repository URL, owner/repo, full commit SHA, commit URL, source license expression or license reference, full original commit message, import timestamp, fixture origin kind, and maintainer selection rationale.
-- **FR-006**: Synthetic fixtures MUST be explicitly marked synthetic and MUST NOT require external source commit metadata.
-- **FR-007**: Adapted fixtures MUST be explicitly marked adapted and MUST include adaptation notes.
-- **FR-008**: Rubrics MUST support required concepts, forbidden concepts, allowed conventional types, optional allowed scopes, example good messages, example bad messages, quality notes, and safety notes.
-- **FR-009**: Suite definitions MUST support `smoke`, `core`, and `safety` membership without duplicating fixture content.
-- **FR-010**: The smoke suite MUST be validated as a subset of the core suite.
-- **FR-011**: Validation MUST check fixture schema validity, rubric schema validity, required provenance metadata, reconstructability, staged diff digest, suite references, supported formats, and compatibility between declared conventional types and gmuse's current validator.
-- **FR-012**: Validation MUST report coverage by ecosystem, source repo, origin kind, source license evidence status, change type, format, safety tag, injection sub-tag, history usage, branch usage, hint usage, and `max_chars` usage.
-- **FR-013**: Balance issues SHOULD warn by default unless a suite policy marks the balance rule required.
-- **FR-014**: Safety fixtures tagged for injection MUST support sub-tags that distinguish direct instructions, indirect/external-content instructions, obfuscated or encoded instructions, deleted instructions, and instruction-like content in code comments, docs, strings, tests, or config examples.
-- **FR-015**: Fixture provenance MUST distinguish source licensing from fixture redistribution review status so validation can enforce metadata without claiming legal approval.
-- **FR-016**: The foundation MUST NOT make live model calls, judge calls, baseline comparisons, fixture import network calls, or public benchmark recommendations.
-- **FR-017**: Default CI MUST NOT require provider credentials or live eval execution for this foundation.
+- **FR-001**: The evaluation foundation MUST define versioned, reviewable
+  fixture, case, suite, scoring-profile, and rubric data.
+- **FR-002**: Fixtures MUST remain offline and self-contained after they are
+  checked in.
+- **FR-003**: Fixture validation MUST reconstruct an isolated repository,
+  stage the evaluated changes, and verify that the staged-change identity
+  matches fixture metadata.
+- **FR-004**: Fixtures MUST preserve original changed file paths and MUST NOT
+  pre-truncate evaluated changes.
+- **FR-005**: Real open-source fixtures MUST record sufficient source,
+  licensing, and redistribution-review information for maintainers to audit
+  their provenance; this record MUST NOT claim legal approval.
+- **FR-006**: Synthetic fixtures MUST be explicitly identified as synthetic,
+  and adapted fixtures MUST explain their adaptation.
+- **FR-007**: Validation reports MUST label the distribution of scenarios in a
+  suite as **suite composition**, not coverage.
+- **FR-008**: A suite-composition report MUST group information into
+  understandable categories, including changes, output formats, context
+  variations, safety scenarios, and fixture sources when present.
+- **FR-009**: Each composition entry MUST show how many cases it represents.
+  The report MUST NOT rely on unexplained raw status values or comma-separated
+  sets to communicate mutually different case states.
+- **FR-010**: Suite composition MUST be reported separately from validation
+  status, validation errors, and future model-quality results.
+- **FR-011**: A suite MAY define composition goals only for a specific scenario
+  value and a minimum number of cases. A generic requirement that a category
+  merely have any value is insufficient.
+- **FR-012**: Composition goals MUST identify whether falling short is required
+  or advisory. Advisory shortfalls MUST be visible by default and may be
+  promoted to failures by maintainer choice. The smoke suite MUST use only
+  minimal required scenarios; the core suite is the first suite expected to use
+  explicit composition goals as it grows.
+- **FR-013**: Suite definitions MUST support smoke, core, and safety membership
+  without duplicating fixture content. The smoke suite MUST remain a subset of
+  the core suite.
+- **FR-014**: Rubrics MUST distinguish reusable scoring rules from the
+  expectations that are specific to one case.
+- **FR-015**: Reusable scoring rules MUST define each subjective assessment
+  dimension, explain every rating level, and state how individual assessments
+  are presented to maintainers. The profile MUST use a four-level,
+  anchored rating for each subjective dimension and a separate categorical
+  usability result: `usable`, `minor_edit`, `major_edit`, or `unusable`.
+- **FR-016**: Case-specific rubrics MUST use independently
+  assessable criteria and failure conditions. Each item MUST state the
+  observable behavior, its affected dimension or error category, and its
+  importance.
+- **FR-017**: Objective constraints that can be reliably checked without
+  subjective judgment—including applicable output validity, length, privacy,
+  and objective injection evidence—MUST be represented as deterministic gates
+  separate from subjective assessments. Semantic instruction obedience is
+  deferred to later judge scoring.
+- **FR-018**: A failed deterministic gate MUST prevent a result from being
+  considered usable regardless of subjective assessment. The foundation MUST
+  preserve the gate and its evidence for later review.
+- **FR-019**: Rubrics MUST support annotated examples that include
+  an expected assessment and rationale. Examples MUST illustrate acceptable and
+  unacceptable outcomes without becoming exact-match targets. Each checked-in
+  case MUST include two examples: one `usable` outcome and one important
+  failure. The reusable scoring profile MUST illustrate intermediate usability
+  categories.
+- **FR-020**: The foundation MUST validate fixture and suite structure,
+  references, provenance, reconstructability, staged-change identity, and
+  suitability of declared scoring profiles and rubrics.
+- **FR-021**: Injection-safety cases MUST identify both the instruction pattern
+  and the location in which it appears. Secret-like safety test data MUST be
+  explicitly marked fake or nonfunctional. The foundation MUST validate only
+  objective injection evidence, not infer semantic instruction obedience.
+- **FR-022**: The foundation MUST provide enough structured information for a
+  later evaluation runner and scorer to apply the same profile and rubric
+  consistently without redefining its meaning.
+- **FR-023**: This feature MUST NOT make live candidate-model or judge-model
+  calls, produce model-quality scores, calculate a composite score, compare
+  baselines, import fixtures over a network, or publish benchmark
+  recommendations.
+- **FR-024**: Default continuous integration MUST NOT require provider
+  credentials or live evaluation execution for this foundation.
 
 ### Key Entities *(include if feature involves data)*
 
-- **EvalFixture**: Offline source data needed to reconstruct a temporary git repository and stage the evaluated patch.
-- **EvalCase**: A runnable evaluation case that binds a fixture to formats, context options, and a rubric.
-- **EvalSuite**: A named, versioned set of case IDs grouped for smoke, core, or safety execution.
-- **EvalRubric**: Reviewable expectations for acceptable messages and disallowed claims.
-- **FixtureProvenance**: Attribution and origin metadata for real, adapted, or synthetic fixtures.
-- **ValidationReport**: Machine-readable and human-readable validation results for fixtures and suites.
+- **EvalFixture**: Offline source data that reconstructs the repository state
+  and staged change to be evaluated.
+- **EvalCase**: A runnable scenario that combines a fixture, rubric, requested
+  output formats, and context variations.
+- **EvalSuite**: A named collection of case IDs and optional, value-specific
+  composition goals.
+- **Composition Summary**: A readable count of the scenarios represented by a
+  suite, grouped by their purpose rather than presented as raw metadata.
+- **Scoring Profile**: A versioned, reusable description of subjective
+  assessment dimensions, their four rating-level meanings, and the separate
+  categorical usability result (`usable`, `minor_edit`, `major_edit`, or
+  `unusable`). It describes how a future scorer will assess messages but does
+  not itself run scoring.
+- **EvalRubric**: Independently assessable criteria, failure conditions,
+  deterministic gates, and annotated examples that apply a scoring profile to
+  one evaluation case.
+- **Deterministic Gate**: An objective requirement whose failure makes an
+  output unusable regardless of subjective assessment.
+- **Fixture Provenance**: Attribution and origin information for real, adapted,
+  or synthetic fixture content.
+- **Validation Report**: A maintainer-facing result that separately presents
+  validation status, actionable errors, and suite composition.
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: A maintainer can validate the initial smoke suite in under 30 seconds on a typical development machine without provider credentials.
-- **SC-002**: Validation detects 100% of fixtures with missing required real-OSS attribution fields.
-- **SC-003**: Validation detects 100% of reconstructed staged diff digest mismatches in the checked-in fixture set.
-- **SC-004**: The validation report lists coverage for every required coverage dimension for the checked-in suite.
-- **SC-005**: Later eval runner specs can reference fixture, case, suite, and rubric entities without redefining their schemas.
+- **SC-001**: A maintainer can validate the checked-in smoke suite in under 30
+  seconds on a typical development machine without provider credentials.
+- **SC-002**: The smoke-suite report identifies the count for every represented
+  change type, output format, context variation, safety scenario, and fixture
+  source without requiring the reader to inspect asset files.
+- **SC-003**: For every declared composition goal, validation reports the
+  requested scenario value, observed case count, required case count, and
+  whether the result is advisory or required.
+- **SC-004**: Every checked-in rubric identifies its scoring
+  profile, and every criterion or failure condition identifies its affected
+  dimension or error category and importance.
+- **SC-005**: Every checked-in case includes two annotated examples: one
+  `usable` outcome and one important failure. Each example includes an expected
+  assessment and rationale, and validation accepts semantically valid messages
+  that do not exactly match example wording.
+- **SC-006**: Validation detects 100% of checked-in fixture provenance,
+  reconstruction, staged-change identity, suite-reference, and deterministic-
+  gate metadata failures.
+- **SC-007**: Later runner and scoring work can consume the versioned fixture,
+  case, suite, scoring-profile, and rubric identities without
+  redefining their semantics.
 
 ## Assumptions
 
-- Eval fixtures are maintainer-only assets and are not part of the normal `gmuse msg` or `gmuse commit` user workflow.
-- The first checked-in smoke suite is intentionally small and may use only synthetic fixtures while real OSS source selection is still being curated.
-- Fixture importer automation is deferred; manually authored fixtures are acceptable for proving the schema and validation foundation.
-- Validation is manual for this feature and is not a default CI gate.
-- Existing gmuse git behavior is the source of truth for staged diff extraction once a fixture is reconstructed.
+- Eval assets are maintainer-only and do not change the ordinary `gmuse`
+  command workflow.
+- The checked-in smoke suite remains intentionally small and may contain only
+  synthetic fixtures while real open-source cases are curated. It has minimal
+  composition requirements; core-suite composition goals expand with the
+  curated corpus.
+- Scoring profiles and rubrics make future scoring understandable and
+  consistent; execution of an automated scorer is deferred to a later feature.
+- Human review and calibration examples are the reference point for future
+  model-based grading. Automated grading is not assumed to replace maintainer
+  judgment.
+- Semantic judgments about whether an output obeyed embedded instructions are
+  deferred to the future judge-scoring feature; this foundation only preserves
+  the structured safety evidence that the judge will need.
+- Aggregate or weighted quality scores are deferred until calibration shows
+  that individual assessments are useful and trustworthy.
+- Existing gmuse staged-change behavior remains the source of truth once a
+  fixture is reconstructed.

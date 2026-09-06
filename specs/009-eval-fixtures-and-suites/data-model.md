@@ -1,238 +1,148 @@
 # Data Model: Eval Fixtures And Suites
 
-## Entity: `EvalFixture`
+**Schema version**: 1.0
 
-Represents offline data needed to reconstruct a temporary git repository and
-stage the evaluated change.
+## Asset identities
 
-**Fields**:
+Every checked-in asset declares `schema_version = "1.0"`, a stable `id`, and a
+positive integer `revision`. The loader rejects unknown schema versions.
 
-- `id: str`
-  - Stable fixture identifier.
-- `schema_version: str`
-  - Fixture schema version.
-- `revision: int`
-  - Monotonic fixture revision when fixture content changes.
-- `origin: Literal["real", "adapted", "synthetic"]`
-  - Fixture source category.
-- `provenance: FixtureProvenance`
-  - Source and attribution metadata.
-- `ecosystem: str`
-  - Primary ecosystem or language represented by the fixture.
-- `change_type: str`
-  - Maintainer-assigned category such as `fix`, `feat`, `docs`, `test`,
-    `refactor`, or `chore`.
-- `safety_tags: list[str]`
-  - Optional tags such as `privacy` or `injection`.
-- `injection_tags: list[str]`
-  - Optional injection pattern tags for injection safety fixtures.
-- `base_files: list[FixtureFile]`
-  - Minimal file contents needed before applying the evaluated change.
-- `patch: str`
-  - Patch data applied to stage the evaluated change.
-- `expected_staged_diff_sha256: str`
-  - Digest of the staged diff produced by reconstruction.
-- `expected_files_changed: list[str]`
-  - Original changed file paths expected in the staged diff.
-- `history: list[FixtureHistoryCommit]`
-  - Optional recent commit subjects used to reconstruct style context.
-- `branch_name: str | None`
-  - Optional branch name for branch-context cases.
-- `repository_instructions: str | None`
-  - Optional fixture-level `.gmuse` content.
-- `selection_rationale: str`
-  - Maintainer explanation for why the fixture belongs in the suite.
+## EvalFixture and FixtureProvenance
 
-**Validation Rules**:
+`EvalFixture` continues to reconstruct one staged change. Its stable fields
+are `id`, `revision`, `origin`, `provenance`, `ecosystem`,
+`change_type`, safety/injection tags, base files, patch, expected changed
+paths and digest, optional history and context, and selection rationale.
 
-- `id` must be unique across checked-in fixtures.
-- `schema_version` must be compatible with the validator.
-- `revision` must be positive.
-- `patch` must apply to `base_files` in a temporary git repository.
-- Reconstructed staged diff digest must equal `expected_staged_diff_sha256`.
-- `expected_files_changed` must match the reconstructed staged diff paths.
-- Fixtures must not store a pre-truncated diff.
-- Safety fixtures containing secret-like values must mark them as fake or
-  nonfunctional in safety notes or provenance.
-- `injection_tags` must be non-empty when `safety_tags` includes `injection`.
+`FixtureProvenance` continues to distinguish real, adapted, and synthetic
+content; source-license evidence is distinct from redistribution review.
+Fixture fields support composition reporting.
 
-## Entity: `FixtureFile`
+## ScoringProfile
 
-Represents a file present before the evaluated patch is applied.
+A reusable description of future subjective assessment, tracked by revision.
 
-**Fields**:
+| Field | Meaning |
+|---|---|
+| `id` | Stable profile identifier, initially `commit-message-v1` |
+| `revision` | Monotonic profile revision |
+| `dimensions` | Ordered subjective dimensions |
+| `usability_labels` | Definitions for usable, minor edit, major edit, unusable |
+| `usability_examples` | Annotated illustrations of intermediate labels |
 
-- `path: str`
-- `content: str`
-- `executable: bool`
+Each dimension has:
 
-**Validation Rules**:
+| Field | Meaning |
+|---|---|
+| `id` | Stable key used by case guidance and later scorers |
+| `label` | Maintainer-facing name |
+| `description` | What the dimension assesses |
+| `anchors` | Exactly four explicit meanings, keyed 1 through 4 |
 
-- Paths must be relative repository paths.
-- Paths must not escape the temporary repository root.
+Initial dimensions are `accuracy`, `message_quality`, and
+`style_context_fit`. A case may mark a dimension not applicable when it does
+not supply relevant context; a future scorer must preserve that state rather
+than invent a rating.
 
-## Entity: `FixtureHistoryCommit`
+The profile does not define weights or an aggregate score.
 
-Represents a synthetic history commit used to recreate style context.
+## EvalRubric
 
-**Fields**:
+A case-specific application of one scoring profile, tracked by revision.
 
-- `subject: str`
-- `body: str | None`
-- `source_commit_sha: str | None`
+| Field | Meaning |
+|---|---|
+| `id` / `revision` | Stable rubric identity |
+| `scoring_profile_id` | Referenced profile |
+| `criteria` | Independently assessable positive or required evidence |
+| `failure_conditions` | Specific undesirable behavior or claim |
+| `deterministic_gates` | Objective checks and their evidence configuration |
+| `examples` | Two annotated messages for the case |
+| `notes` | Optional maintainer context that does not replace a criterion |
 
-**Rules**:
+A criterion contains `id`, `dimension`, `description`, and importance
+(`major` or `minor`). A failure condition contains `id`,
+`error_category`, `description`, and severity (`major` or `minor`).
+Each reference must use a profile dimension or supported error category.
 
-- History must not include the evaluated commit itself.
-- History may use synthetic placeholder commits as long as original prior commit
-  messages are preserved when derived from a real source.
+A deterministic-gate declaration contains `id`, `gate`, and objective
+evidence configuration. Supported gates are production output validity,
+applicable length, known fake-secret leakage, and configured literal injection
+markers. It cannot claim semantic instruction obedience.
 
-## Entity: `FixtureProvenance`
+Each example contains a message, expected ratings for applicable profile
+dimensions, expected usability, expected gate/failure identifiers, and a
+rationale. Every checked-in rubric has exactly two examples: one usable
+example and one important failure. The profile supplies the intermediate-label
+illustrations. Examples are calibration evidence, never exact-match targets.
 
-Represents source attribution and origin metadata.
+## EvalCase
 
-**Fields**:
+An `EvalCase` binds one fixture to one rubric and generation context. Existing
+formats, history depth, branch inclusion, hint, maximum length, and tags remain
+case configuration.
 
-- `origin: Literal["real", "adapted", "synthetic"]`
-- `source_repository_url: str | None`
-- `source_owner_repo: str | None`
-- `source_commit_sha: str | None`
-- `source_commit_url: str | None`
-- `source_license: str | None`
-  - Optional human-readable source license label when available.
-- `source_license_expression: str | None`
-  - SPDX license expression or `LicenseRef-*` reference when available.
-- `source_license_url: str | None`
-  - URL or repository path for license evidence when available.
-- `redistribution_review: Literal["not_reviewed", "metadata_only", "approved_for_fixture"]`
-  - Maintainer review status for checking fixture content into gmuse.
-- `original_commit_message: str | None`
-- `imported_at: str | None`
-- `adaptation_notes: str | None`
-- `synthetic_notes: str | None`
+## EvalSuite and CompositionGoal
 
-**Validation Rules**:
+An `EvalSuite` contains ordered case IDs and zero or more composition goals.
 
-- Real fixtures require repository URL, owner/repo, full commit SHA, commit URL,
-  source license evidence, full original commit message, and import timestamp.
-- Real fixtures require either `source_license_expression` or
-  `source_license_url`; both should be present when practical.
-- `redistribution_review` must be present for real and adapted fixtures, and
-  validation must not treat metadata presence alone as legal approval.
-- Adapted fixtures require all real fixture metadata when derived from a real
-  commit plus non-empty adaptation notes.
-- Synthetic fixtures require non-empty synthetic notes and must not pretend to
-  have a real source commit.
+A `CompositionGoal` contains:
 
-## Entity: `EvalRubric`
+| Field | Meaning |
+|---|---|
+| `selector` | One supported scenario selector |
+| `value` | A permitted value for that selector |
+| `minimum_cases` | Positive minimum number of matching cases |
+| `severity` | `required` or `advisory` |
 
-Represents reviewable expectations for a case.
+Supported selectors are:
 
-**Fields**:
+- `fixture.origin`, `fixture.ecosystem`, `fixture.change_type`
+- `fixture.source_repository`
+- `case.format`
+- `context.history`, `context.branch`, `context.hint`,
+  `context.max_chars`
+- `safety.scenario`, `safety.tag`, `safety.injection_pattern`, and
+  `safety.injection_location`
 
-- `id: str`
-- `version: str`
-- `required_concepts: list[str]`
-- `forbidden_concepts: list[str]`
-- `allowed_conventional_types: list[str]`
-- `allowed_scopes: list[str]`
-- `example_good: list[str]`
-- `example_bad: list[str]`
-- `quality_notes: str | None`
-- `safety_notes: str | None`
+Boolean context selectors use `enabled` or `disabled`; `safety.scenario`
+uses `ordinary` or `injection`. A matching case counts once for one goal,
+even when it contributes multiple values to other goals. Duplicate or
+conflicting goals are invalid.
 
-**Validation Rules**:
+Smoke remains a subset of core. Its goals are intentionally minimal. Core can
+add advisory or required goals as curation expands.
 
-- Allowed conventional types must be compatible with gmuse's current supported
-  conventional type validation.
-- Rubrics must not require exact match to an original source commit message.
-- Safety notes are required for privacy or injection-tagged cases.
-- Injection safety notes should identify the injection location and pattern,
-  such as direct instruction text, indirect external-content text, obfuscated or
-  encoded instruction text, deleted instruction text, code comments, Markdown,
-  test fixtures, string literals, or config examples.
+## SuiteComposition and ValidationReport
 
-## Entity: `EvalCase`
+`SuiteComposition` is a report-only summary of resolved cases. It consists of
+ordered groups and entries:
 
-Represents a runnable eval case binding fixture data to rubric and context
-options.
+| Group | Example entries |
+|---|---|
+| Changes | `docs: 1 case`, `test: 1 case` |
+| Output formats | `conventional: 2 cases` |
+| Context variations | `commit history enabled: 1 case` |
+| Safety scenarios | `ordinary change: 1 case`, `direct instruction in code comment: 1 case` |
+| Fixture sources | `synthetic: 2 cases` |
 
-**Fields**:
+Each entry has a stable machine key, human label, and case count. Empty or
+unresolved records do not fabricate an `none` entry.
 
-- `id: str`
-- `revision: int`
-- `fixture_id: str`
-- `rubric_id: str`
-- `formats: list[Literal["freeform", "conventional", "gitmoji"]]`
-- `history_depth: int | None`
-- `include_branch: bool`
-- `user_hint: str | None`
-- `max_chars: int | None`
-- `tags: list[str]`
+`ValidationReport` keeps status, errors, warnings, timestamp, and
+`composition`. Composition is separate from validation success and is
+never a model score or metric.
 
-**Validation Rules**:
+## Relationships and lifecycle
 
-- `fixture_id` and `rubric_id` must resolve.
-- `formats` must include only gmuse-supported formats.
-- `history_depth`, branch, hint, and `max_chars` settings must be represented in
-  validation coverage.
+```text
+EvalSuite ──contains──> EvalCase ──uses──> EvalFixture
+                         │
+                         └──uses──> EvalRubric ──uses──> ScoringProfile
+ValidationReport ──summarizes──> resolved cases + composition goals
+```
 
-## Entity: `EvalSuite`
-
-Represents a named, versioned set of eval cases.
-
-**Fields**:
-
-- `id: Literal["smoke", "core", "safety"] | str`
-- `version: str`
-- `case_ids: list[str]`
-- `suite_kind: Literal["smoke", "core", "safety", "custom"]`
-- `coverage_policy: SuiteCoveragePolicy`
-
-**Validation Rules**:
-
-- `smoke` cases must be a subset of `core`.
-- `safety` may include safety-tagged core cases and additional safety cases.
-- Missing case references fail validation.
-- Balance gaps warn by default unless required by `coverage_policy`.
-
-## Entity: `SuiteCoveragePolicy`
-
-Represents optional required coverage rules for a suite.
-
-**Fields**:
-
-- `required_dimensions: list[str]`
-- `advisory_dimensions: list[str]`
-- `minimum_case_counts: dict[str, int]`
-
-## Entity: `ValidationReport`
-
-Represents the result of validating fixtures and suites.
-
-**Fields**:
-
-- `schema_version: str`
-- `suite_id: str`
-- `suite_version: str`
-- `status: Literal["passed", "failed"]`
-- `errors: list[ValidationIssue]`
-- `warnings: list[ValidationIssue]`
-- `coverage: CoverageSummary`
-- `validated_at: str`
-
-**Rules**:
-
-- Any schema, provenance, reference, reconstructability, or digest error fails
-  validation.
-- Advisory balance issues are warnings unless the suite policy marks them
-  required.
-
-## Relationships
-
-- An `EvalSuite` contains many `EvalCase` records.
-- An `EvalCase` references exactly one `EvalFixture` and one `EvalRubric`.
-- An `EvalFixture` owns one `FixtureProvenance` record and zero or more history
-  commits.
-- A `ValidationReport` is produced for a suite validation attempt and includes
-  issues from fixtures, rubrics, cases, and suite policies.
+A source asset revision changes the corresponding stable identity/digest used
+by runner and scorer work. Feature 010 resolves the source assets into a
+canonical assessment target and immutable evidence reference. Feature 012
+later emits named ratings and gate results; it does not change source assets.

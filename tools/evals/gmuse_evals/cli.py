@@ -8,7 +8,7 @@ from collections.abc import Sequence
 import typer
 
 from .load import EvalLoadError
-from .models import COVERAGE_DIMENSIONS, ValidationIssue
+from .models import SuiteComposition, ValidationIssue
 from .validate import validate_suite
 
 app = typer.Typer(
@@ -29,16 +29,28 @@ def _render_issues(title: str, issues: Sequence[ValidationIssue]) -> None:
         typer.echo(f"- {issue.render()}")
 
 
+def _render_composition(composition: SuiteComposition) -> None:
+    """Render counted composition without exposing raw asset metadata."""
+    if not composition.groups:
+        return
+    typer.echo("Suite composition")
+    for group in composition.groups:
+        typer.echo(f"\n{group.name}")
+        for entry in group.entries:
+            suffix = "case" if entry.case_count == 1 else "cases"
+            typer.echo(f"- {entry.label}: {entry.case_count} {suffix}")
+
+
 @validate_app.callback(invoke_without_command=True)
 def validate(
     suite: str = typer.Option("smoke", "--suite", help="Suite identifier to validate."),
     evals_dir: Path = typer.Option(
         Path("evals"), "--evals-dir", help="Root directory containing eval assets."
     ),
-    strict_balance: bool = typer.Option(
+    strict_composition: bool = typer.Option(
         False,
-        "--strict-balance",
-        help="Treat advisory coverage gaps as validation failures.",
+        "--strict-composition",
+        help="Promote advisory composition-goal shortfalls to failures.",
     ),
 ) -> None:
     """Validate a suite without model, judge, or network calls.
@@ -49,7 +61,7 @@ def validate(
     Args:
         suite: Stable suite identifier.
         evals_dir: Root directory containing eval assets.
-        strict_balance: Whether advisory coverage gaps should fail validation.
+        strict_composition: Whether advisory composition-goal shortfalls fail.
 
     Raises:
         typer.Exit: With status one when loading or validation fails.
@@ -58,7 +70,11 @@ def validate(
         Run ``python -m tools.evals.gmuse_evals validate --suite smoke``.
     """
     try:
-        result = validate_suite(evals_dir, suite, strict_balance=strict_balance)
+        result = validate_suite(
+            evals_dir,
+            suite,
+            strict_composition=strict_composition,
+        )
     except EvalLoadError as error:
         typer.echo(f"Validated suite: {suite}")
         typer.echo("Status: failed")
@@ -73,13 +89,18 @@ def validate(
         _render_issues("Errors", report.errors)
     _render_issues("Warnings", report.warnings)
     typer.echo(
-        f"Cases: {len(result.cases)}\n"
-        f"Fixtures: {len({item.fixture.id for item in result.cases})}\n"
+        f"Cases: {len(result.resolved_cases)}\n"
+        f"Fixtures: {len({item.fixture.id for item in result.resolved_cases})}\n"
         f"Warnings: {len(report.warnings)}"
     )
-    typer.echo("Coverage:")
-    for dimension in COVERAGE_DIMENSIONS:
-        values = report.coverage.dimensions.get(dimension, [])
-        typer.echo(f"- {dimension}: {', '.join(sorted(values)) or 'none'}")
+    if report.composition_goals:
+        typer.echo("\nComposition goals:")
+        for goal in report.composition_goals:
+            typer.echo(
+                f"- {goal.selector}={goal.value}: observed {goal.observed_cases}, "
+                f"required {goal.minimum_cases} ({goal.severity}) - {goal.status}"
+            )
+    typer.echo()
+    _render_composition(report.composition)
     if report.status == "failed":
         raise typer.Exit(code=1)

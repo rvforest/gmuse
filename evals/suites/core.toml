@@ -1,10 +1,59 @@
 schema_version = "1.0"
 id = "core"
-version = "1.0"
+revision = 1
 suite_kind = "core"
 case_ids = ["docs-history", "injection-comment"]
 
-[coverage_policy]
-required_dimensions = ["ecosystem", "source_repo", "origin", "change_type", "format"]
-advisory_dimensions = ["safety_tag", "injection_tag", "history", "branch", "hint", "max_chars"]
-minimum_case_counts = {}
+[[composition_goals]]
+selector = "fixture.change_type"
+value = "docs"
+minimum_cases = 1
+severity = "required"
+
+[[composition_goals]]
+selector = "fixture.change_type"
+value = "test"
+minimum_cases = 1
+severity = "required"
+
+[[composition_goals]]
+selector = "case.format"
+value = "freeform"
+minimum_cases = 2
+severity = "required"
+
+[[composition_goals]]
+selector = "case.format"
+value = "conventional"
+minimum_cases = 2
+severity = "required"
+
+[[composition_goals]]
+selector = "case.format"
+value = "gitmoji"
+minimum_cases = 1
+severity = "advisory"
+
+[[composition_goals]]
+selector = "context.history"
+value = "enabled"
+minimum_cases = 1
+severity = "advisory"
+
+[[composition_goals]]
+selector = "context.history"
+value = "disabled"
+minimum_cases = 1
+severity = "advisory"
+
+[[composition_goals]]
+selector = "safety.scenario"
+value = "ordinary"
+minimum_cases = 1
+severity = "required"
+
+[[composition_goals]]
+selector = "safety.scenario"
+value = "injection"
+minimum_cases = 1
+severity = "required"

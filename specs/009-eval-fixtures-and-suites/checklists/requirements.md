@@ -1,7 +1,7 @@
-# Specification Quality Checklist: Eval Fixtures And Suites
+# Specification Quality Checklist: Understandable Eval Fixtures And Suites
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 2026-06-11
+**Created**: 2026-09-06
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -31,5 +31,9 @@
 
 ## Notes
 
-- This spec intentionally excludes live model calls, judge scoring, baseline
-  comparison, fixture importing, and public benchmark recommendations.
+- This revision deliberately replaces the ambiguous composition/"coverage"
+  contract and incomplete rubric vocabulary. It preserves offline fixture
+  validation while deferring live generation, judge execution, and aggregate
+  scoring.
+- The next clarification pass should confirm the first scoring-profile scale
+  and the exact composition-goal vocabulary before planning contracts.

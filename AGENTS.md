@@ -193,4 +193,5 @@ For questions or issues, open an issue on GitHub or refer to the contributing gu
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
+at specs/009-eval-fixtures-and-suites/plan.md
 <!-- SPECKIT END -->

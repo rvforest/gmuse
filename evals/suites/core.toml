@@ -1,0 +1,59 @@
+schema_version = "1.0"
+id = "core"
+revision = 1
+suite_kind = "core"
+case_ids = ["docs-history", "injection-comment"]
+
+[[composition_goals]]
+selector = "fixture.change_type"
+value = "docs"
+minimum_cases = 1
+severity = "required"
+
+[[composition_goals]]
+selector = "fixture.change_type"
+value = "test"
+minimum_cases = 1
+severity = "required"
+
+[[composition_goals]]
+selector = "case.format"
+value = "freeform"
+minimum_cases = 2
+severity = "required"
+
+[[composition_goals]]
+selector = "case.format"
+value = "conventional"
+minimum_cases = 2
+severity = "required"
+
+[[composition_goals]]
+selector = "case.format"
+value = "gitmoji"
+minimum_cases = 1
+severity = "advisory"
+
+[[composition_goals]]
+selector = "context.history"
+value = "enabled"
+minimum_cases = 1
+severity = "advisory"
+
+[[composition_goals]]
+selector = "context.history"
+value = "disabled"
+minimum_cases = 1
+severity = "advisory"
+
+[[composition_goals]]
+selector = "safety.scenario"
+value = "ordinary"
+minimum_cases = 1
+severity = "required"
+
+[[composition_goals]]
+selector = "safety.scenario"
+value = "injection"
+minimum_cases = 1
+severity = "required"

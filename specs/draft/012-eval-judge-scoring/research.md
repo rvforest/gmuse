@@ -98,15 +98,15 @@ effective usability category to `unusable` and set `hard_failed=true`. Per-
 dimension judge scores remain recorded when available.
 
 **Rationale**: Maintainers need to inspect whether a model wrote an otherwise
-good message that failed one safety gate. Preserving scores supports analysis
-without allowing aggregate scores to hide a hard failure.
+good message that failed one safety gate. Preserving named ratings supports
+analysis without allowing a summary score to hide a hard failure.
 
 **Alternatives considered**:
 
 - Zero all numeric scores after a hard failure: rejected because it loses
   diagnostic information.
-- Treat hard failures as large aggregate penalties: rejected because weighted
-  scores can obscure zero-tolerance failures.
+- Treat hard failures as numeric penalties: rejected because any summary score
+  can obscure zero-tolerance failures.
 
 ## Judge Input Evidence
 
@@ -137,7 +137,7 @@ scoring time.
 ## Judge Configuration Stability
 
 **Decision**: A scoring run uses one fixed judge model, provider, judge prompt
-version, rubric version, and parameter set for comparable outputs. Results record
+version, rubric revision, and parameter set for comparable outputs. Results record
 that configuration on every scored output and in the summary.
 
 **Rationale**: LLM-as-judge results are only comparable when the judge setup is
@@ -158,7 +158,7 @@ on stable eval definitions
 
 **Decision**: Hide candidate model/provider identity from ordinary judge prompts,
 record judge input controls, and support a calibration mode that compares judge
-outputs against manually annotated examples for each judge prompt/rubric version.
+outputs against manually annotated examples for each judge-prompt version and rubric revision.
 If pairwise judge scoring is added later, it must support order-swapped or
 randomized presentation for calibration.
 
@@ -190,18 +190,17 @@ metadata and keep human overrides available
 - Add pairwise judge scoring immediately: rejected because absolute rubric
   scoring is enough for v1 and avoids position-bias complexity.
 
-## Rubric Dimensions And Aggregate Score
+## Rubric Dimensions And No Aggregate
 
-**Decision**: Use numeric 1-5 scores for `accuracy`, `quality`, and optional
-`style_history_fit`; use pass/fail gates for hard constraints; use categorical
-`usable`, `minor_edit`, `major_edit`, `unusable` for usability. Compute a
-secondary aggregate using accuracy 50%, quality 35%, and style/history fit 15%
-when style/history context applies; otherwise redistribute the style/history
-weight proportionally across accuracy and quality.
+**Decision**: Consume the spec 009 `commit-message-v1` profile with named 1–4
+ratings for `accuracy`, `message_quality`, and `style_context_fit`; preserve
+not-applicable dimensions; use pass/fail gates for hard constraints; and use
+categorical `usable`, `minor_edit`, `major_edit`, or `unusable` usability. Do
+not compute an aggregate score in this feature.
 
-**Rationale**: The weights match the eval planning notes and keep factual
-accuracy dominant. Usability remains categorical because it maps better to
-maintainer review than a single number.
+**Rationale**: The shared profile keeps rating anchors reviewable and stable
+across cases. Named ratings and separate usability/gate evidence are more
+transparent than a weighted number before calibration supports aggregation.
 
 **Alternatives considered**:
 

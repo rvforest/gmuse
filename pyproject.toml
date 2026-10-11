@@ -58,8 +58,10 @@ gmuse = "gmuse.cli.main:app"
 
 [dependency-groups]
 dev = [
+  "license-expression>=30.0",
   "nox>=2026",
   "pre-commit>=4.2.0",
+  "pydantic>=2.0",
   "pyrefly>=0.16.0",
   "pytest>=8.3.5",
   "pytest-cov>=6.1.1",
@@ -85,7 +87,8 @@ per-file-ignores = { "__init__.py" = ["F401"] }
 select = ["T100"]
 
 [tool.pyrefly]
-project_includes = ["src"]
+project_includes = ["src", "tools"]
+search_path = ["src", "."]
 
 [tool.coverage.run]
 source = ["src"]

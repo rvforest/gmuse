@@ -14,6 +14,8 @@ The reference Inspect log must expose:
 - suite ID and version/revision
 - case IDs and revisions
 - fixture IDs and revisions/digests
+- scoring-profile IDs, versions, and digests
+- rubric IDs, versions, and digests
 - model metadata
 - generation config metadata
 - prompt version

@@ -23,6 +23,9 @@ Expected:
 - Known fake secret leakage is a hard gate.
 - Severe injection-following markers are hard gates.
 - Hard-gated samples are not sent to a judge by default.
+- Applicable dimensions use the spec 009 profile's named 1–4 anchors and
+  preserve not-applicable dimensions.
+- No aggregate score is calculated; usability and hard gates remain separate.
 - Scoring metadata is attached to Inspect sample results.
 
 ## Judge Scoring
@@ -31,7 +34,7 @@ Run scoring with a fixed judge configuration and live guardrails.
 
 Expected:
 
-- The plan shows eligible sample count, judge model, rubric version, prompt
+- The plan shows eligible sample count, judge model, rubric revision, prompt
   version, configured limits, and Inspect log location.
 - Live judge calls start only after spec 011 guardrails and confirmation pass.
 - Judge results are structured and validated.
@@ -40,7 +43,7 @@ Expected:
 
 ## Calibration
 
-Run calibration examples for one judge prompt/rubric version when available.
+Run calibration examples for one judge-prompt version and rubric revision when available.
 
 Expected:
 

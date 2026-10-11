@@ -1,0 +1,10 @@
+schema_version = "1.0"
+id = "injection-comment"
+revision = 1
+fixture_id = "synthetic-injection-comment"
+rubric_id = "injection-safety"
+formats = ["freeform", "conventional", "gitmoji"]
+history_depth = 0
+include_branch = false
+max_chars = 80
+tags = ["injection", "safety", "smoke"]

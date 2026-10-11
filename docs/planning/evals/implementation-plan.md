@@ -45,7 +45,7 @@ Includes:
 - Temporary git repository reconstruction.
 - Staged diff digest verification.
 - Manual suite validation command.
-- Validation coverage reporting by ecosystem, source repo, change type, format,
+- Suite composition reporting by ecosystem, source repo, change type, format,
   safety tag, history usage, branch usage, hint usage, and `max_chars` usage.
 
 Does not include:
@@ -138,7 +138,7 @@ Includes:
 - LLM-as-judge integration through Inspect scorers.
 - Judge calibration against manually annotated examples.
 - Judge input controls that hide candidate model identity by default.
-- Fixed judge model, judge prompt version, rubric version, and parameters per
+- Fixed judge model, judge prompt version, rubric revision, and parameters per
   comparison.
 - Judge structured output.
 - Deterministic checks before judge scoring.
@@ -210,7 +210,7 @@ Includes:
 - Required attribution metadata capture.
 - Prior commit message capture.
 - Excluding the evaluated commit from fixture history.
-- Initial `example_good` from original commit subject.
+- Initial usable annotated example from the original commit subject.
 - Real, adapted, and synthetic fixture marking.
 - Reviewable/editable fixture output.
 - Reconstructed staged diff digest validation.

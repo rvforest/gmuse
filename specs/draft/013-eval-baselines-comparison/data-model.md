@@ -37,10 +37,18 @@ Rules:
 Fields:
 
 - `case_id: str`
-- `reference_case_revision: str | None`
-- `candidate_case_revision: str | None`
-- `reference_fixture_revision: str | None`
-- `candidate_fixture_revision: str | None`
+- `reference_case_revision: int | None`
+- `candidate_case_revision: int | None`
+- `reference_fixture_revision: int | None`
+- `candidate_fixture_revision: int | None`
+- `reference_scoring_profile_id: str | None`
+- `candidate_scoring_profile_id: str | None`
+- `reference_scoring_profile_revision: int | None`
+- `candidate_scoring_profile_revision: int | None`
+- `reference_rubric_id: str | None`
+- `candidate_rubric_id: str | None`
+- `reference_rubric_revision: int | None`
+- `candidate_rubric_revision: int | None`
 - `hard_failure_delta: HardFailureDelta`
 - `production_validation_delta: str`
 - `score_deltas: dict[str, float | int | bool | str | None]`
@@ -52,6 +60,9 @@ Rules:
 
 - One record is created for every shared case.
 - Reference-only and candidate-only cases are recorded separately in the report.
+- Named profile and rubric identities must be compatible before rating deltas
+  are treated as comparable evidence. The comparison never invents an
+  aggregate score.
 
 ## HardFailureDelta
 

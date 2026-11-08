@@ -32,6 +32,15 @@ from .models import (
 from .composition import collect_suite_composition
 from .results import ResolvedCase, SuiteValidationResult
 from .validate import validate_assets, validate_suite
+from .runner import (
+    EffectiveGenerationConfig,
+    EvalRun,
+    Guardrails,
+    RunEntry,
+    RunPlan,
+    RunPlanError,
+    build_run_plan,
+)
 
 __all__ = [
     "AnnotatedExample",
@@ -46,6 +55,8 @@ __all__ = [
     "EvalLoadError",
     "EvalRubric",
     "EvalSuite",
+    "EffectiveGenerationConfig",
+    "EvalRun",
     "FailureCondition",
     "FixtureFile",
     "FixtureHistoryCommit",
@@ -55,6 +66,10 @@ __all__ = [
     "ScoringProfile",
     "ReconstructedRepository",
     "ReconstructionError",
+    "Guardrails",
+    "RunEntry",
+    "RunPlan",
+    "RunPlanError",
     "SuiteComposition",
     "UsabilityExample",
     "ResolvedCase",
@@ -65,6 +80,7 @@ __all__ = [
     "load_suite_assets",
     "collect_suite_composition",
     "reconstruct_fixture",
+    "build_run_plan",
     "validate_assets",
     "validate_suite",
 ]

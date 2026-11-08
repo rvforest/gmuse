@@ -99,7 +99,7 @@ This project uses pytest for testing, with a focus on unit tests and integration
 
 #### Continuous Integration
 - **Platform**: GitHub Actions
-- **Checks**: All pre-commit hooks, tests across Python 3.11–3.14, coverage reporting
+- **Checks**: All pre-commit hooks, tests across Python 3.11–3.15, coverage reporting
 
 ## Making Changes
 

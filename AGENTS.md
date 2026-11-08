@@ -113,6 +113,13 @@ This project uses pytest for testing, with a focus on unit tests and integration
 6. **Git Hooks**: Keep hooks enabled when committing. Fix hook failures before retrying. Do not bypass hooks with `core.hooksPath`, `SKIP`, or other overrides without explicit user approval. Running checks separately does not authorize bypassing hooks.
 
 
+### Pull Request and Issue Labels
+
+- When creating or updating a PR or issue, inspect the repository's existing labels and their descriptions, then apply the labels that match the final scope.
+- Use existing labels rather than creating new ones unless the user requests a new label. Preserve relevant labels already applied; remove a label only when it no longer describes the work.
+- Apply `enhancement` for new features, `bug` for fixes, `documentation` for documentation changes, and `chore` for maintenance. Add `dependencies` and `python:uv` for Python dependency updates managed with uv, and `breaking-change` when the change breaks supported behavior, APIs, or Python version compatibility.
+- Label unpublished internal API changes as breaking only when they affect an existing supported contract. Do not apply workflow labels such as `help wanted`, `duplicate`, or `wontfix` without evidence that they apply.
+- Recheck labels when the scope changes, and verify the labels on GitHub after applying them.
 
 ### Common Commands
 

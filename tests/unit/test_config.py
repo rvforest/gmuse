@@ -257,30 +257,6 @@ class TestConfigHelpers:
             missing = Path(tmpdir) / "missing.toml"
             assert load_config_raw(missing) is None
 
-    def test_load_config_requires_tomli(self) -> None:
-        """If tomllib is not available, loading should raise a helpful error."""
-        import importlib
-        import gmuse.config as cfg
-
-        # Simulate running under Python < 3.11 without tomli package
-        orig_tomllib = cfg.tomllib
-        cfg.tomllib = None  # type: ignore[assignment]
-        try:
-            with tempfile.NamedTemporaryFile(
-                mode="w", suffix=".toml", delete=False
-            ) as f:
-                f.write('model = "gpt-4"\n')
-                f.flush()
-                config_path = Path(f.name)
-
-            try:
-                with pytest.raises(ConfigError, match="tomli package is required"):
-                    load_config(config_path)
-            finally:
-                config_path.unlink()
-        finally:
-            cfg.tomllib = orig_tomllib
-
     def test_load_config_raw_unreadable_raises(self) -> None:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".toml", delete=False) as f:
             f.write('model = "gpt-4"\n')
@@ -340,37 +316,6 @@ class TestConfigHelpers:
                 "Invalid GMUSE_BRANCH_MAX_LENGTH" in rec.message
                 for rec in caplog.records
             )
-
-    def test_tomli_import_fallback_when_running_py310(self, monkeypatch) -> None:
-        """Ensure module gracefully handles absent tomli on Python 3.10 by setting tomllib=None."""
-        import importlib
-        import sys
-        import builtins
-
-        # Prepare environment to simulate Python 3.10
-        monkeypatch.setattr(sys, "version_info", (3, 10))
-
-        real_import = builtins.__import__
-
-        def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
-            if name == "tomli":
-                raise ImportError("no tomli")
-            return real_import(name, globals, locals, fromlist, level)
-
-        monkeypatch.setattr(builtins, "__import__", fake_import)
-
-        # Reload module under simulated conditions
-        original_modules = dict(sys.modules)
-        if "gmuse.config" in sys.modules:
-            del sys.modules["gmuse.config"]
-        try:
-            cfg = importlib.import_module("gmuse.config")
-            assert cfg.tomllib is None
-        finally:
-            # Restore safely
-            sys.modules.clear()
-            sys.modules.update(original_modules)
-            monkeypatch.setattr(builtins, "__import__", real_import)
 
     def test_atomic_write_text_cleanup_on_unlink_error(
         self, tmp_path, monkeypatch

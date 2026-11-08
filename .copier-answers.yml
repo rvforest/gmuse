@@ -8,4 +8,4 @@ description: AI generated commit messages.
 gh_owner: rvforest
 has_cli: true
 project_name: gmuse
-py_min_version: '3.10'
+py_min_version: '3.11'

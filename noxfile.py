@@ -13,7 +13,7 @@ DOCS_TAG = "docs"
 CLEAN_TAG = "clean"
 
 # Add a single source of truth for the Python testing matrix
-TEST_PYTHON_VERSIONS: tuple[str, ...] = ("3.10", "3.11", "3.12", "3.13", "3.14")
+TEST_PYTHON_VERSIONS: tuple[str, ...] = ("3.11", "3.12", "3.13", "3.14", "3.15")
 
 nox.options.sessions = ["lint", "format", "types", "test"]
 
@@ -57,7 +57,7 @@ def fix(session: nox.Session) -> None:
 
 @nox.session(venv_backend="uv", tags=[TEST_TAG], python=TEST_PYTHON_VERSIONS)
 def test(session: nox.Session) -> None:
-    """Run tests with pytest across multiple Python versions (3.10-3.13)."""
+    """Run tests with pytest across multiple Python versions (3.11-3.15)."""
     _run_install(session)
     session.run("pytest", *session.posargs)
 

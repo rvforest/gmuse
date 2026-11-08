@@ -9,7 +9,7 @@ authors = [
 ]
 description = "AI generated commit messages."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { file = "LICENSE" }
 dynamic = ["version"]
 classifiers = [
@@ -25,18 +25,19 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
 dependencies = [
     "typer>=0.9.0",
-    "tomli>=2.0.0; python_version < '3.11'",
     "tomlkit>=0.13.2",
-    "litellm>=1.86.0",
+    "litellm>=1.86.0; python_version < '3.15'",
+    # The first published 3.15-compatible release is currently a release candidate.
+    "litellm==1.109.0rc1; python_version >= '3.15'",
     "keyring>=25.7.0",
 ]
 

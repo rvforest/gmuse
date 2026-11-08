@@ -8,7 +8,7 @@ This file provides essential project information and development standards for c
 - **Repository**: https://github.com/rvforest/gmuse
 - **Documentation**: https://gmuse.readthedocs.io
 - **License**: MIT
-- **Python Version**: 3.10+
+- **Python Version**: 3.11+
 - **Main Dependencies**: No runtime dependencies by default. Development and documentation dependencies are defined in `pyproject.toml` (dev: Ruff, pyrefly, pytest, pytest-cov, pre-commit, nox; docs: Sphinx, myst-parser, furo, sphinx-autodoc2)
 
 ### Key Features
@@ -39,7 +39,7 @@ The project follows a standard layout:
 
 ### Development Environment Setup
 
-1. **Prerequisites**: Python 3.10+, Git, uv package manager
+1. **Prerequisites**: Python 3.11+, Git, uv package manager
 2. **Setup**: Run `uv sync` to create virtual environment and install dependencies
 3. **Workflow**: Create feature branches, make changes, test, commit, and open PRs
 
@@ -99,7 +99,7 @@ This project uses pytest for testing, with a focus on unit tests and integration
 
 #### Continuous Integration
 - **Platform**: GitHub Actions
-- **Checks**: All pre-commit hooks, tests across Python 3.10–3.13, coverage reporting
+- **Checks**: All pre-commit hooks, tests across Python 3.11–3.14, coverage reporting
 
 ## Making Changes
 

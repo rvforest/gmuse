@@ -12,19 +12,10 @@ values of various types depending on the setting.
 """
 
 import os
-import sys
 import tempfile
+import tomllib
 from pathlib import Path
 from typing import Any, Dict, Final, Optional
-
-# Use tomllib (3.11+) or tomli (3.10)
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    try:
-        import tomli as tomllib
-    except ImportError:
-        tomllib = None  # type: ignore[assignment]
 
 from gmuse.exceptions import ConfigError
 from gmuse.logging import get_logger
@@ -170,12 +161,6 @@ def load_config(config_path: Optional[Path] = None) -> ConfigDict:
     if not config_path.exists():
         logger.debug(f"Config file not found: {config_path}")
         return {}
-
-    if tomllib is None:
-        raise ConfigError(
-            "tomli package is required for Python 3.10. "
-            "Install with: pip install gmuse[all]"
-        )
 
     try:
         logger.debug(f"Loading config from: {config_path}")

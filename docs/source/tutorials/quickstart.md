@@ -5,7 +5,7 @@ and generate an AI-powered commit message from staged git changes.
 
 ## Prerequisites
 
-- Python 3.10 or newer
+- Python 3.11 or newer
 - A git repository (or `git init` a new one)
 - An LLM provider API key (OpenAI, Anthropic, Google Gemini, etc.) for your model of choice
 

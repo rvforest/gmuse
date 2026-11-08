@@ -38,26 +38,6 @@ def test_load_config_invalid_toml(tmp_path: Path) -> None:
     assert "Invalid TOML syntax" in str(exc.value)
 
 
-def test_load_config_requires_tomli_when_missing(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    # Simulate environment where tomllib isn't available (Python <3.11 scenario)
-    # Ensure we hit the explicit ConfigError about installing tomli
-    good = tmp_path / "good.toml"
-    good.write_text(
-        textwrap.dedent("""
-        model = "gpt-4"
-    """)
-    )
-
-    monkeypatch.setattr(config, "tomllib", None)
-
-    with pytest.raises(ConfigError) as exc:
-        config.load_config(config_path=good)
-
-    assert "tomli package is required" in str(exc.value)
-
-
 @pytest.mark.parametrize(
     "cfg",
     [

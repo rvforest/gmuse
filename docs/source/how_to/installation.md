@@ -2,7 +2,7 @@
 
 ## Basic Installation
 
-gmuse requires Python 3.10 or higher.
+gmuse requires Python 3.11 or higher.
 
 ::::{tab-set}
 

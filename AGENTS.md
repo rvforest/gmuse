@@ -110,6 +110,7 @@ This project uses pytest for testing, with a focus on unit tests and integration
 3. **Testing**: Run relevant tests early and frequently
 4. **Quality**: Ensure code passes all linting, formatting, and type checking
 5. **Documentation**: Update docstrings and docs if changing public APIs
+6. **Git Hooks**: Keep hooks enabled when committing. Fix hook failures before retrying. Do not bypass hooks with `core.hooksPath`, `SKIP`, or other overrides without explicit user approval. Running checks separately does not authorize bypassing hooks.
 
 
 

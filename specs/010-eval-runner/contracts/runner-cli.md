@@ -32,9 +32,11 @@ python -m tools.evals.gmuse_evals run [OPTIONS]
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `--model` | str, repeatable | required in `live`, forbidden in `check` | Candidate model identifier |
-| `--limit-samples` | int | optional | Maximum Inspect samples to execute |
-| `--limit-tokens` | int | optional | Token guardrail when supported by Inspect/provider path |
-| `--limit-cost` | str | optional | Cost guardrail when supported by Inspect/provider path |
+| `--limit-samples` | int | required in live | Positive attempt cap; live matrices exceeding it fail before execution |
+| `--limit-tokens` | int | unsupported | Rejected: direct provider usage is not tracked by Inspect |
+| `--limit-cost` | float | unsupported | Rejected: direct provider cost is not tracked by Inspect |
+| `--limit-time` | int | unsupported | Rejected: synchronous production calls cannot be interrupted by Inspect |
+| `--concurrency` | int | 1 | Only serial execution is supported because fixtures change process cwd |
 | `--log-dir` | path | Inspect default or `.gmuse-evals/inspect/` | Directory for local Inspect logs |
 | `--yes` | bool | false | Non-interactive acknowledgement of the displayed live plan and configured guardrails |
 | `--preserve-debug` | bool | false | Preserve temporary repositories and raw prompt debug artifacts when supported by gmuse/Inspect debug settings |
@@ -173,7 +175,7 @@ Error: --model is required with --mode live.
 ### Live mode without guardrails
 
 ```text
-Error: live evals require an explicit limit such as --limit-samples, --limit-tokens, or --limit-cost.
+Error: live evals require an explicit --limit-samples guardrail greater than zero
 ```
 
 ### Sample limit exceeded

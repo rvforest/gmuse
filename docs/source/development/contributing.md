@@ -266,3 +266,39 @@ If you need help with contributing to gmuse, you can:
 - Join our community discussions
 
 Thank you for contributing to gmuse!
+
+# Maintainer eval runner
+
+The production-path eval runner is maintainer-only tooling. Install the
+development group with `uv sync`, then validate and run the offline smoke suite:
+
+```bash
+uv run python -m tools.evals.gmuse_evals validate --suite smoke
+uv run python -m tools.evals.gmuse_evals run --mode check --suite smoke
+```
+
+Check mode uses deterministic local responses, exercises the real Git/context/
+prompt/validation path, writes Inspect logs under `.gmuse-evals/inspect/`, and
+makes zero provider calls. Generated logs and debug artifacts are ignored by
+Git. Raw prompts are excluded from ordinary logs; use `--preserve-debug` only
+when troubleshooting and treat the resulting `.gmuse-evals/debug/` files as
+sensitive.
+
+Live runs require explicit model selection, a positive sample cap covering the
+entire selected matrix, and confirmation (or `--yes`):
+
+```bash
+uv run python -m tools.evals.gmuse_evals run \
+  --mode live --suite smoke --model gpt-4.1-mini \
+  --limit-samples 5 --yes
+```
+
+Execution is serial. Token, cost, and wall-clock run limits are rejected because
+Inspect cannot enforce them on gmuse's direct provider calls. Use
+`--limit-samples` to bound attempts and `--max-tokens` to cap each response;
+these do not promise a dollar budget. A sample cap smaller than the selected
+matrix fails before provider calls.
+
+Live execution is not wired into the default GitHub workflows. The optional
+local convenience command `uv run nox -s evals-check` runs only the offline
+smoke check with a temporary Inspect log directory.

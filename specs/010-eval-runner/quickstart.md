@@ -41,7 +41,7 @@ uv run python -m tools.evals.gmuse_evals run \
   --mode live \
   --suite smoke \
   --model gpt-4.1-mini \
-  --limit-samples 2 \
+  --limit-samples 5 \
   --yes
 ```
 
@@ -59,6 +59,11 @@ Expected:
 Multiple live models are allowed, and `--limit-samples` applies to the full
 selected case/model/config matrix.
 
+The smoke suite has five entries per model. A live sample cap smaller than the
+selected matrix fails before provider calls. Execution is serial; token, cost,
+and time run limits are unsupported and rejected. Inspect cannot account for
+gmuse's direct provider calls. `--max-tokens` still caps each production response.
+
 ## 4. Choose an explicit log directory when needed
 
 ```bash
@@ -66,7 +71,7 @@ uv run python -m tools.evals.gmuse_evals run \
   --mode live \
   --suite smoke \
   --model gpt-4.1-mini \
-  --limit-samples 2 \
+  --limit-samples 5 \
   --log-dir .gmuse-evals/inspect/smoke-gpt-4.1-mini \
   --yes
 ```

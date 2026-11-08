@@ -20,6 +20,15 @@ from .models import (
     ValidationReport,
 )
 from .validate import ValidatedCase, ValidatedSuite, validate_assets, validate_suite
+from .runner import (
+    EffectiveGenerationConfig,
+    EvalRun,
+    Guardrails,
+    RunEntry,
+    RunPlan,
+    RunPlanError,
+    build_run_plan,
+)
 
 __all__ = [
     "CoverageSummary",
@@ -29,11 +38,17 @@ __all__ = [
     "EvalLoadError",
     "EvalRubric",
     "EvalSuite",
+    "EffectiveGenerationConfig",
+    "EvalRun",
     "FixtureFile",
     "FixtureHistoryCommit",
     "FixtureProvenance",
     "ReconstructedRepository",
     "ReconstructionError",
+    "Guardrails",
+    "RunEntry",
+    "RunPlan",
+    "RunPlanError",
     "SuiteCoveragePolicy",
     "ValidatedCase",
     "ValidatedSuite",
@@ -42,6 +57,7 @@ __all__ = [
     "load_assets",
     "load_suite_assets",
     "reconstruct_fixture",
+    "build_run_plan",
     "validate_assets",
     "validate_suite",
 ]

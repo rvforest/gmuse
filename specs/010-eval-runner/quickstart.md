@@ -93,10 +93,15 @@ Expected metadata:
 - operational errors separated from validation failures;
 - prompt hash, prompt size, token estimates, prompt version, and context
   metadata;
-- suite, case, fixture, rubric, scoring-profile, and generation config identity,
-  including revisions/digests;
-- an immutable, privacy-reviewed assessment-evidence reference;
+- suite, case, fixture, and rubric identity, including integer revisions
+  (`suite_version` is `str(suite.revision)`; sample metadata uses the key
+  `rubric_version` for the integer rubric revision) and generation-config
+  identity;
 - raw prompt text absent by default.
+
+Rubric digests, scoring-profile identity, and an assessment-evidence reference
+are not recorded yet; they are deferred to judge/scoring (spec 012) and
+Inspect-log comparison (spec 013).
 
 ## 6. Troubleshoot a failing case
 

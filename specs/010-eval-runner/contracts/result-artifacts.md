@@ -33,7 +33,7 @@ Each Inspect run must expose:
 - effective generation defaults and overrides
 - prompt version
 - gmuse project revision when available
-- configured guardrails, such as sample, token, cost, time, or concurrency limits
+- configured guardrails (the required live cap is `--limit-samples`; token, cost, and time run limits are rejected; concurrency is serial)
 - fixture foundation schema version
 
 ## Sample-Level Metadata
@@ -43,11 +43,8 @@ Each Inspect sample result must expose:
 - stable `entry_id`
 - `case_id` and `case_revision`
 - `fixture_id` and `fixture_revision` or digest
-- `rubric_id` and `rubric_revision`
-- `rubric_digest`
-- `scoring_profile_id`, `scoring_profile_revision`, and `scoring_profile_digest`
-- immutable `assessment_evidence_ref` linking the staged diff, rubric, and
-  profile through a privacy-reviewed local evidence reference
+- `rubric_id` and `rubric_version` (the integer rubric revision; the metadata
+  key is `rubric_version`)
 - `candidate_kind`: `deterministic_check` or `live_model`
 - candidate model metadata when applicable
 - effective generation config:
@@ -67,6 +64,13 @@ Each Inspect sample result must expose:
 - prompt size in bytes
 - estimated input/output token counts when available
 - timing metadata when available
+
+## Deferred Metadata
+
+Rubric digests, scoring-profile id/revision/digest, and an
+`AssessmentEvidenceReference` are not part of the current runner artifacts.
+They are future work for judge/scoring (spec 012) and Inspect-log comparison
+(spec 013).
 
 ## Privacy Rules
 

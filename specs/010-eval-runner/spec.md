@@ -98,8 +98,10 @@ As a maintainer, I want eval runner commands and dependencies to stay out of ord
 
 - Check mode must never call a provider, even when model credentials are configured.
 - Live mode must fail before provider calls unless the maintainer accepts the
-  displayed plan and configures Inspect/gmuse spend guardrails such as sample,
-  token, cost, time, or concurrency limits.
+  displayed plan and sets a positive `--limit-samples` cap. Token, cost, and
+  time run limits are rejected because Inspect cannot enforce them over
+  gmuse's direct provider calls; concurrency must be serial. Broader
+  spend/resume guardrails remain in spec 011.
 - A missing, malformed, or unsupported fixture/suite schema from spec 009 must stop the affected run before generation.
 - Temporary repositories must be cleaned up after successful and failed cases unless an explicit debug-preserve option is selected.
 - A case with no staged diff after reconstruction must fail as an invalid fixture or setup error rather than producing an eval output.

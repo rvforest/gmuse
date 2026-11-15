@@ -20,12 +20,13 @@ describe the gmuse wrapper around Inspect rather than a bespoke JSONL runner.
 python -m tools.evals.gmuse_evals run [OPTIONS]
 ```
 
-### Required inputs
+### Common inputs
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `--mode` | `check` or `live` | required | Execution mode |
-| `--suite` | str | required | One suite ID from spec 009, such as `smoke`, `core`, or `safety` |
+| `--suite` | str | `smoke` | One suite ID from spec 009, such as `smoke` or `core` |
+| `--evals-dir` | path | `evals` | Root directory containing eval assets |
 
 ### Mode-specific inputs
 
@@ -40,6 +41,7 @@ python -m tools.evals.gmuse_evals run [OPTIONS]
 | `--log-dir` | path | Inspect default or `.gmuse-evals/inspect/` | Directory for local Inspect logs |
 | `--yes` | bool | false | Non-interactive acknowledgement of the displayed live plan and configured guardrails |
 | `--preserve-debug` | bool | false | Preserve temporary repositories and raw prompt debug artifacts when supported by gmuse/Inspect debug settings |
+| `--strict-composition` | bool | false | Promote advisory composition-goal shortfalls to validation failures before the run is planned |
 
 ### Generation overrides
 
@@ -84,7 +86,7 @@ Expected outcome:
 Run mode: check
 Suite: smoke
 Candidate kind: deterministic_check
-Planned entries: 2
+Planned entries: 5
 Provider calls: 0
 Inspect log: .gmuse-evals/inspect/20260611T120000Z-smoke-check.eval
 ```

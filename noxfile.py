@@ -74,6 +74,56 @@ def coverage(session: nox.Session) -> None:
     )
 
 
+# Fail-under matches the Codecov patch target in codecov.yml.
+DIFF_COVER_FAIL_UNDER = 90
+DEFAULT_COMPARE_BRANCH = "origin/main"
+
+
+def _diff_cover_compare_branch(
+    session: nox.Session,
+) -> tuple[str, list[str]]:
+    """Return the compare branch and leftover pytest posargs.
+
+    The compare branch is ``origin/main`` by default, then
+    ``DIFF_COVER_COMPARE_BRANCH``, then ``--compare-branch``.
+    """
+    remaining = list(session.posargs)
+    branch = os.environ.get("DIFF_COVER_COMPARE_BRANCH") or DEFAULT_COMPARE_BRANCH
+    if remaining:
+        if remaining[0] == "--compare-branch" and len(remaining) > 1:
+            branch = remaining[1]
+            remaining = remaining[2:]
+        elif remaining[0].startswith("--compare-branch="):
+            branch = remaining[0].split("=", 1)[1]
+            remaining = remaining[1:]
+    return branch, remaining
+
+
+@nox.session(name="diff-coverage", venv_backend="uv", tags=[TEST_TAG])
+def diff_coverage(session: nox.Session) -> None:
+    """Run tests with coverage and fail if the diff is under the patch target.
+
+    Compare against ``origin/main`` by default. For stacked PRs, override with
+    ``DIFF_COVER_COMPARE_BRANCH`` or ``--compare-branch <ref>``. Remaining
+    posargs are forwarded to pytest.
+    """
+    _run_install(session)
+    compare_branch, pytest_args = _diff_cover_compare_branch(session)
+    session.run(
+        "pytest",
+        "--cov=src/gmuse",
+        "--cov-branch",
+        "--cov-report=xml:coverage.xml",
+        *pytest_args,
+    )
+    session.run(
+        "diff-cover",
+        "coverage.xml",
+        f"--compare-branch={compare_branch}",
+        f"--fail-under={DIFF_COVER_FAIL_UNDER}",
+    )
+
+
 # ==================== DOCUMENTATION ====================
 
 

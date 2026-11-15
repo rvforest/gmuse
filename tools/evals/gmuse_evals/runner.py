@@ -9,7 +9,7 @@ from typing import Any, Literal
 from gmuse.config import DEFAULTS
 
 from .models import EvalCase, EvalFixture
-from .validate import ValidatedCase, ValidatedSuite
+from .results import ResolvedCase, SuiteValidationResult
 
 RunMode = Literal["check", "live"]
 
@@ -104,14 +104,14 @@ class RunEntry:
     """
 
     entry_id: str
-    validated_case: ValidatedCase
+    resolved_case: ResolvedCase
     generation: EffectiveGenerationConfig
     candidate_kind: Literal["deterministic_check", "live_model"]
 
     @property
     def case(self) -> EvalCase:
         """Return the source case configuration."""
-        return self.validated_case.case
+        return self.resolved_case.case
 
     @property
     def case_id(self) -> str:
@@ -121,7 +121,7 @@ class RunEntry:
     @property
     def fixture(self) -> EvalFixture:
         """Return the resolved fixture."""
-        return self.validated_case.fixture
+        return self.resolved_case.fixture
 
     @property
     def model(self) -> str | None:
@@ -181,7 +181,7 @@ EvalRun = RunPlan
 
 
 def _effective_config(
-    item: ValidatedCase,
+    item: ResolvedCase,
     format_name: str,
     model: str | None,
     overrides: dict[str, Any],
@@ -226,7 +226,7 @@ def _entry_id(case_id: str, format_name: str, model: str | None) -> str:
 
 
 def build_run_plan(
-    validated: ValidatedSuite,
+    validated: SuiteValidationResult,
     *,
     mode: RunMode,
     models: tuple[str, ...] = (),
@@ -237,7 +237,7 @@ def build_run_plan(
     """Expand a validated suite into deterministic case/config entries.
 
     Args:
-        validated: The spec-009 validated suite boundary.
+        validated: The spec-009 suite validation result.
         mode: ``check`` for deterministic output or ``live`` for providers.
         models: Live model IDs. Check mode forbids them.
         formats: Optional format filter/override.
@@ -256,7 +256,7 @@ def build_run_plan(
     if validated.suite is None or validated.report.status != "passed":
         details = "; ".join(issue.render() for issue in validated.report.errors)
         raise RunPlanError(f"suite validation failed: {details or 'unknown error'}")
-    if not validated.cases:
+    if not validated.resolved_cases:
         raise RunPlanError("no matching cases were selected")
     if mode == "check" and models:
         raise RunPlanError("--model is only valid with --mode live")
@@ -281,7 +281,7 @@ def build_run_plan(
     resolved_overrides = dict(overrides or {})
     entries: list[RunEntry] = []
     selected_models = models or (None,)
-    for item in validated.cases:
+    for item in validated.resolved_cases:
         case_formats = formats or tuple(item.case.formats)
         for format_name in case_formats:
             if format_name not in item.case.formats:
@@ -298,7 +298,7 @@ def build_run_plan(
                 entries.append(
                     RunEntry(
                         entry_id=_entry_id(item.case.id, format_name, model),
-                        validated_case=item,
+                        resolved_case=item,
                         generation=generation,
                         candidate_kind=candidate_kind,
                     )
@@ -314,7 +314,7 @@ def build_run_plan(
     return RunPlan(
         mode=mode,
         suite_id=validated.suite.id,
-        suite_version=validated.suite.version,
+        suite_version=str(validated.suite.revision),
         entries=tuple(entries),
         planned_entries=planned_entries,
         guardrails=limits,

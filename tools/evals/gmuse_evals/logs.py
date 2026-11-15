@@ -112,7 +112,7 @@ def build_sample_metadata(
     fixture_revision: int | None = None,
     fixture_digest: str | None = None,
     rubric_id: str | None = None,
-    rubric_version: str | None = None,
+    rubric_version: int | str | None = None,
     generation: dict[str, object] | None = None,
     staged_diff_digest: str | None = None,
     validation: ValidationOutcome | dict[str, object] | None = None,

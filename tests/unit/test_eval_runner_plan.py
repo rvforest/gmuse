@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+from tools.evals.gmuse_evals.results import SuiteValidationResult
 from tools.evals.gmuse_evals.runner import (
     Guardrails,
     RunPlanError,
@@ -33,7 +34,9 @@ def test_check_plan_rejects_model_and_empty_selection() -> None:
     with pytest.raises(RunPlanError, match="only valid"):
         build_run_plan(validated, mode="check", models=("gpt-test",))
 
-    empty = validated.__class__(validated.suite, (), validated.report)
+    empty = SuiteValidationResult(
+        suite=validated.suite, resolved_cases=(), report=validated.report
+    )
     with pytest.raises(RunPlanError, match="no matching"):
         build_run_plan(empty, mode="check")
 

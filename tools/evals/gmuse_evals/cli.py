@@ -143,7 +143,7 @@ def run(
         False, "--yes", help="Acknowledge the displayed live plan."
     ),
     preserve_debug: bool = typer.Option(False, "--preserve-debug"),
-    strict_balance: bool = typer.Option(False, "--strict-balance"),
+    strict_composition: bool = typer.Option(False, "--strict-composition"),
 ) -> None:
     """Run a validated suite through the production-path Inspect runner."""
     if mode not in {"check", "live"}:
@@ -179,7 +179,11 @@ def run(
         concurrency=concurrency,
     )
     try:
-        validated = validate_suite(evals_dir, suite, strict_balance=strict_balance)
+        validated = validate_suite(
+            evals_dir,
+            suite,
+            strict_composition=strict_composition,
+        )
         plan = build_run_plan(
             validated,
             mode=mode,  # type: ignore[arg-type]

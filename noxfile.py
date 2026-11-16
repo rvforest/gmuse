@@ -1,7 +1,6 @@
 import glob
 import os
 import shutil
-import subprocess
 from typing import Literal
 
 import nox
@@ -77,98 +76,27 @@ def coverage(session: nox.Session) -> None:
 
 # Fail-under matches the Codecov patch target in codecov.yml.
 DIFF_COVER_FAIL_UNDER = 90
-DEFAULT_COMPARE_BRANCH = "origin/main"
-
-
-def _diff_cover_compare_branch(
-    session: nox.Session,
-) -> tuple[str, list[str]]:
-    """Return the compare branch and leftover pytest posargs.
-
-    The compare branch is ``origin/main`` by default, then
-    ``DIFF_COVER_COMPARE_BRANCH``, then ``--compare-branch``.
-    """
-    remaining = list(session.posargs)
-    branch = os.environ.get("DIFF_COVER_COMPARE_BRANCH") or DEFAULT_COMPARE_BRANCH
-    if remaining:
-        if remaining[0] == "--compare-branch" and len(remaining) > 1:
-            branch = remaining[1]
-            remaining = remaining[2:]
-        elif remaining[0].startswith("--compare-branch="):
-            branch = remaining[0].split("=", 1)[1]
-            remaining = remaining[1:]
-    return branch, remaining
-
-
-def _git_ref_exists(ref: str) -> bool:
-    result = subprocess.run(
-        ["git", "rev-parse", "--verify", "--quiet", ref],
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    return result.returncode == 0
-
-
-def _git_is_shallow() -> bool:
-    result = subprocess.run(
-        ["git", "rev-parse", "--is-shallow-repository"],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    return result.returncode == 0 and result.stdout.strip() == "true"
-
-
-def _ensure_compare_branch(session: nox.Session, ref: str) -> None:
-    """Fetch *ref* when a shallow or GitHub Actions checkout omitted it.
-
-    ``actions/checkout`` defaults to fetch-depth 1, and the existing Run
-    checks workflow runs pre-push hooks without fetching ``origin/main``.
-    """
-    remote, sep, name = ref.partition("/")
-    if _git_is_shallow():
-        # Full history is needed so diff-cover can find the merge-base.
-        unshallow_args = ["git", "fetch", "--unshallow", "--no-tags"]
-        if sep:
-            unshallow_args.append(remote)
-        session.run(*unshallow_args, external=True, success_codes=[0, 1])
-    if _git_ref_exists(ref):
-        return
-    if not sep:
-        session.error(
-            f"Compare branch {ref!r} was not found. "
-            "Pass --compare-branch or set DIFF_COVER_COMPARE_BRANCH."
-        )
-    session.run(
-        "git",
-        "fetch",
-        "--no-tags",
-        remote,
-        f"{name}:refs/remotes/{remote}/{name}",
-        external=True,
-    )
 
 
 @nox.session(name="diff-coverage", venv_backend="uv", tags=[TEST_TAG])
 def diff_coverage(session: nox.Session) -> None:
     """Run tests with coverage and fail if the diff is under the patch target.
 
-    Compare against ``origin/main`` by default. For stacked PRs, override with
-    ``DIFF_COVER_COMPARE_BRANCH`` or ``--compare-branch <ref>``. Remaining
-    posargs are forwarded to pytest. The compare ref is fetched if missing
-    (for example on a shallow CI checkout).
+    Skipped in CI, where Codecov is the gate. Locally, compare against
+    ``origin/main`` by default, or ``DIFF_COVER_COMPARE_BRANCH``. Posargs
+    are forwarded to pytest.
     """
+    if os.environ.get("CI"):
+        session.skip("Codecov enforces the patch target in CI")
     _run_install(session)
-    compare_branch, pytest_args = _diff_cover_compare_branch(session)
+    compare_branch = os.environ.get("DIFF_COVER_COMPARE_BRANCH", "origin/main")
     session.run(
         "pytest",
         "--cov=src/gmuse",
         "--cov-branch",
         "--cov-report=xml:coverage.xml",
-        *pytest_args,
+        *session.posargs,
     )
-    _ensure_compare_branch(session, compare_branch)
     session.run(
         "diff-cover",
         "coverage.xml",

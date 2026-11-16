@@ -41,7 +41,7 @@ uv run python -m tools.evals.gmuse_evals run \
   --mode live \
   --suite smoke \
   --model gpt-4.1-mini \
-  --limit-samples 2 \
+  --limit-samples 5 \
   --yes
 ```
 
@@ -59,6 +59,11 @@ Expected:
 Multiple live models are allowed, and `--limit-samples` applies to the full
 selected case/model/config matrix.
 
+The smoke suite has five entries per model. A live sample cap smaller than the
+selected matrix fails before provider calls. Execution is serial; token, cost,
+and time run limits are unsupported and rejected. Inspect cannot account for
+gmuse's direct provider calls. `--max-tokens` still caps each production response.
+
 ## 4. Choose an explicit log directory when needed
 
 ```bash
@@ -66,7 +71,7 @@ uv run python -m tools.evals.gmuse_evals run \
   --mode live \
   --suite smoke \
   --model gpt-4.1-mini \
-  --limit-samples 2 \
+  --limit-samples 5 \
   --log-dir .gmuse-evals/inspect/smoke-gpt-4.1-mini \
   --yes
 ```
@@ -88,10 +93,15 @@ Expected metadata:
 - operational errors separated from validation failures;
 - prompt hash, prompt size, token estimates, prompt version, and context
   metadata;
-- suite, case, fixture, rubric, scoring-profile, and generation config identity,
-  including revisions/digests;
-- an immutable, privacy-reviewed assessment-evidence reference;
+- suite, case, fixture, and rubric identity, including integer revisions
+  (`suite_version` is `str(suite.revision)`; sample metadata uses the key
+  `rubric_version` for the integer rubric revision) and generation-config
+  identity;
 - raw prompt text absent by default.
+
+Rubric digests, scoring-profile identity, and an assessment-evidence reference
+are not recorded yet; they are deferred to judge/scoring (spec 012) and
+Inspect-log comparison (spec 013).
 
 ## 6. Troubleshoot a failing case
 

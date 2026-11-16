@@ -1,6 +1,7 @@
 import glob
 import os
 import shutil
+import tempfile
 from typing import Literal
 
 import nox
@@ -103,6 +104,34 @@ def diff_coverage(session: nox.Session) -> None:
         f"--compare-branch={compare_branch}",
         f"--fail-under={DIFF_COVER_FAIL_UNDER}",
     )
+
+
+@nox.session(name="evals-check", venv_backend="uv", tags=[TEST_TAG])
+def evals_check(session: nox.Session) -> None:
+    """Run the maintainer-only offline smoke eval with temporary logs.
+
+    This session is intentionally local-only and never invokes a live model.
+    """
+    _run_install(session, groups=["main", "dev"])
+    with tempfile.TemporaryDirectory(prefix="gmuse-evals-") as log_dir:
+        session.run(
+            "python",
+            "-m",
+            "tools.evals.gmuse_evals",
+            "run",
+            "--mode",
+            "check",
+            "--suite",
+            "smoke",
+            "--log-dir",
+            log_dir,
+            env={
+                "OPENAI_API_KEY": "",
+                "ANTHROPIC_API_KEY": "",
+                "COHERE_API_KEY": "",
+                "GEMINI_API_KEY": "",
+            },
+        )
 
 
 # ==================== DOCUMENTATION ====================

@@ -16,7 +16,7 @@
 ### 1. Boundary with fixture and suite foundation
 
 **Decision**: Treat spec 009 fixture/suite validation as a required precondition
-and consume its validated case objects, reconstructed staged repositories,
+and consume its resolved case objects, reconstructed staged repositories,
 stable case IDs, and fixture revisions or digests as Inspect dataset/sample
 metadata.
 
@@ -163,14 +163,17 @@ and strict safety comparison use the same source of truth that execution uses.
 ### 7. Live call guard
 
 **Decision**: Live mode requires preflight display, explicit maintainer
-confirmation, and configured spend guardrails before provider calls. Prefer
-Inspect-native limits such as sample, token, cost, time, or concurrency limits
-where practical. A simple gmuse call/sample cap may be added only if Inspect
-does not provide an adequate local guardrail for the selected provider path.
+confirmation, and a positive `--limit-samples` cap before provider calls.
+Token, cost, and time run limits are rejected: Inspect cannot enforce them
+over gmuse's direct provider calls. `--max-tokens` still caps each production
+response. Concurrency must be omitted or `1` because fixture execution
+changes the process working directory. Further spend/resume behavior belongs
+to spec 011.
 
 **Rationale**: The objective is to prevent runaway spend, not to maintain a
-custom provider-call ledger. Aligning with Inspect limits keeps the design
-simple while preserving explicit maintainer control before live calls.
+custom provider-call ledger. Because this runner calls providers through
+gmuse rather than through Inspect's model layer, only a gmuse-enforced
+sample cap is a reliable live guardrail in this slice.
 
 **Alternatives considered**:
 
@@ -182,9 +185,9 @@ simple while preserving explicit maintainer control before live calls.
 ### 8. Error classification boundary
 
 **Decision**: Separate operational errors from deterministic production
-validation outcomes. Initial operational categories are `auth_error`,
-`rate_limit`, `timeout`, `network_error`, `context_length`, `empty_response`,
-`fixture_setup_error`, and `unknown_error`. Continue after per-entry provider
+validation outcomes. Initial operational categories are `authentication`,
+`rate_limit`, `timeout`, `network`, `context_length`, `empty_response`,
+`fixture_setup`, and `unknown`. Continue after per-entry provider
 errors, but fail before provider calls when suite or fixture validation fails.
 
 **Rationale**: Provider/setup failures describe whether an entry ran successfully, not whether the generated commit message was good. Later scoring needs this distinction to avoid treating unavailable providers as low-quality messages.

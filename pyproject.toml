@@ -59,6 +59,7 @@ gmuse = "gmuse.cli.main:app"
 
 [dependency-groups]
 dev = [
+  "diff-cover>=9.0",
   "license-expression>=30.0",
   "inspect-ai>=0.3.120",
   "nox>=2026",

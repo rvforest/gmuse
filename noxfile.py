@@ -74,6 +74,37 @@ def coverage(session: nox.Session) -> None:
     )
 
 
+# Fail-under matches the Codecov patch target in codecov.yml.
+DIFF_COVER_FAIL_UNDER = 90
+
+
+@nox.session(name="diff-coverage", venv_backend="uv", tags=[TEST_TAG])
+def diff_coverage(session: nox.Session) -> None:
+    """Run tests with coverage and fail if the diff is under the patch target.
+
+    Skipped in CI, where Codecov is the gate. Locally, compare against
+    ``origin/main`` by default, or ``DIFF_COVER_COMPARE_BRANCH``. Posargs
+    are forwarded to pytest.
+    """
+    if os.environ.get("CI"):
+        session.skip("Codecov enforces the patch target in CI")
+    _run_install(session)
+    compare_branch = os.environ.get("DIFF_COVER_COMPARE_BRANCH", "origin/main")
+    session.run(
+        "pytest",
+        "--cov=src/gmuse",
+        "--cov-branch",
+        "--cov-report=xml:coverage.xml",
+        *session.posargs,
+    )
+    session.run(
+        "diff-cover",
+        "coverage.xml",
+        f"--compare-branch={compare_branch}",
+        f"--fail-under={DIFF_COVER_FAIL_UNDER}",
+    )
+
+
 # ==================== DOCUMENTATION ====================
 
 

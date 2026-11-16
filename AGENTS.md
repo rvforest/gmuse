@@ -94,7 +94,7 @@ This project uses pytest for testing, with a focus on unit tests and integration
 #### Pre-commit Hooks
 - **Enabled**: Ruff linting/formatting, pyrefly type checking, yaml validation
 - **Spell checking**: cspell for Markdown files only
-- **Security**: detect-secrets for credential scanning
+- **Security**: gitleaks for credential scanning
 - **Setup**: Automatically configured with `uv sync`
 
 #### Continuous Integration

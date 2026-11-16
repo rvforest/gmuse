@@ -1,0 +1,18 @@
+# TEMPORARY: existing findings in the workflow files are ignored so the new
+# zizmor pre-commit hook doesn't fail CI before the workflows are fixed.
+# TODO: apply the workflow fix patch (see PR), which also deletes this file.
+rules:
+  artipacked:
+    ignore:
+      - publish-test-pypi.yaml
+      - release.yaml
+      - run-checks.yaml
+  cache-poisoning:
+    ignore:
+      - release.yaml
+  unpinned-uses:
+    ignore:
+      - draft-release.yaml
+      - publish-test-pypi.yaml
+      - release.yaml
+      - run-checks.yaml

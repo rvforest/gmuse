@@ -119,7 +119,16 @@ To enable pre-commit hooks locally, install pre-commit and run:
 uv run pre-commit install
 ```
 
-This will automatically run code quality checks on staged files before each commit.
+This installs both the `pre-commit` and `pre-push` hook types.
+If you already have hooks installed from an older clone, add the pre-push hook with:
+
+```bash
+uv run pre-commit install --hook-type pre-push
+```
+
+The commit hooks run linting and formatting on staged files.
+The pre-push hook runs `nox -s diff-coverage` so a push is blocked when changed lines are under the Codecov patch target (90%).
+The hook is skipped in CI, where Codecov is the patch-coverage gate.
 Use of pre-commit is optional; the GitHub Actions workflow is the final gatekeeper for code quality. All code must pass the checks enforced by CI before it is accepted, regardless of local pre-commit usage.
 
 ## GitHub Actions
@@ -162,6 +171,17 @@ Check coverage with:
 ```bash
 uv run nox -s coverage
 ```
+
+To check coverage of the current diff against `origin/main` (the same 90% patch target Codecov uses):
+
+```bash
+uv run nox -s diff-coverage
+```
+
+For a stacked PR, set `DIFF_COVER_COMPARE_BRANCH` (for example
+`DIFF_COVER_COMPARE_BRANCH=origin/other-branch uv run nox -s diff-coverage`).
+Arguments after `--` are forwarded to pytest.
+The session is skipped when `CI` is set; Codecov is the patch-coverage gate in CI.
 
 ## Building and Previewing Documentation
 

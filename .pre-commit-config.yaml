@@ -1,6 +1,12 @@
 default_language_version:
   node: 22.14.0
 
+# Install both hook types with `pre-commit install`. The diff-coverage hook
+# is pre-push only so it does not run on every commit.
+default_install_hook_types:
+  - pre-commit
+  - pre-push
+
 repos:
   - repo: local
     hooks:
@@ -31,6 +37,13 @@ repos:
         files: ^src/gmuse/_docs/.*\.py$
         # Run once for the docs tree rather than per-file.
         pass_filenames: false
+      - id: diff-coverage
+        name: diff coverage
+        entry: uv run --frozen nox -s diff-coverage
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0

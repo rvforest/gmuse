@@ -1,0 +1,62 @@
+schema_version = "1.0"
+id = "commit-message-v1"
+revision = 1
+
+[[dimensions]]
+id = "accuracy"
+label = "Accuracy"
+description = "How faithfully the message describes the staged change."
+
+[dimensions.anchors]
+"1" = "Mostly incorrect or makes a major unsupported claim."
+"2" = "Materially incomplete, misleading, or poorly prioritized."
+"3" = "Accurate with a minor omission or imprecision."
+"4" = "Accurate, specific, and centered on the primary change."
+
+[[dimensions]]
+id = "message_quality"
+label = "Message quality"
+description = "How clear, concise, and useful the message is to a maintainer."
+
+[dimensions.anchors]
+"1" = "Unclear, excessively vague, or not usable as a commit message."
+"2" = "Understandable only after substantial editing or interpretation."
+"3" = "Clear and useful with a small wording or prioritization issue."
+"4" = "Clear, concise, and immediately useful to a maintainer."
+
+[[dimensions]]
+id = "style_context_fit"
+label = "Style and context fit"
+description = "How well the message follows the requested format and available context."
+
+[dimensions.anchors]
+"1" = "Ignores the requested format or contradicts the supplied context."
+"2" = "Partly follows the format or uses context in a materially awkward way."
+"3" = "Fits the requested format and context with a minor mismatch."
+"4" = "Fits the requested format and uses relevant context naturally."
+
+[usability_labels]
+usable = "Ready to use without editing."
+minor_edit = "Accurate but needs a small edit."
+major_edit = "Needs substantial editing before use."
+unusable = "Cannot be used as a commit message."
+
+[[usability_examples]]
+message = "docs(evals): explain offline validation"
+usability = "usable"
+rationale = "Specific, accurate, and concise."
+
+[[usability_examples]]
+message = "docs: clarify the validation guide"
+usability = "minor_edit"
+rationale = "Accurate and usable, but slightly less specific about the change."
+
+[[usability_examples]]
+message = "update documentation"
+usability = "major_edit"
+rationale = "The topic is plausible but too vague to guide a reviewer."
+
+[[usability_examples]]
+message = "feat: add a provider that does not exist"
+usability = "unusable"
+rationale = "Makes a materially unsupported claim about the change."

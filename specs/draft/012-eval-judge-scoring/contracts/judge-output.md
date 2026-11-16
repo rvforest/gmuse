@@ -17,15 +17,15 @@ The judge request must provide:
 
 - Raw staged diff for the eval case.
 - Generated commit message under evaluation.
-- Case rubric, including required concepts, forbidden concepts, allowed
-  conventional types or formats, examples, and safety notes where present.
+- Case rubric, including its criteria, failure conditions, deterministic gates,
+  annotated examples, and safety notes where present.
 - Format/config constraints that affect validity, such as `format` and
   `max_chars`.
 - Relevant case context included by the runner, such as history, branch context,
   user hints, or repository instructions.
 
 The judge request must not require exact match to an original source commit
-message or any `example_good` message.
+message or any annotated rubric example.
 
 The judge request should not include candidate model or provider identity during
 ordinary scoring. Self-judge and model-family flags are computed from scoring
@@ -43,16 +43,16 @@ support order-swapped or randomized presentation for calibration.
   "judge_output_schema_version": 1,
   "scores": {
     "accuracy": 1,
-    "quality": 1,
-    "style_history_fit": null
+    "message_quality": 1,
+    "style_context_fit": null
   },
   "usability": "unusable",
   "hard_failure_findings": [],
   "quality_errors": [],
   "rationales": {
     "accuracy": "Concise reason for the accuracy score.",
-    "quality": "Concise reason for the quality score.",
-    "style_history_fit": "Concise reason or null when not applicable.",
+    "message_quality": "Concise reason for the message-quality score.",
+    "style_context_fit": "Concise reason or null when not applicable.",
     "usability": "Concise reason for the usability category."
   }
 }
@@ -60,10 +60,12 @@ support order-swapped or randomized presentation for calibration.
 
 ## Field Rules
 
-- `scores.accuracy`: Required integer from 1 through 5.
-- `scores.quality`: Required integer from 1 through 5.
-- `scores.style_history_fit`: Integer from 1 through 5 when style/history
-  context is applicable, otherwise null.
+- `scores.accuracy`: Required integer from 1 through 4, using the active spec
+  009 scoring-profile anchors.
+- `scores.message_quality`: Required integer from 1 through 4, using the active
+  profile anchors.
+- `scores.style_context_fit`: Integer from 1 through 4 when style/context
+  evidence is applicable, otherwise null.
 - `usability`: One of `usable`, `minor_edit`, `major_edit`, `unusable`.
 - `hard_failure_findings`: Zero or more of:
   - `privacy_leak`
@@ -89,7 +91,7 @@ support order-swapped or randomized presentation for calibration.
 
 - Accuracy score must prioritize whether the message describes changes that are
   actually present in the diff and avoids unsupported claims.
-- Quality score must consider specificity, concision, imperative phrasing where
+- Message-quality score must consider specificity, concision, imperative phrasing where
   applicable, readability, scope fit, and whether the message is likely usable
   with little editing.
 - Style/history fit applies only when the case includes style or history context

@@ -86,12 +86,16 @@ Represents one planned case/model/config entry.
   - Stable within one run.
 - `suite_id: str`
 - `case_id: str`
-- `case_revision: str`
+- `case_revision: int`
 - `fixture_id: str`
-- `fixture_revision: str`
+- `fixture_revision: int`
   - Revision or digest supplied by spec 009.
 - `rubric_id: str`
-- `rubric_version: str`
+- `rubric_revision: int`
+- `rubric_digest: str`
+- `scoring_profile_id: str`
+- `scoring_profile_revision: int`
+- `scoring_profile_digest: str`
 - `candidate_kind: Literal["deterministic_check", "live_model"]`
 - `model: str | None`
   - Null in check mode, required in live mode.
@@ -106,6 +110,8 @@ Represents one planned case/model/config entry.
 - The fixture must be validated by spec 009 before execution.
 - The plan stores lightweight suite, case, fixture, and rubric identity so
   scoring can resolve the canonical staged diff and rubric from spec 009 assets.
+- The plan also stores the referenced profile identity and asset digests so
+  changed assessment semantics cannot be silently reused.
 - Check-mode entries are not candidate model evidence and should be skipped by
   judge scoring unless a future diagnostic mode explicitly opts in.
 
@@ -146,6 +152,7 @@ Represents runtime state for executing one entry.
 - `completed_at: str | None`
 - `duration_ms: int | None`
 - `preserved_debug_artifacts: bool`
+- `assessment_evidence_ref: AssessmentEvidenceReference`
 
 **State Transitions**:
 
@@ -158,6 +165,34 @@ Represents runtime state for executing one entry.
 7. Run production validation.
 8. Write exactly one Inspect sample result for the entry.
 9. Clean up temporary repository unless debug preservation is explicitly enabled.
+
+## Entity: `AssessmentEvidenceReference`
+
+Represents the immutable, privacy-reviewed handoff to the canonical staged diff
+and case assessment assets.
+
+**Fields**:
+
+- `reference_id: str`
+- `fixture_id: str`
+- `fixture_digest: str`
+- `rubric_id: str`
+- `rubric_revision: int`
+- `rubric_digest: str`
+- `scoring_profile_id: str`
+- `scoring_profile_revision: int`
+- `scoring_profile_digest: str`
+- `evidence_digest: str`
+- `storage_reference: str`
+
+**Rules**:
+
+- The reference is immutable after the run starts and resolves the canonical
+  staged diff, rubric, and profile without copying raw prompts.
+- `storage_reference` points only to a local, privacy-reviewed evidence
+  location or content-addressed record; it is not a generated prompt.
+- A changed fixture, rubric, or profile creates a new evidence digest and is
+  incompatible with reuse or scoring of the old reference.
 
 ## Entity: `GenerationAttemptResult`
 
@@ -234,7 +269,12 @@ for one executed case/model/config entry.
 - `suite_id: str`
 - `case_id: str`
 - `fixture_id: str`
-- `fixture_revision: str`
+- `fixture_revision: int`
+- `rubric_id: str`
+- `rubric_revision: int`
+- `scoring_profile_id: str`
+- `scoring_profile_revision: int`
+- `assessment_evidence_ref: AssessmentEvidenceReference`
 - `model: str | None`
 - `deterministic_output_policy: str | None`
 - `generation_config: GenerationConfig`

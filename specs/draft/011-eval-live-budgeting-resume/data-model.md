@@ -96,11 +96,22 @@ Fields:
 - `generation_config_digest`
 - `prompt_version`
 - `fixture_revision_digest`
+- `rubric_id`
+- `rubric_revision`
+- `rubric_digest`
+- `scoring_profile_id`
+- `scoring_profile_revision`
+- `scoring_profile_digest`
+- `assessment_evidence_ref`
 - `inspect_log_schema`
 
 Rules:
 
 - Any mismatch should reject reuse or force a fresh run.
+- Profile/rubric identity or digest mismatches reject reuse even when the case
+  and fixture identities are unchanged.
+- An assessment-evidence reference must remain immutable and privacy-reviewed;
+  reuse may point to it but must not rewrite it.
 - Missing or corrupt Inspect logs reject reuse before provider calls.
 - Safe reuse is optional in v1; rerunning bounded samples is acceptable when
   Inspect does not provide simple partial-run reuse.

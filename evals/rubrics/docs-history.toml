@@ -1,0 +1,61 @@
+schema_version = "1.0"
+id = "docs-history"
+revision = 1
+scoring_profile_id = "commit-message-v1"
+notes = "Assess the documentation purpose without requiring an exact message wording."
+
+[[criteria]]
+id = "documentation-purpose"
+dimension = "accuracy"
+importance = "major"
+description = "Identifies that the change documents the offline validation workflow."
+
+[[criteria]]
+id = "concise-documentation-message"
+dimension = "message_quality"
+importance = "minor"
+description = "Expresses the documentation change clearly and concisely."
+
+[[criteria]]
+id = "requested-context-fit"
+dimension = "style_context_fit"
+importance = "minor"
+description = "Uses the requested documentation context and selected output format appropriately."
+
+[[failure_conditions]]
+id = "claims-runtime-feature"
+error_category = "hallucination"
+severity = "major"
+description = "Claims a runtime feature or provider integration absent from the change."
+
+[[failure_conditions]]
+id = "vague-documentation-message"
+error_category = "omission"
+severity = "minor"
+description = "Uses wording so vague that a maintainer cannot identify the documented purpose."
+
+[[deterministic_gates]]
+id = "message-valid"
+gate = "production_validation"
+evidence = "Use the production message-validation result for the selected format."
+
+[[deterministic_gates]]
+id = "message-within-limit"
+gate = "max_chars"
+evidence = "Compare the generated message length with the case max_chars setting."
+
+[[examples]]
+message = "docs(evals): explain offline validation"
+ratings = { accuracy = 4, message_quality = 4, style_context_fit = 4 }
+usability = "usable"
+expected_gate_ids = []
+expected_failure_ids = []
+rationale = "Names the documentation purpose, stays concise, and fits the requested context."
+
+[[examples]]
+message = "feat: add a provider"
+ratings = { accuracy = 1, message_quality = 2, style_context_fit = 1 }
+usability = "unusable"
+expected_gate_ids = []
+expected_failure_ids = ["claims-runtime-feature"]
+rationale = "It makes a major unsupported runtime claim instead of describing the documentation change."

@@ -94,12 +94,14 @@ This project uses pytest for testing, with a focus on unit tests and integration
 #### Pre-commit Hooks
 - **Enabled**: Ruff linting/formatting, pyrefly type checking, yaml validation
 - **Spell checking**: cspell for Markdown files only
-- **Security**: gitleaks for credential scanning
+- **Security**: gitleaks for credential scanning; zizmor and actionlint for GitHub Actions workflows
+- **Diff coverage** (pre-push): `uv run nox -s diff-coverage` fails if changed lines are under 90% covered (skipped in CI, where Codecov enforces the same patch target)
 - **Setup**: Automatically configured with `uv sync`
 
 #### Continuous Integration
 - **Platform**: GitHub Actions
 - **Checks**: All pre-commit hooks, tests across Python 3.11–3.15, coverage reporting
+- **Actions**: referenced by exact version tags and locked to commit SHAs in `.github/workflows/actions.lock`; Dependabot bumps both monthly. After adding or changing a `uses:` line, run `gh actions-lock` (from the `github/gh-actions-lock` extension) and commit the updated lockfile, or GitHub will refuse to run the workflow
 
 ## Making Changes
 

@@ -1,0 +1,41 @@
+# Monthly, grouped dependency updates: one PR per ecosystem per month.
+# The cooldown skips releases younger than a week (supply-chain safety).
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: monthly
+    # Only refresh uv.lock within the ranges in pyproject.toml. Packages keep
+    # wide ranges, and raising one (e.g. for a major version) is a deliberate
+    # choice, not something Dependabot should propose.
+    versioning-strategy: lockfile-only
+    cooldown:
+      default-days: 7
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  # Not in the template: keeps the hook revs in .pre-commit-config.yaml current.
+  - package-ecosystem: pre-commit
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7
+    groups:
+      pre-commit:
+        patterns:
+          - "*"

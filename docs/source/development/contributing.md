@@ -131,6 +131,11 @@ The pre-push hook runs `nox -s diff-coverage` so a push is blocked when changed 
 The hook is skipped in CI, where Codecov is the patch-coverage gate.
 Use of pre-commit is optional; the GitHub Actions workflow is the final gatekeeper for code quality. All code must pass the checks enforced by CI before it is accepted, regardless of local pre-commit usage.
 
+## Dependency Updates
+
+`.github/dependabot.yml` only schedules monthly version updates, and for Python packages it only refreshes `uv.lock` within the ranges in `pyproject.toml`.
+Security fixes come from a repository setting instead, so turn on **Dependabot alerts** and **Dependabot security updates** in the repository's Settings > Advanced Security.
+
 ## GitHub Actions
 
 We use [GitHub Actions](https://docs.github.com/en/actions) for continuous integration (CI).

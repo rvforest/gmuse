@@ -1,6 +1,7 @@
 {
   "version": "0.2",
   "words": [
+    "actionlint",
     "apidocs",
     "autobuild",
     "autodoc",
@@ -20,6 +21,7 @@
     "fract",
     "furo",
     "generativeai",
+    "gitleaks",
     "Gitmoji",
     "gmuse",
     "huggingface",
@@ -36,6 +38,7 @@
     "pyperclip",
     "pypi",
     "pyproject",
+    "pyrefly",
     "pytest",
     "rvforest",
     "secho",
@@ -48,9 +51,11 @@
     "toctree",
     "typer",
     "undoc",
+    "versioningit",
     "VIRTUALENV",
     "wntrblm",
     "xclip",
-    "yournewword"
+    "yournewword",
+    "zizmor"
   ]
 }

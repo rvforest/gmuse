@@ -576,9 +576,7 @@ class TestProviderResolution:
             mock.Mock(side_effect=Exception("unavailable")),
         )
         assert credentials.infer_provider_from_model("ollama/llama3.1") == "ollama"
-        assert (
-            credentials.infer_provider_from_model("ollama_chat/llama3.1") == "ollama"
-        )
+        assert credentials.infer_provider_from_model("ollama_chat/llama3.1") == "ollama"
         assert (
             credentials.infer_provider_from_model("gemini/gemini-flash-lite-latest")
             == "gemini"
@@ -597,7 +595,10 @@ class TestProviderResolution:
             "get_llm_provider",
             mock.Mock(return_value="not-a-tuple"),
         )
-        assert credentials.infer_provider_from_model("openrouter/openai/gpt-6-luna") is None
+        assert (
+            credentials.infer_provider_from_model("openrouter/openai/gpt-6-luna")
+            is None
+        )
 
     def test_default_status_variables_find_openrouter_without_index(
         self, monkeypatch: pytest.MonkeyPatch

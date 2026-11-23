@@ -85,6 +85,16 @@ class EffectiveGenerationConfig:
         max_tokens: Per-response output token limit, not a run-wide budget.
         max_diff_bytes: Staged-diff byte limit before production truncation.
         timeout: Provider request timeout in seconds.
+
+    Example:
+        >>> config = EffectiveGenerationConfig(
+        ...     format="freeform", history_depth=0, include_branch=False,
+        ...     hint=None, repository_instructions=None, max_chars=None,
+        ...     model=None, temperature=0.7, max_tokens=500,
+        ...     max_diff_bytes=20000, timeout=30,
+        ... )
+        >>> config.as_dict()["format"]
+        'freeform'
     """
 
     format: str
@@ -128,6 +138,12 @@ class RunEntry:
         generation: Effective settings used for this entry's generation call.
         candidate_kind: ``deterministic_check`` for offline output or
             ``live_model`` for provider-generated output.
+
+    Example:
+        >>> from .validate import validate_suite
+        >>> plan = build_run_plan(validate_suite("evals", "smoke"), mode="check")
+        >>> plan.entries[0].candidate_kind
+        'deterministic_check'
     """
 
     entry_id: str
@@ -171,6 +187,12 @@ class RunPlan:
         guardrails: Limits used to validate and cap the plan.
         overrides: Caller-provided generation overrides. Non-None values take
             precedence over case or fixture settings and production defaults.
+
+    Example:
+        >>> from .validate import validate_suite
+        >>> plan = build_run_plan(validate_suite("evals", "smoke"), mode="check")
+        >>> plan.mode
+        'check'
     """
 
     mode: RunMode

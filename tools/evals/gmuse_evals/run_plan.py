@@ -1,4 +1,4 @@
-"""Run-plan resolution and orchestration for maintainer evals."""
+"""Run-plan construction and configuration resolution for maintainer evals."""
 
 from __future__ import annotations
 

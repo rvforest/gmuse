@@ -48,16 +48,16 @@
 > **NOTE: Write these tests first and verify they fail before implementation.**
 
 - [X] T006 [P] [US1] Add failing run-plan tests for check-mode suite validation, case/format expansion, stable entry IDs, forbidden models, empty selections, sample limits, and conflicting log locations in `tests/unit/test_eval_runner_plan.py`
-- [X] T007 [P] [US1] Add failing Inspect adapter tests for one sample per check entry, stable fixture/rubric metadata, deterministic candidate markers, and a solver path that never constructs a provider client in `tests/unit/test_eval_runner_inspect_tasks.py`
+- [X] T007 [P] [US1] Add failing Inspect adapter tests for one sample per check entry, stable fixture/rubric metadata, deterministic candidate markers, and a solver path that never constructs a provider client in `tests/unit/test_eval_runner_inspect_runner.py`
 - [X] T008 [P] [US1] Add failing CLI/integration tests for successful smoke checks, displayed effective settings, Inspect log creation, zero provider calls, invalid fixture rejection, and no completed results for unknown or empty suites in `tests/integration/test_eval_runner_check.py`
 
 ### Implementation for User Story 1
 
 - [X] T009 [P] [US1] Implement the built-in `format_valid_v1` deterministic output policy for freeform, conventional, and gitmoji cases in `tools/evals/gmuse_evals/deterministic.py`
 - [X] T010 [P] [US1] Implement independent default Inspect log identities under `.gmuse-evals/inspect/`, explicit `--log-dir` creation, and pre-execution conflict detection in `tools/evals/gmuse_evals/logs.py`
-- [X] T011 [US1] Implement typed check-mode `EvalRun`, `RunPlan`, `RunEntry`, guardrail, and effective-generation-config resolution from `validate_suite()` results in `tools/evals/gmuse_evals/runner.py`
+- [X] T011 [US1] Implement typed check-mode `EvalRun`, `RunPlan`, `RunEntry`, guardrail, and effective-generation-config resolution from `validate_suite()` results in `tools/evals/gmuse_evals/run_plan.py`
 - [X] T012 [US1] Execute each check entry inside `reconstruct_fixture()`, verify a non-empty staged diff/digest, invoke `generate_message_attempt()` with the deterministic response seam, and clean up temporary repositories on success and failure in `tools/evals/gmuse_evals/execution.py`
-- [X] T013 [US1] Build the Inspect dataset, task, and production-path solver for check entries and emit one framework result per reached entry in `tools/evals/gmuse_evals/inspect_tasks.py`
+- [X] T013 [US1] Build the Inspect dataset, task, and production-path solver for check entries and emit one framework result per reached entry in `tools/evals/gmuse_evals/inspect_runner.py`
 - [X] T014 [US1] Add the Typer `run` command with required `--mode`/`--suite`, check-mode option validation, plan rendering, Inspect orchestration, and actionable pre-execution errors in `tools/evals/gmuse_evals/cli.py`
 
 **Checkpoint**: Check mode is a complete offline MVP that validates fixtures, exercises production plumbing, and produces Inspect evidence without credentials or provider calls.
@@ -80,9 +80,9 @@
 
 ### Implementation for User Story 2
 
-- [X] T018 [US2] Expand `RunPlan` construction to resolve suite/case defaults and CLI overrides for format, history depth, branch inclusion, hint, repository instructions, `max_chars`, model, temperature, and token cap across the case/model/config matrix in `tools/evals/gmuse_evals/runner.py`
+- [X] T018 [US2] Expand `RunPlan` construction to resolve suite/case defaults and CLI overrides for format, history depth, branch inclusion, hint, repository instructions, `max_chars`, model, temperature, and token cap across the case/model/config matrix in `tools/evals/gmuse_evals/run_plan.py`
 - [X] T019 [US2] Extend case execution to gather production context from the reconstructed repository, apply the complete effective config, invoke live or injected generation through `generate_message_attempt()`, preserve raw invalid messages, and always clean up unless debug preservation is requested in `tools/evals/gmuse_evals/execution.py`
-- [X] T020 [P] [US2] Extend the Inspect task/solver to execute live-model entries through the production attempt path while keeping check entries on deterministic local output in `tools/evals/gmuse_evals/inspect_tasks.py`
+- [X] T020 [P] [US2] Extend the Inspect task/solver to execute live-model entries through the production attempt path while keeping check entries on deterministic local output in `tools/evals/gmuse_evals/inspect_runner.py`
 - [X] T021 [P] [US2] Implement live-mode model requirements, plan and guardrail display, sample/token/cost limits, interactive confirmation or `--yes`, and fail-closed preflight behavior in `tools/evals/gmuse_evals/cli.py`
 
 **Checkpoint**: Check and guarded live runs both evaluate gmuse's production behavior, and received messages are retained even when deterministic validation rejects them.
@@ -107,9 +107,9 @@
 
 - [X] T025 [US3] Implement typed `OperationalError` categories and deterministic translation for authentication, rate limit, timeout, network, context-length, empty-response, fixture-setup, and unknown failures in `tools/evals/gmuse_evals/errors.py`
 - [X] T026 [US3] Implement versioned run/sample metadata builders and `RunSummary` aggregation for identities, effective config, staged-diff digest, context/prompt metadata, validation, timing, guardrails, and operational errors in `tools/evals/gmuse_evals/logs.py`
-- [X] T027 [US3] Attach complete gmuse metadata to Inspect runs and sample results, preserve generated output on validation failure, and continue safely after per-entry operational failures in `tools/evals/gmuse_evals/inspect_tasks.py`
+- [X] T027 [US3] Attach complete gmuse metadata to Inspect runs and sample results, preserve generated output on validation failure, and continue safely after per-entry operational failures in `tools/evals/gmuse_evals/inspect_runner.py`
 - [X] T028 [US3] Implement opt-in `--preserve-debug` handling that stores raw prompts and preserved repositories only under separate `.gmuse-evals/debug/` paths while ordinary logs remain prompt-free in `tools/evals/gmuse_evals/execution.py` and `tools/evals/gmuse_evals/logs.py`
-- [X] T029 [US3] Aggregate completed, validation-passed, validation-failed, and operational-error counts from Inspect results and render the final status plus canonical log locations in `tools/evals/gmuse_evals/runner.py` and `tools/evals/gmuse_evals/cli.py`
+- [X] T029 [US3] Aggregate completed, validation-passed, validation-failed, and operational-error counts from Inspect results and render the final status plus canonical log locations in `tools/evals/gmuse_evals/logs.py` and `tools/evals/gmuse_evals/cli.py`
 
 **Checkpoint**: Inspect logs and summaries contain the complete privacy-safe handoff contract for future scoring and strict comparison work without implementing either feature.
 
@@ -131,7 +131,7 @@
 ### Implementation for User Story 4
 
 - [X] T032 [P] [US4] Add a local-only `evals-check` nox session that runs the smoke suite in check mode with a temporary Inspect log directory and no credentials in `noxfile.py`
-- [X] T033 [US4] Keep Inspect imports and runner orchestration confined to `tools/evals/gmuse_evals/inspect_tasks.py` and `tools/evals/gmuse_evals/runner.py`, using lazy imports where needed so validation tooling and `src/gmuse/` remain usable without Inspect
+- [X] T033 [US4] Keep Inspect imports and runner orchestration confined to `tools/evals/gmuse_evals/inspect_runner.py`, with framework-independent planning in `tools/evals/gmuse_evals/run_plan.py` and lazy imports so validation tooling and `src/gmuse/` remain usable without Inspect
 - [X] T034 [P] [US4] Document maintainer-only installation, validation, check/live commands, guardrails, privacy defaults, and the absence of default live CI in `docs/source/development/contributing.md`
 
 **Checkpoint**: Eval execution is explicit maintainer tooling, while normal packaging, commands, imports, and credential-free automated checks remain unchanged.
@@ -142,7 +142,7 @@
 
 **Purpose**: Validate the complete feature across its documented offline workflow and repository quality gates.
 
-- [X] T035 Run the focused suites in `tests/unit/test_commit_attempt.py`, `tests/unit/test_eval_runner_plan.py`, `tests/unit/test_eval_runner_inspect_tasks.py`, `tests/unit/test_eval_runner_execution.py`, `tests/unit/test_eval_runner_artifacts.py`, `tests/contract/test_eval_runner_artifacts.py`, `tests/contract/test_eval_runner_automation.py`, `tests/integration/test_eval_runner_check.py`, `tests/integration/test_eval_runner_production_path.py`, `tests/integration/test_eval_runner_live.py`, `tests/integration/test_eval_runner_logs.py`, and `tests/integration/test_eval_runner_isolation.py`
+- [X] T035 Run the focused suites in `tests/unit/test_commit_attempt.py`, `tests/unit/test_eval_runner_plan.py`, `tests/unit/test_eval_runner_inspect_runner.py`, `tests/unit/test_eval_runner_execution.py`, `tests/unit/test_eval_runner_artifacts.py`, `tests/contract/test_eval_runner_artifacts.py`, `tests/contract/test_eval_runner_automation.py`, `tests/integration/test_eval_runner_check.py`, `tests/integration/test_eval_runner_production_path.py`, `tests/integration/test_eval_runner_live.py`, `tests/integration/test_eval_runner_logs.py`, and `tests/integration/test_eval_runner_isolation.py`
 - [X] T036 Run formatting, linting, type checking, and the full regression suite for `src/gmuse/commit.py`, `tools/evals/gmuse_evals/`, `tests/`, `pyproject.toml`, and `noxfile.py` with `uv run nox -s check` and `uv run nox -s test`
 - [X] T037 Execute the check-mode and debug-preservation walkthroughs from `specs/010-eval-runner/quickstart.md`, inspect the resulting `.gmuse-evals/inspect/` metadata, and verify zero provider calls and cleanup/privacy expectations
 
@@ -189,7 +189,7 @@ All selected stories → Polish
 
 ```text
 Task T006: Write run-plan tests in tests/unit/test_eval_runner_plan.py
-Task T007: Write Inspect task tests in tests/unit/test_eval_runner_inspect_tasks.py
+Task T007: Write Inspect task tests in tests/unit/test_eval_runner_inspect_runner.py
 Task T008: Write check-mode integration tests in tests/integration/test_eval_runner_check.py
 
 Then in parallel:
@@ -205,7 +205,7 @@ Task T016: Write production-path integration tests in tests/integration/test_eva
 Task T017: Write live preflight tests in tests/integration/test_eval_runner_live.py
 
 After T018 and T019:
-Task T020: Add live Inspect orchestration in tools/evals/gmuse_evals/inspect_tasks.py
+Task T020: Add live Inspect orchestration in tools/evals/gmuse_evals/inspect_runner.py
 Task T021: Add live CLI safeguards in tools/evals/gmuse_evals/cli.py
 ```
 

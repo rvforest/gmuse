@@ -1,4 +1,4 @@
-"""Inspect AI dataset/task adapters with lazy framework imports."""
+"""Run eval plans through Inspect AI and collect results with lazy imports."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from gmuse.commit import ResponseGenerator
 
 from .execution import CaseExecutionResult, execute_entry
 from .logs import build_run_metadata, resolve_log_dir
-from .runner import RunPlan
+from .run_plan import RunPlan
 
 
 def _debug_directory(log_dir: Path) -> Path:

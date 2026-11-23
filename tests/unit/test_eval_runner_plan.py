@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from tools.evals.gmuse_evals.results import SuiteValidationResult
-from tools.evals.gmuse_evals.runner import (
+from tools.evals.gmuse_evals.run_plan import (
     Guardrails,
     RunPlanError,
     build_run_plan,

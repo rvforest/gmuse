@@ -24,7 +24,7 @@ from gmuse.exceptions import NoStagedChangesError
 from .deterministic import deterministic_response
 from .errors import OperationalError, classify_error
 from .git_reconstruct import ReconstructionError, reconstruct_fixture
-from .runner import RunEntry
+from .run_plan import RunEntry
 
 
 @dataclass(frozen=True, slots=True)
@@ -145,7 +145,7 @@ def execute_entry(
             Explicit paths are resolved before entering the temporary repository.
             Supply a path outside that repository to retain artifacts; the
             fallback ``.gmuse-evals/debug`` is relative to the temporary repo.
-            :func:`~tools.evals.gmuse_evals.inspect_tasks.run_inspect_plan`
+            :func:`~tools.evals.gmuse_evals.inspect_runner.run_inspect_plan`
             supplies an external destination automatically.
 
     Returns:

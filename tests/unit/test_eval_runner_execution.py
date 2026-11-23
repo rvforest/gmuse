@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from tools.evals.gmuse_evals.execution import execute_entry
-from tools.evals.gmuse_evals.runner import build_run_plan
+from tools.evals.gmuse_evals.run_plan import build_run_plan
 from tools.evals.gmuse_evals.validate import validate_suite
 
 

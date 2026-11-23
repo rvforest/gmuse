@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from inspect_ai.log import read_eval_log
 
-from tools.evals.gmuse_evals.inspect_tasks import run_inspect_plan
-from tools.evals.gmuse_evals.runner import Guardrails, build_run_plan
+from tools.evals.gmuse_evals.inspect_runner import run_inspect_plan
+from tools.evals.gmuse_evals.run_plan import Guardrails, build_run_plan
 from tools.evals.gmuse_evals.validate import validate_suite
 
 

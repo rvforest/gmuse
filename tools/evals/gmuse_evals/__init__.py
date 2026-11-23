@@ -32,7 +32,7 @@ from .models import (
 from .composition import collect_suite_composition
 from .results import ResolvedCase, SuiteValidationResult
 from .validate import validate_assets, validate_suite
-from .runner import (
+from .run_plan import (
     EffectiveGenerationConfig,
     EvalRun,
     Guardrails,

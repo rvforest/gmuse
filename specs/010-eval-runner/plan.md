@@ -116,8 +116,8 @@ tools/
 └── evals/
     └── gmuse_evals/
         ├── cli.py              # Typer app with validate/run commands
-        ├── inspect_tasks.py    # Inspect task/dataset/scorer construction
-        ├── runner.py           # run-plan construction and Inspect orchestration
+        ├── inspect_runner.py   # Inspect task execution and result collection
+        ├── run_plan.py         # run-plan construction and configuration resolution
         ├── execution.py        # temporary repo execution through production path
         ├── logs.py             # gmuse helpers around Inspect logs/metadata
         ├── deterministic.py    # check-mode local output policy

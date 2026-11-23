@@ -20,10 +20,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.3.3
 
       - name: Set up Python
         run: uv python install
@@ -38,11 +40,13 @@ jobs:
       matrix:
         python-version: ['3.11', '3.12', '3.13', '3.14', '3.15']
     steps:
-      - uses: actions/checkout@v4
-      - uses: wntrblm/nox@main
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: wntrblm/nox@2026.10.20
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.3.3
 
       - name: Set up Python
         run: uv python install
@@ -56,11 +60,11 @@ jobs:
             --junitxml=junit.xml \
             -o junit_family=legacy
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7.1.1
 
       - name: Upload test results to Codecov
         if: ${{ !cancelled() }}
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7.1.1
         with:
           report_type: test_results
 
@@ -68,10 +72,12 @@ jobs:
     name: Build, install, and CLI smoke test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.3.3
 
       - name: Build sdist and wheel
         run: uv build
@@ -90,11 +96,13 @@ jobs:
     name: Documentation Checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: wntrblm/nox@main
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: wntrblm/nox@2026.10.20
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v10.3.3
 
       - name: Set up Python
         run: uv python install

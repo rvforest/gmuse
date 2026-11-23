@@ -36,7 +36,98 @@ _PROVIDER_CREDENTIAL_VARIABLES: Final[dict[str, tuple[str, ...]]] = {
     "cohere": ("COHERE_API_KEY",),
     "azure": ("AZURE_API_KEY",),
     "gemini": ("GEMINI_API_KEY", "GOOGLE_API_KEY"),
+    "openrouter": ("OPENROUTER_API_KEY",),
 }
+
+
+def known_credential_variables() -> tuple[str, ...]:
+    """Return unique credential variable names for known providers."""
+    seen: list[str] = []
+    for variable_names in _PROVIDER_CREDENTIAL_VARIABLES.values():
+        for variable_name in variable_names:
+            if variable_name not in seen:
+                seen.append(variable_name)
+    return tuple(seen)
+
+
+def infer_provider_from_model(model: str) -> str | None:
+    """Return the LiteLLM provider encoded in a model string, if any.
+
+    Model IDs such as ``openrouter/openai/gpt-4o-mini`` must resolve to
+    ``openrouter``, not the nested ``openai`` segment.
+    """
+    normalized = model.strip()
+    if not normalized:
+        return None
+
+    try:
+        provider_info = litellm.get_llm_provider(normalized)
+    except Exception:  # noqa: BLE001
+        return _infer_provider_from_model_fallback(normalized)
+
+    if isinstance(provider_info, tuple) and len(provider_info) >= 2:
+        provider = provider_info[1]
+        if isinstance(provider, str) and provider:
+            if provider == "ollama_chat":
+                return "ollama"
+            return provider
+
+    return _infer_provider_from_model_fallback(normalized)
+
+
+def _infer_provider_from_model_fallback(model: str) -> str | None:
+    lowered = model.lower()
+    if lowered.startswith("ollama/") or lowered.startswith("ollama_chat/"):
+        return "ollama"
+    if lowered.startswith("gemini/") or "gemini" in lowered:
+        return "gemini"
+    return None
+
+
+def detect_provider_from_env_vars() -> str | None:
+    """Detect a provider from known API key environment variables."""
+    for provider, variable_names in _PROVIDER_CREDENTIAL_VARIABLES.items():
+        for variable_name in variable_names:
+            if normalize_env_value(os.getenv(variable_name)):
+                return provider
+    return None
+
+
+def get_default_status_variables(*, configured_model: str | None = None) -> list[str]:
+    """Return variables that default ``auth status`` should display.
+
+    The managed keyring index is the primary source. The configured model's
+    provider variables are included as well, and known provider variables are
+    added when they resolve from the environment or keyring. This keeps status
+    useful when the index is missing and when the only stored provider is one
+    like OpenRouter, which is not inferred from a default-provider list alone.
+    """
+    managed = get_managed_variables()
+    seen: set[str] = set()
+    candidates: list[str] = []
+
+    def add(variable_name: str) -> None:
+        if variable_name and variable_name not in seen:
+            seen.add(variable_name)
+            candidates.append(variable_name)
+
+    for variable_name in managed:
+        add(variable_name)
+
+    if configured_model:
+        provider = infer_provider_from_model(configured_model)
+        if provider:
+            for variable_name in get_provider_credential_variables(provider):
+                add(variable_name)
+
+    for variable_name in known_credential_variables():
+        if variable_name in seen:
+            continue
+        resolution = resolve_credential(variable_name, managed_index=managed)
+        if resolution.source in {"env", "keyring"}:
+            add(variable_name)
+
+    return sorted(candidates)
 
 
 @dataclass(slots=True)
@@ -389,18 +480,9 @@ def detect_provider_from_credentials(
     completion_timeout: float | None = None,
 ) -> str | None:
     """Detect a provider from env vars or keyring-backed credentials."""
-    if normalize_env_value(os.getenv("OPENAI_API_KEY")):
-        return "openai"
-    if normalize_env_value(os.getenv("ANTHROPIC_API_KEY")):
-        return "anthropic"
-    if normalize_env_value(os.getenv("COHERE_API_KEY")):
-        return "cohere"
-    if normalize_env_value(os.getenv("AZURE_API_KEY")):
-        return "azure"
-    if normalize_env_value(os.getenv("GEMINI_API_KEY")) or normalize_env_value(
-        os.getenv("GOOGLE_API_KEY")
-    ):
-        return "gemini"
+    env_provider = detect_provider_from_env_vars()
+    if env_provider is not None:
+        return env_provider
 
     for provider in _PROVIDER_CREDENTIAL_VARIABLES:
         resolution = resolve_provider_credential(

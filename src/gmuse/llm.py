@@ -23,7 +23,7 @@ import litellm
 
 from gmuse.credentials import (
     detect_provider_from_credentials,
-    normalize_env_value,
+    detect_provider_from_env_vars,
     resolve_provider_credential,
 )
 from gmuse.exceptions import (
@@ -157,19 +157,7 @@ def resolve_provider_from_key_env_vars() -> Optional[str]:
     Returns:
         Provider name if found, None otherwise
     """
-    if normalize_env_value(os.getenv("OPENAI_API_KEY")):
-        return "openai"
-    if normalize_env_value(os.getenv("ANTHROPIC_API_KEY")):
-        return "anthropic"
-    if normalize_env_value(os.getenv("COHERE_API_KEY")):
-        return "cohere"
-    if normalize_env_value(os.getenv("AZURE_API_KEY")):
-        return "azure"
-    if normalize_env_value(os.getenv("GEMINI_API_KEY")) or normalize_env_value(
-        os.getenv("GOOGLE_API_KEY")
-    ):
-        return "gemini"
-    return None
+    return detect_provider_from_env_vars()
 
 
 def resolve_model(provider: str, model: Optional[str] = None) -> str:

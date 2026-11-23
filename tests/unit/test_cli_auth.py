@@ -109,6 +109,94 @@ def test_auth_status_provider_uses_litellm_validation(
     assert "OPENAI_API_KEY" in output
 
 
+def test_auth_set_then_default_status_shows_openrouter_key(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    store = _install_memory_keyring(monkeypatch)
+    monkeypatch.setattr(
+        auth.typer, "prompt", lambda *args, **kwargs: "sk-or-dummy-value"
+    )
+
+    auth.set_credential("OPENROUTER_API_KEY", force=True)
+    capsys.readouterr()
+
+    assert (
+        store[(credentials.SERVICE_NAME, "OPENROUTER_API_KEY")] == "sk-or-dummy-value"
+    )
+
+    auth.status()
+    output = capsys.readouterr().out
+    assert "Credential status for gmuse" in output
+    assert "OPENROUTER_API_KEY" in output
+    assert "keyring" in output
+    assert "No stored credentials found." not in output
+    assert "sk-or-dummy-value" not in output
+
+
+def test_auth_status_finds_openrouter_when_index_is_missing(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    store = _install_memory_keyring(monkeypatch)
+    store[(credentials.SERVICE_NAME, "OPENROUTER_API_KEY")] = "sk-or-dummy-value"
+    monkeypatch.setattr(auth, "_configured_model", lambda: None)
+
+    auth.status()
+    output = capsys.readouterr().out
+    assert "OPENROUTER_API_KEY" in output
+    assert "keyring" in output
+    assert "No stored credentials found." not in output
+    assert "sk-or-dummy-value" not in output
+
+
+def test_auth_status_uses_configured_openrouter_model_not_nested_openai(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    store = _install_memory_keyring(monkeypatch)
+    store[(credentials.SERVICE_NAME, "OPENROUTER_API_KEY")] = "sk-or-dummy-value"
+    monkeypatch.setattr(
+        auth, "_configured_model", lambda: "openrouter/openai/gpt-6-luna"
+    )
+
+    auth.status()
+    output = capsys.readouterr().out
+    assert "OPENROUTER_API_KEY" in output
+    assert "keyring" in output
+    assert "OPENAI_API_KEY" not in output
+    assert "No stored credentials found." not in output
+    assert "sk-or-dummy-value" not in output
+
+
+def test_configured_model_reads_openrouter_model_from_env(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("GMUSE_MODEL", "openrouter/openai/gpt-6-luna")
+    assert auth._configured_model() == "openrouter/openai/gpt-6-luna"
+
+
+def test_auth_status_provider_openrouter(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    store = _install_memory_keyring(monkeypatch)
+    store[(credentials.SERVICE_NAME, "OPENROUTER_API_KEY")] = "sk-or-dummy-value"
+
+    import litellm
+
+    monkeypatch.setattr(
+        litellm,
+        "validate_environment",
+        lambda model: {
+            "keys_in_environment": False,
+            "missing_keys": ["OPENROUTER_API_KEY"],
+        },
+    )
+
+    auth.status("openrouter")
+    output = capsys.readouterr().out
+    assert "Credential status for provider: openrouter" in output
+    assert "OPENROUTER_API_KEY" in output
+    assert "sk-or-dummy-value" not in output
+
+
 def test_auth_set_rejects_insecure_backend_before_prompt(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

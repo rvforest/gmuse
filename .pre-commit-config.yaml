@@ -70,6 +70,7 @@ repos:
         # Only run cspell for the top-level README.md and all markdown files
         # under docs/. This avoids running it on unrelated .md files elsewhere.
         files: '^(README\.md|docs/.*\\.md)$'
+        language_version: 26.13.1  # Active LTS; hook needs Node >=22.18.0
 
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1

@@ -7,7 +7,7 @@ from typing import Literal, cast
 DeterministicFormat = Literal["freeform", "conventional", "gitmoji"]
 
 
-def format_valid_v1(
+def format_valid(
     format_name: DeterministicFormat,
     *,
     case_id: str = "eval",
@@ -61,7 +61,7 @@ def deterministic_response(
     **_: object,
 ) -> str:
     """Response-generator callback compatible with ``generate_message_attempt``."""
-    return format_valid_v1(
+    return format_valid(
         cast(DeterministicFormat, format),
         case_id=case_id,
         change_type=change_type,
@@ -69,4 +69,4 @@ def deterministic_response(
     )
 
 
-__all__ = ["DeterministicFormat", "deterministic_response", "format_valid_v1"]
+__all__ = ["DeterministicFormat", "deterministic_response", "format_valid"]

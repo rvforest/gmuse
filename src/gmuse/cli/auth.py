@@ -10,6 +10,7 @@ from gmuse.credentials import (
     credential_exists,
     delete_credential,
     ensure_secure_backend,
+    get_default_status_variables,
     get_managed_variables,
     get_provider_credential_variables,
     resolve_credential,
@@ -118,6 +119,21 @@ def set_credential(
     typer.echo(f"Stored {normalized_name} in the system keyring for gmuse.")
 
 
+def _configured_model() -> str | None:
+    """Return the resolved gmuse model, if one is configured."""
+    try:
+        from gmuse.cli.config_resolution import resolve_config
+
+        model = resolve_config(tolerate_load_errors=True).get("model")
+    except Exception:  # noqa: BLE001
+        return None
+    if isinstance(model, str):
+        stripped = model.strip()
+        if stripped:
+            return stripped
+    return None
+
+
 @auth_app.command("status")
 def status(provider: str | None = None) -> None:
     """Show credential availability and storage source."""
@@ -142,7 +158,9 @@ def status(provider: str | None = None) -> None:
                 if missing_variable not in candidate_variables:
                     candidate_variables.append(missing_variable)
     else:
-        candidate_variables = sorted(get_managed_variables())
+        candidate_variables = get_default_status_variables(
+            configured_model=_configured_model()
+        )
 
     managed = get_managed_variables()
     for variable_name in candidate_variables:

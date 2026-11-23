@@ -106,20 +106,20 @@ Re-run with --force or confirm overwrite in an interactive terminal.
 ### Signature
 
 ```text
-gmuse auth status [PROVIDER]
+gmuse auth status [--provider PROVIDER]
 ```
 
-### Arguments
+### Options
 
-| Argument | Type | Required | Description |
-|----------|------|----------|-------------|
-| `PROVIDER` | str | No | Optional LiteLLM provider name, e.g. `openai` |
+| Option | Type | Required | Description |
+|--------|------|----------|-------------|
+| `--provider` | str | No | Optional LiteLLM provider name, e.g. `openrouter` or `openai` |
 
 ### Behavior Contract
 
-1. With no provider argument, read the `__gmuse_index__` entry and report only gmuse-managed variables.
+1. With no `--provider`, list gmuse-managed variables from the `__gmuse_index__` entry, plus known provider variables that resolve from the environment or keyring, plus variables required by the configured model. Infer the configured model's provider with LiteLLM so IDs such as `openrouter/openai/gpt-4o-mini` map to `openrouter`, not `openai`.
 2. For each variable, show whether the effective value comes from env or keyring and display only the masked value.
-3. With a provider argument, use `litellm.validate_environment(model="<provider>/dummy")` to determine required variables, then resolve each via env/keyring.
+3. With `--provider`, use `litellm.validate_environment(model="<provider>/dummy")` to determine required variables, then resolve each via env/keyring.
 4. Do not scan unrelated OS keychain items or dump the broader process environment.
 
 ### Output Contract

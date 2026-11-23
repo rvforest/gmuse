@@ -71,6 +71,34 @@ class TestDetectProvider:
             assert f"gmuse auth set {api_key_name}" in message
             assert f"export {api_key_name}='sk-...'" in message
 
+    def test_detect_openrouter(self) -> None:
+        """Test detecting OpenRouter provider from its API key."""
+        with mock.patch.dict(os.environ, {"OPENROUTER_API_KEY": "sk-or-test"}):
+            assert detect_provider() == "openrouter"
+
+    def test_detect_openrouter_from_model_env(self) -> None:
+        """OpenRouter model IDs must not be treated as the nested openai provider."""
+        with mock.patch.dict(
+            os.environ,
+            {"GMUSE_MODEL": "openrouter/openai/gpt-6-luna"},
+            clear=True,
+        ):
+            assert detect_provider() == "openrouter"
+
+    def test_detect_openrouter_from_keyring(self) -> None:
+        """The keyring should find OpenRouter when it is the only stored provider."""
+
+        def fake_get_password(service_name: str, username: str) -> str | None:
+            if username == "OPENROUTER_API_KEY":
+                return "sk-or-dummy"
+            return None
+
+        with mock.patch.dict(os.environ, {}, clear=True):
+            with mock.patch(
+                "gmuse.credentials.keyring.get_password", fake_get_password
+            ):
+                assert detect_provider() == "openrouter"
+
     def test_detect_openai_priority(self) -> None:
         """Test OpenAI takes priority when multiple keys present."""
         with mock.patch.dict(

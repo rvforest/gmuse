@@ -522,6 +522,7 @@ class TestProviderResolution:
             ("COHERE_API_KEY", "cohere"),
             ("AZURE_API_KEY", "azure"),
             ("GEMINI_API_KEY", "gemini"),
+            ("OPENROUTER_API_KEY", "openrouter"),
         ]:
             monkeypatch.setenv(env_var, "stored-secret")
             assert credentials.detect_provider_from_credentials() == provider
@@ -547,6 +548,97 @@ class TestProviderResolution:
         )
 
         assert credentials.detect_provider_from_credentials() is None
+
+    def test_infer_provider_from_openrouter_model_strings(self) -> None:
+        assert (
+            credentials.infer_provider_from_model("openrouter/openai/gpt-6-luna")
+            == "openrouter"
+        )
+        assert (
+            credentials.infer_provider_from_model("openrouter/openai/gpt-4o-mini")
+            == "openrouter"
+        )
+        assert (
+            credentials.infer_provider_from_model(
+                "openrouter/anthropic/claude-haiku-4-5"
+            )
+            == "openrouter"
+        )
+        assert credentials.infer_provider_from_model("openai/gpt-4o-mini") == "openai"
+        assert credentials.infer_provider_from_model("  ") is None
+
+    def test_infer_provider_from_model_fallback_paths(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            credentials.litellm,
+            "get_llm_provider",
+            mock.Mock(side_effect=Exception("unavailable")),
+        )
+        assert credentials.infer_provider_from_model("ollama/llama3.1") == "ollama"
+        assert credentials.infer_provider_from_model("ollama_chat/llama3.1") == "ollama"
+        assert (
+            credentials.infer_provider_from_model("gemini/gemini-flash-lite-latest")
+            == "gemini"
+        )
+        assert credentials.infer_provider_from_model("some-local-model") is None
+
+        monkeypatch.setattr(
+            credentials.litellm,
+            "get_llm_provider",
+            mock.Mock(return_value=("llama3.1", "ollama_chat")),
+        )
+        assert credentials.infer_provider_from_model("ollama_chat/llama3.1") == "ollama"
+
+        monkeypatch.setattr(
+            credentials.litellm,
+            "get_llm_provider",
+            mock.Mock(return_value="not-a-tuple"),
+        )
+        assert (
+            credentials.infer_provider_from_model("openrouter/openai/gpt-6-luna")
+            is None
+        )
+
+    def test_default_status_variables_find_openrouter_without_index(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        store = _install_memory_keyring(monkeypatch)
+        store[(credentials.SERVICE_NAME, "OPENROUTER_API_KEY")] = "sk-or-dummy"
+
+        variables = credentials.get_default_status_variables()
+
+        assert variables == ["OPENROUTER_API_KEY"]
+        assert credentials.get_managed_variables() == set()
+
+    def test_default_status_variables_use_configured_openrouter_model(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _install_memory_keyring(monkeypatch)
+
+        variables = credentials.get_default_status_variables(
+            configured_model="openrouter/openai/gpt-6-luna"
+        )
+
+        assert variables == ["OPENROUTER_API_KEY"]
+        assert "OPENAI_API_KEY" not in variables
+
+    def test_default_status_variables_include_managed_openrouter_key(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _install_memory_keyring(monkeypatch)
+        credentials.store_credential("OPENROUTER_API_KEY", "sk-or-dummy")
+
+        assert credentials.get_managed_variables() == {"OPENROUTER_API_KEY"}
+        assert credentials.get_default_status_variables() == ["OPENROUTER_API_KEY"]
+
+    def test_detect_provider_from_openrouter_keyring(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        _install_memory_keyring(monkeypatch)
+        credentials.store_credential("OPENROUTER_API_KEY", "sk-or-dummy")
+
+        assert credentials.detect_provider_from_credentials() == "openrouter"
 
     def test_build_backend_and_missing_credential_messages(self) -> None:
         unavailable = BackendStatus(

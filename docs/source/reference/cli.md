@@ -95,13 +95,14 @@ Manage API credentials stored in the OS keyring.
 ```console
 $ gmuse auth set OPENAI_API_KEY
 $ gmuse auth set OPENAI_API_KEY --force
+$ gmuse auth set OPENROUTER_API_KEY
 $ gmuse auth status
-$ gmuse auth status openai
+$ gmuse auth status --provider openrouter
 $ gmuse auth remove OPENAI_API_KEY
 $ gmuse auth remove OPENAI_API_KEY ANTHROPIC_API_KEY
 ```
 
-`gmuse auth set` prompts for a secret and stores it under the `gmuse` keyring service. `gmuse auth status` shows the managed keys and their masked values, and `gmuse auth remove` deletes one or more stored credentials.
+`gmuse auth set` prompts for a secret and stores it under the `gmuse` keyring service. `gmuse auth status` lists stored credentials and their masked values, including keys for the configured model (so a model such as `openrouter/openai/gpt-4o-mini` is treated as OpenRouter, not OpenAI). Pass `--provider` to inspect one provider. `gmuse auth remove` deletes one or more stored credentials.
 
 Status `Source` values mean:
 

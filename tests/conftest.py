@@ -32,8 +32,11 @@ def _isolate_gmuse_global_config(
     for key in (
         "OPENAI_API_KEY",
         "ANTHROPIC_API_KEY",
+        "COHERE_API_KEY",
+        "AZURE_API_KEY",
         "GEMINI_API_KEY",
         "GOOGLE_API_KEY",
+        "OPENROUTER_API_KEY",
     ):
         monkeypatch.delenv(key, raising=False)
 

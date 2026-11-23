@@ -12,6 +12,7 @@ Data Classes:
     - GenerationResult: Result of message generation
 """
 
+import hashlib
 from dataclasses import dataclass
 from typing import Any, Callable, Final, Optional, cast
 
@@ -136,16 +137,15 @@ class GenerationPromptMetadata:
         prompt_version: str = PROMPT_VERSION,
     ) -> "GenerationPromptMetadata":
         """Build metadata from prompt text without returning the text itself."""
-        import hashlib
 
-        def digest(value: str) -> str:
+        def sha256_text(value: str) -> str:
             return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
         combined = f"{system_prompt}\n\n{user_prompt}"
         return cls(
-            prompt_hash=digest(combined),
-            system_prompt_hash=digest(system_prompt),
-            user_prompt_hash=digest(user_prompt),
+            prompt_hash=sha256_text(combined),
+            system_prompt_hash=sha256_text(system_prompt),
+            user_prompt_hash=sha256_text(user_prompt),
             prompt_size_bytes=len(combined.encode("utf-8")),
             system_prompt_size_bytes=len(system_prompt.encode("utf-8")),
             user_prompt_size_bytes=len(user_prompt.encode("utf-8")),

@@ -5,11 +5,16 @@ It orchestrates git operations, prompt building, and LLM interaction.
 
 Public API:
     - generate_message: Main entry point for generating commit messages
+    - generate_message_attempt: Retain output and provider failures for evals
     - gather_context: Collect context from git repository
 
 Data Classes:
     - GenerationContext: Context gathered for generation
     - GenerationResult: Result of message generation
+    - GenerationAttemptResult: Output, validation, and operational failure details
+    - GenerationPromptMetadata: Prompt hashes, sizes, and token estimates
+    - ValidationOutcome: Production message validation state
+    - GenerationOperationalError: Provider or response callback failure
 """
 
 import hashlib
@@ -136,7 +141,20 @@ class GenerationPromptMetadata:
         output: str | None = None,
         prompt_version: str = PROMPT_VERSION,
     ) -> "GenerationPromptMetadata":
-        """Build metadata from prompt text without returning the text itself."""
+        """Build metadata without retaining prompt or output text.
+
+        The combined hash and byte size use the system prompt, two newline
+        characters, and the user prompt, encoded as UTF-8.
+
+        Args:
+            system_prompt: System instructions sent to the response generator.
+            user_prompt: Repository context sent to the response generator.
+            output: Generated text for the output token estimate, if available.
+            prompt_version: Prompt builder version associated with this attempt.
+
+        Returns:
+            Hashes, byte sizes, and heuristic token counts for the attempt.
+        """
 
         def sha256_text(value: str) -> str:
             return hashlib.sha256(value.encode("utf-8")).hexdigest()
@@ -164,7 +182,16 @@ class GenerationPromptMetadata:
 
 @dataclass(frozen=True, slots=True)
 class ValidationOutcome:
-    """Structured production validation outcome for a generated message."""
+    """Structured production validation outcome for a generated message.
+
+    Attributes:
+        valid: Whether output passed validation. Also false when a provider
+            failure prevented validation; check the attempt's operational error.
+        category: ``validation`` for rejected output. Execution wrappers may
+            use ``operational`` for setup failures. None for passed validation
+            or an uncategorized failure.
+        message: Failure details when available, otherwise None.
+    """
 
     valid: bool
     category: str | None = None
@@ -183,7 +210,16 @@ class ValidationOutcome:
 
 @dataclass(frozen=True, slots=True)
 class GenerationOperationalError:
-    """An operational failure observed while trying to generate a response."""
+    """A failure during provider setup or response generation.
+
+    Attributes:
+        category: ``unknown`` at the generation boundary; eval tooling applies
+            its own error classification.
+        message: Original exception's string representation.
+        exception_type: Original exception's class name.
+        exception: Original exception retained for :func:`generate_message` to
+            re-raise. This object is for in-process use, not serialization.
+    """
 
     category: str
     message: str
@@ -193,10 +229,21 @@ class GenerationOperationalError:
 
 @dataclass(frozen=True, slots=True)
 class GenerationAttemptResult:
-    """Non-raising observation of one production generation attempt.
+    """Output and failure observations from one production generation attempt.
 
-    Unlike :func:`generate_message`, this record retains invalid generated
-    output and provider/setup failures so maintainer evals can log them.
+    Invalid output and provider failures are returned by
+    :func:`generate_message_attempt` for evals to inspect. Context gathering,
+    prompt building, and unexpected validator errors can still raise before
+    a result is returned.
+
+    Attributes:
+        message: Unmodified response, including invalid or empty output. None
+            when provider setup or the response generator raised an exception.
+        context: Repository context used to build the prompts.
+        prompt: Prompt metadata without raw prompt text.
+        validation: Validation result. A false ``valid`` with an operational
+            error means validation was not reached, rather than rejected output.
+        operational_error: Provider or callback failure, otherwise None.
     """
 
     message: str | None
@@ -222,7 +269,14 @@ class GenerationAttemptResult:
 
 
 ResponseGenerator = Callable[..., str]
-"""Typed injection seam for deterministic or test response generation."""
+"""Synchronous callback returning raw message text in place of an LLM call.
+
+Callbacks may accept any subset of the named ``system_prompt``, ``user_prompt``,
+``temperature``, ``max_tokens``, and ``model`` arguments, or all of them via
+``**kwargs``. Two positional prompt arguments are also supported. Exceptions
+are recorded by :func:`generate_message_attempt` and re-raised by
+:func:`generate_message`.
+"""
 
 
 def gather_context(
@@ -306,6 +360,12 @@ def generate_message(
         config: Merged configuration dictionary
         hint: Optional user hint for message generation
         context: Pre-gathered context (if None, will be gathered automatically)
+        credential_lookup_timeout: Credential lookup timeout in seconds passed
+            to the LLM client. None uses the client's default behavior. Ignored
+            when a response generator is supplied.
+        response_generator: Optional synchronous callback replacing the LLM
+            call. See :data:`ResponseGenerator` for accepted arguments. Its raw
+            string response goes through normal production validation.
 
     Returns:
         GenerationResult with the message and context used
@@ -315,6 +375,8 @@ def generate_message(
         NoStagedChangesError: If no files are staged
         LLMError: If LLM interaction fails
         InvalidMessageError: If generated message fails validation
+
+    Exceptions from an injected response generator are re-raised unchanged.
 
     Example:
         >>> from gmuse.config import merge_config
@@ -356,16 +418,26 @@ def generate_message_attempt(
     typed internal seam used by offline evals; when omitted, the normal
     :class:`~gmuse.llm.LLMClient` is used.
 
+    Exceptions during client setup or response generation are captured as
+    operational errors. InvalidMessageError from message validation is captured
+    as a validation failure with the original response retained. Context
+    gathering, prompt building, and unexpected validator errors still propagate.
+
     Args:
         config: Merged gmuse generation configuration.
         hint: Optional user hint.
         context: Pre-gathered context, or gather it from the current repository.
-        credential_lookup_timeout: Optional credential lookup timeout.
-        response_generator: Optional deterministic response callback.
+        credential_lookup_timeout: Credential lookup timeout in seconds passed
+            to the LLM client. None uses the client's default behavior. Ignored
+            when a response generator is supplied.
+        response_generator: Optional synchronous callback replacing the LLM
+            call. See :data:`ResponseGenerator` for accepted arguments. It must
+            return raw message text, which is validated without modification.
 
     Returns:
         A result containing raw output, prompt metadata, validation, and any
-        operational provider failure.
+        operational provider or callback failure. ``message`` is None for an
+        operational failure; invalid responses remain available as strings.
 
     Raises:
         NotAGitRepositoryError: If context must be gathered outside a Git repo.

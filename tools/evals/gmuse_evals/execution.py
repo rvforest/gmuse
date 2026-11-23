@@ -29,7 +29,24 @@ from .runner import RunEntry
 
 @dataclass(frozen=True, slots=True)
 class CaseExecutionResult:
-    """Structured result of one reconstructed repository execution."""
+    """Structured result of one reconstructed repository execution.
+
+    Attributes:
+        entry_id: Run matrix entry identifier.
+        case_id: Source case identifier.
+        message: Raw response, including invalid output; None on operational
+            failure.
+        validation: Production validation state. Check ``operational_error``
+            before interpreting a false ``valid`` as rejected output.
+        operational_error: Classified execution failure, otherwise None.
+        prompt: Prompt hashes, sizes, and token estimates without prompt text.
+        context: In-memory generation context, or None if setup failed.
+        staged_diff_digest: Verified fixture diff hash, or None on setup failure.
+        duration_seconds: Elapsed execution time including fixture setup.
+        preserved_repository: Debug repository copy path, when created.
+        raw_prompt: Debug prompt file path, rather than prompt text. Debug
+            paths and repository context are excluded from ``as_metadata``.
+    """
 
     entry_id: str
     case_id: str
@@ -110,7 +127,33 @@ def execute_entry(
     preserve_debug: bool = False,
     debug_dir: Path | str | None = None,
 ) -> CaseExecutionResult:
-    """Reconstruct, stage, and execute one entry through gmuse production code."""
+    """Reconstruct, stage, and execute one entry through gmuse production code.
+
+    Execution temporarily changes the process working directory. Callers must
+    serialize entries and avoid concurrent work that depends on that directory.
+    The original directory is restored and the temporary repository is removed
+    when execution leaves its context, including on failure.
+
+    Args:
+        entry: Resolved fixture and generation settings to execute.
+        response_generator: Optional synchronous callback replacing the LLM
+            call; see :data:`gmuse.commit.ResponseGenerator`. If omitted, check
+            entries use deterministic output and live entries use the LLM client.
+        preserve_debug: Copy the reconstructed repository and write raw prompt
+            text to separate debug files when generation returns a result.
+        debug_dir: Debug destination, used only with ``preserve_debug``.
+            Explicit paths are resolved before entering the temporary repository.
+            Supply a path outside that repository to retain artifacts; the
+            fallback ``.gmuse-evals/debug`` is relative to the temporary repo.
+            :func:`~tools.evals.gmuse_evals.inspect_tasks.run_inspect_plan`
+            supplies an external destination automatically.
+
+    Returns:
+        Raw output, validation, prompt metadata, and timing. Provider and
+        callback failures are recorded as operational errors. Exceptions during
+        reconstruction, context gathering, prompting, or debug copying are also
+        returned as operational failures, with no message or context.
+    """
     started = time.perf_counter()
     debug_root = (
         Path(debug_dir).expanduser().resolve() if debug_dir is not None else None

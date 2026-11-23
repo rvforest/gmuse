@@ -27,7 +27,18 @@ class RunPlanError(ValueError):
 
 @dataclass(frozen=True, slots=True)
 class Guardrails:
-    """Explicit resource limits for live execution.
+    """Run selection limits checked by :func:`build_run_plan`.
+
+    Attributes:
+        max_samples: Positive entry cap required for live plans. The plan
+            builder keeps the first entries up to this cap; the CLI rejects
+            live matrices whose full size exceeds the cap before execution.
+        max_tokens: Unsupported run-wide token limit; any value is rejected.
+            Per-response token limits belong in EffectiveGenerationConfig.
+        max_cost: Unsupported run-wide cost limit; any value is rejected.
+        time_limit: Unsupported run-wide time limit; any value is rejected.
+        concurrency: None or 1. Other values are rejected because fixture
+            execution changes the process working directory.
 
     Example:
         >>> Guardrails(max_samples=2).configured()
@@ -51,7 +62,10 @@ class Guardrails:
         }
 
     def configured(self) -> bool:
-        """Return whether at least one meaningful limit is configured."""
+        """Return whether a positive sample cap is configured.
+
+        Other limit fields are validated separately by :func:`build_run_plan`.
+        """
         return self.max_samples is not None and self.max_samples > 0
 
 
@@ -59,10 +73,18 @@ class Guardrails:
 class EffectiveGenerationConfig:
     """Generation settings resolved for one case/format/model entry.
 
-    Example:
-        >>> config = EffectiveGenerationConfig("freeform", 0, False, None, None, None, None, 0.7, 500, 20000, 30)
-        >>> config.format
-        'freeform'
+    Attributes:
+        format: Message format supported by the source case.
+        history_depth: Number of fixture history commits to include as context.
+        include_branch: Whether to include sanitized fixture branch context.
+        hint: Optional user guidance included in the prompt.
+        repository_instructions: Optional .gmuse file content for the fixture.
+        max_chars: Optional generated-message character limit.
+        model: Provider model ID, or None for deterministic check entries.
+        temperature: Provider sampling temperature.
+        max_tokens: Per-response output token limit, not a run-wide budget.
+        max_diff_bytes: Staged-diff byte limit before production truncation.
+        timeout: Provider request timeout in seconds.
     """
 
     format: str
@@ -98,9 +120,14 @@ class EffectiveGenerationConfig:
 class RunEntry:
     """One stable case/format/model execution entry.
 
-    Example:
-        >>> RunEntry.__name__
-        'RunEntry'
+    Attributes:
+        entry_id: Identity composed from case ID, format, and model, using
+            ``deterministic-check`` in place of a model for check entries.
+        resolved_case: Validated case and its resolved fixture, profile, and
+            rubric assets.
+        generation: Effective settings used for this entry's generation call.
+        candidate_kind: ``deterministic_check`` for offline output or
+            ``live_model`` for provider-generated output.
     """
 
     entry_id: str
@@ -133,9 +160,17 @@ class RunEntry:
 class RunPlan:
     """Resolved execution plan for one suite and one run mode.
 
-    Example:
-        >>> RunPlan.__name__
-        'RunPlan'
+    Attributes:
+        mode: ``check`` for deterministic output or ``live`` for provider calls.
+        suite_id: Source suite identifier.
+        suite_version: Source suite revision as a string.
+        entries: Selected entries after applying the sample cap, ordered by
+            validated case, format, then model.
+        planned_entries: Full matrix size before applying the sample cap;
+            may exceed the number of selected entries.
+        guardrails: Limits used to validate and cap the plan.
+        overrides: Caller-provided generation overrides. Non-None values take
+            precedence over case or fixture settings and production defaults.
     """
 
     mode: RunMode
@@ -234,22 +269,43 @@ def build_run_plan(
     overrides: dict[str, Any] | None = None,
     guardrails: Guardrails | None = None,
 ) -> RunPlan:
-    """Expand a validated suite into deterministic case/config entries.
+    """Expand a validated suite into ordered case/format/model entries.
+
+    This function only plans execution and makes no provider calls. It keeps
+    the first ``guardrails.max_samples`` entries when a cap is supplied, while
+    ``planned_entries`` retains the full matrix size. The CLI separately
+    rejects live matrices exceeding the cap rather than running a subset.
 
     Args:
         validated: The spec-009 suite validation result.
         mode: ``check`` for deterministic output or ``live`` for providers.
         models: Live model IDs. Check mode forbids them.
-        formats: Optional format filter/override.
-        overrides: CLI-level generation overrides.
-        guardrails: Resource limits for live execution.
+        formats: Formats to use for every selected case, in the given order.
+            Each format must be supported by every case. Empty uses each
+            case's declared formats.
+        overrides: Non-None generation overrides take precedence over case
+            settings, fixture instructions, and production defaults.
+        guardrails: Entry cap and supported concurrency setting. Live mode
+            requires a positive sample cap; run-wide token, cost, and time
+            limits are rejected in both modes.
+
+    Returns:
+        A plan ordered by validated case, format, then model, with selected
+        entries capped and the full matrix size retained in ``planned_entries``.
 
     Raises:
         RunPlanError: If validation, selection, or guardrails are invalid.
 
     Example:
-        >>> build_run_plan(validated, mode="check")  # doctest: +SKIP
-        RunPlan(...)
+        >>> from .validate import validate_suite
+        >>> validated = validate_suite("evals", "smoke")
+        >>> plan = build_run_plan(
+        ...     validated, mode="check", guardrails=Guardrails(max_samples=1)
+        ... )
+        >>> len(plan.entries)
+        1
+        >>> plan.planned_entries > len(plan.entries)
+        True
     """
     if mode not in {"check", "live"}:
         raise RunPlanError("mode must be either 'check' or 'live'")

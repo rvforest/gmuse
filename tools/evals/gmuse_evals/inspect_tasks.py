@@ -64,6 +64,22 @@ def build_task(
 
     Inspect is imported only when a maintainer explicitly builds a runner task;
     importing normal ``gmuse`` modules never requires it.
+
+    Args:
+        plan: Selected entries and run metadata. Building a task does not execute
+            entries; live entries call providers when the solver runs.
+        preserve_debug: Preserve repositories and raw prompts during execution.
+        debug_dir: Debug destination passed to :func:`execute_entry`. Supply an
+            external path when preserving debug artifacts.
+        result_sink: Optional caller-owned list to which the solver appends one
+            metadata dictionary for each executed entry.
+        response_generator: Optional synchronous response callback for all
+            entries; see :data:`gmuse.commit.ResponseGenerator`.
+
+    Returns:
+        An Inspect task using gmuse generation with no quality scorer. Callers
+        running the task must serialize samples because execution changes the
+        process working directory; :func:`run_inspect_plan` enforces this.
     """
     from inspect_ai import Task
     from inspect_ai.model import ModelOutput
@@ -133,7 +149,32 @@ def run_inspect_plan(
     preserve_debug: bool = False,
     response_generator: ResponseGenerator | None = None,
 ) -> InspectRunResult:
-    """Execute a plan using Inspect's native eval/log pipeline."""
+    """Execute a plan serially using Inspect's native eval/log pipeline.
+
+    The solver uses gmuse's provider client for live entries. Inspect records
+    output and metadata without scoring message quality. Ordinary metadata
+    excludes raw prompts and repository context.
+
+    Args:
+        plan: Selected entries and run metadata. Live entries make provider
+            calls unless a response generator is supplied.
+        log_dir: Inspect log destination, defaulting to ``.gmuse-evals/inspect``.
+            An explicit destination must not contain existing ``.eval`` files.
+        preserve_debug: Preserve repository copies and raw prompt files under
+            the enclosing ``.gmuse-evals/debug`` directory, or ``debug`` beside
+            a custom log directory. These artifacts outlive temporary fixtures.
+        response_generator: Optional synchronous response callback for all
+            entries; see :data:`gmuse.commit.ResponseGenerator`.
+
+    Returns:
+        Inspect logs, collected per-entry metadata, and the resolved log path.
+        Entry failures remain in the results so later entries can execute.
+
+    Raises:
+        LogLocationError: If the explicit destination contains Inspect logs.
+        OSError: If the log directory cannot be created.
+        ImportError: If the optional Inspect dependency is unavailable.
+    """
     from inspect_ai import eval as inspect_eval
 
     explicit = log_dir is not None

@@ -567,6 +567,38 @@ class TestProviderResolution:
         assert credentials.infer_provider_from_model("openai/gpt-4o-mini") == "openai"
         assert credentials.infer_provider_from_model("  ") is None
 
+    def test_infer_provider_from_model_fallback_paths(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(
+            credentials.litellm,
+            "get_llm_provider",
+            mock.Mock(side_effect=Exception("unavailable")),
+        )
+        assert credentials.infer_provider_from_model("ollama/llama3.1") == "ollama"
+        assert (
+            credentials.infer_provider_from_model("ollama_chat/llama3.1") == "ollama"
+        )
+        assert (
+            credentials.infer_provider_from_model("gemini/gemini-flash-lite-latest")
+            == "gemini"
+        )
+        assert credentials.infer_provider_from_model("some-local-model") is None
+
+        monkeypatch.setattr(
+            credentials.litellm,
+            "get_llm_provider",
+            mock.Mock(return_value=("llama3.1", "ollama_chat")),
+        )
+        assert credentials.infer_provider_from_model("ollama_chat/llama3.1") == "ollama"
+
+        monkeypatch.setattr(
+            credentials.litellm,
+            "get_llm_provider",
+            mock.Mock(return_value="not-a-tuple"),
+        )
+        assert credentials.infer_provider_from_model("openrouter/openai/gpt-6-luna") is None
+
     def test_default_status_variables_find_openrouter_without_index(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:

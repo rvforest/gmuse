@@ -173,6 +173,28 @@ def test_configured_model_reads_openrouter_model_from_env(
     assert auth._configured_model() == "openrouter/openai/gpt-6-luna"
 
 
+def test_configured_model_returns_none_on_error_or_blank(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        "gmuse.cli.config_resolution.resolve_config",
+        mock.Mock(side_effect=RuntimeError("boom")),
+    )
+    assert auth._configured_model() is None
+
+    monkeypatch.setattr(
+        "gmuse.cli.config_resolution.resolve_config",
+        mock.Mock(return_value={"model": "   "}),
+    )
+    assert auth._configured_model() is None
+
+    monkeypatch.setattr(
+        "gmuse.cli.config_resolution.resolve_config",
+        mock.Mock(return_value={"model": 123}),
+    )
+    assert auth._configured_model() is None
+
+
 def test_auth_status_provider_openrouter(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:

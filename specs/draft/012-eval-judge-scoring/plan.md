@@ -10,8 +10,9 @@ scoring layer adds gmuse deterministic hard-failure checks, rubric-based
 LLM-as-judge scoring, versioned error taxonomy, judge metadata capture, explicit
 unscored states, and optional manual-review metadata on top of immutable
 candidate sample results. Inspect logs are the canonical scored evidence. The
-design keeps aggregate scores secondary, preserves per-dimension evidence, and
-separates judge operational failures from candidate quality failures.
+design preserves named per-dimension evidence, keeps categorical usability and
+objective gates separate, and separates judge operational failures from
+candidate quality failures. It does not define an aggregate score.
 
 ## Technical Context
 
@@ -45,8 +46,8 @@ simple and safe
 than regenerating outputs; preserve raw generated messages and original judge
 responses; write explicit unscored records for candidate operational failures;
 do not judge deterministic hard failures by default; hard failures always gate
-usability; self-judged results are flagged; aggregate scores never replace
-per-dimension scores
+  usability; self-judged results are flagged; no summary score replaces
+  per-dimension ratings
 
 **Scale/Scope**: Initial maintainer scoring for smoke/core/safety eval outputs,
 focused on single-line freeform and conventional messages with minimal gitmoji
@@ -76,7 +77,7 @@ Constitution gates for this feature:
   failures, uses fake fixture secrets for tests, masks secrets in logs, and keeps
   live eval artifacts maintainer-controlled.
 - **Release Discipline Gate**: Pass. Artifact schemas, judge prompt versions,
-  rubric versions, and taxonomy versions are explicitly recorded for future
+  rubric revisions, and taxonomy versions are explicitly recorded for future
   compatibility checks.
 
 Checklist:
@@ -154,8 +155,8 @@ Research focus areas:
 
 - Decide which failures are deterministic hard gates and which require judge
   assessment.
-- Define the absolute rubric score dimensions, usability categories, aggregate
-  weighting, and gate precedence.
+- Define the profile-driven rating dimensions, usability categories, and gate
+  precedence.
 - Decide the scoring command/scorer boundary and how multiple scoring
   configurations are represented in Inspect logs.
 - Decide how the judge input is assembled from runner records, run-plan
@@ -197,7 +198,7 @@ Post-design constitution re-check:
   budget/resume controls remain mandatory.
 - Security/Privacy: privacy leaks hard-fail; logs and summaries must not expose
   secrets beyond explicit local eval artifacts.
-- Release Discipline: schema, taxonomy, judge prompt, and rubric versions are
+- Release Discipline: schema, taxonomy, and judge prompt versions plus rubric revisions are
   part of every scored result.
 
 ## Phase 2 - Future Implementation Planning
@@ -223,9 +224,10 @@ Planned implementation steps:
    contract.
 7. Add hard failure gate calculation and effective scoring so hard failures force
    unusable status, skip judge calls by default, and preserve per-dimension
-   numeric scores when diagnostic judging is explicitly enabled.
-8. Add aggregate scoring as a documented secondary field using accuracy 50%,
-   quality 35%, and style/history fit 15% when applicable.
+   named 1–4 ratings when diagnostic judging is explicitly enabled. Preserve
+   not-applicable dimensions without inventing ratings.
+8. Do not add an aggregate score; downstream comparison may report named rating
+   movement as evidence without collapsing dimensions.
 9. Add judge input controls that hide candidate model identity by default and
    record any diagnostic reason for including it.
 10. Add calibration artifact support for manually annotated examples and

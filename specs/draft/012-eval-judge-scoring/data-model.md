@@ -27,6 +27,7 @@ Required fields consumed by scoring:
 
 - run/sample identity
 - suite, case, fixture, and rubric identity
+- scoring-profile identity, version, and digest
 - model and generation config metadata
 - generated message when available
 - production validation outcome
@@ -51,7 +52,7 @@ Fields:
 - `operational_errors`
 - `self_judged`
 - `judge_input_controls`
-- `effective_score`
+- `effective_ratings`
 - `calibration_report_id`
 
 Rules:
@@ -98,7 +99,7 @@ Fields:
 - `judge_provider`
 - `judge_model`
 - `judge_prompt_version`
-- `rubric_version`
+- `rubric_revision`
 - `parameters`
 - `calibration_report_id`
 - `guardrails`
@@ -145,17 +146,20 @@ Rules:
 Fields:
 
 - `accuracy`
-- `quality`
-- `style_history_fit`
-- `aggregate`
+- `message_quality`
+- `style_context_fit`
 - `usability`
 - `hard_failed`
 - `derived_from`
 
 Rules:
 
-- Aggregates are secondary review aids.
-- Hard failure gates take precedence over aggregate score.
+- Ratings use the active spec 009 scoring profile's named dimensions and
+  integer anchors 1 through 4. A dimension that is not applicable remains
+  omitted or null; no rating is invented.
+- There is no aggregate score in this design. Maintainers review the named
+  ratings, usability category, and gate evidence together.
+- Hard failure gates take precedence over subjective usability.
 
 ## JudgeCalibrationReport
 

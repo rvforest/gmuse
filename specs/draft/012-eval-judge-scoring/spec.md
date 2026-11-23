@@ -59,7 +59,7 @@ stable, recorded, and tied to the case rubric rather than to ad hoc review.
 
 **Independent Test**: Score a completed eval run with a fixed judge
 configuration and verify each scored output contains structured per-dimension
-scores, rationales, judge metadata, rubric version, and self-judge flags.
+scores, rationales, judge metadata, rubric revision, and self-judge flags.
 
 **Acceptance Scenarios**:
 
@@ -67,9 +67,10 @@ scores, rationales, judge metadata, rubric version, and self-judge flags.
    runner, **When** a maintainer starts scoring with an explicit judge
    configuration and call budget, **Then** the system judges each eligible output
    using one fixed judge setup for that scoring run.
-2. **Given** a candidate output for a case with required and forbidden concepts,
-   **When** the judge scores it, **Then** the result includes accuracy, quality,
-   usability, error categories, and concise dimension-specific rationales.
+2. **Given** a candidate output for a case with rubric criteria and failure
+   conditions, **When** the judge scores it, **Then** the result includes the
+   profile's named ratings, usability, error categories, and concise
+   dimension-specific rationales.
 3. **Given** the judge model is the same as the candidate model for an output,
    **When** scoring records the result, **Then** the result is flagged as
    self-judged and unsuitable for strong recommendation claims.
@@ -96,7 +97,7 @@ agreement, parse failures, and any bias-control settings used.
 1. **Given** calibration examples with maintainer-provided expected usability and
    hard-failure labels, **When** calibration runs, **Then** the report compares
    judge output to those labels and records agreement by dimension.
-2. **Given** a judge prompt or rubric version changes, **When** scoring starts
+2. **Given** a judge prompt version or rubric revision changes, **When** scoring starts
    for a benchmarkable run, **Then** the run records whether calibration was run
    for that judge configuration.
 3. **Given** pairwise judge comparison is enabled in a future extension, **When**
@@ -173,7 +174,7 @@ scoring failure and can be resumed according to the live-run budget rules.
   recorded with judge output.
 - Manual overrides must never delete or mutate the original judge output.
 - Scoring must reject or warn on incompatible runner artifact schema, suite
-  version, rubric version, judge prompt version, or judge configuration changes
+  version, rubric revision, judge prompt version, or judge configuration changes
   according to compatibility rules.
 
 ## Requirements *(mandatory)*
@@ -190,11 +191,11 @@ scoring failure and can be resumed according to the live-run budget rules.
   production validation failures, and applicable `max_chars` violations as hard
   failure gates.
 - **FR-005**: A hard failure gate MUST prevent an output from being considered
-  usable, regardless of any numeric judge score or aggregate score.
-- **FR-006**: The system MUST preserve per-dimension scoring even when an
-  aggregate score is computed.
-- **FR-007**: The system MUST score accuracy and commit message quality using a
-  documented numeric rubric.
+  usable, regardless of any numeric judge rating.
+- **FR-006**: The system MUST preserve named per-dimension ratings and
+  not-applicable dimensions; it MUST NOT collapse them into an aggregate.
+- **FR-007**: The system MUST score applicable dimensions using the referenced
+  spec 009 scoring profile's documented 1–4 anchors.
 - **FR-008**: The system MUST classify usability using categories that include at
   least `usable`, `minor_edit`, `major_edit`, and `unusable`.
 - **FR-009**: The system MUST record a versioned quality/compliance error
@@ -207,10 +208,10 @@ scoring failure and can be resumed according to the live-run budget rules.
   `rate_limit`, `timeout`, `network_error`, `context_length`, `empty_response`,
   `judge_parse_error`, and `unknown_error`.
 - **FR-011**: The system MUST use one fixed judge model, judge prompt version,
-  rubric version, and judge parameter set for all comparable candidate outputs in
+  rubric revision, and judge parameter set for all comparable candidate outputs in
   a scoring run.
 - **FR-012**: The system MUST record judge model, judge provider, judge prompt
-  version, rubric version, parameters, timestamps, and structured judge output
+  version, rubric revision, parameters, timestamps, and structured judge output
   with each scored result.
 - **FR-013**: The system MUST flag any result where the judge model and candidate
   model are the same or otherwise declared equivalent for self-judging purposes.
@@ -222,9 +223,9 @@ scoring failure and can be resumed according to the live-run budget rules.
 - **FR-016**: The judge MUST NOT require exact match to an original source commit
   message or example good message.
 - **FR-017**: The system MUST support a calibration mode for judge prompt and
-  rubric versions using manually annotated examples.
+  rubric revisions using manually annotated examples.
 - **FR-018**: Calibration output MUST record expected labels, judge labels,
-  agreement by dimension, parse failures, judge configuration, rubric version,
+  agreement by dimension, parse failures, judge configuration, rubric revision,
   and whether model identity was hidden from the judge.
 - **FR-019**: If pairwise judge comparisons are supported, the system MUST record
   candidate ordering and MUST support order-swapped or randomized presentation
@@ -240,8 +241,9 @@ scoring failure and can be resumed according to the live-run budget rules.
   and generated message.
 - **FR-023**: The system MUST reject or clearly mark unscored records when
   candidate generation failed operationally before a generated message existed.
-- **FR-024**: The system MUST make aggregate scores secondary by documenting
-  weights and never hiding hard failure gates or per-dimension scores.
+- **FR-024**: The system MUST NOT calculate or persist an aggregate score in
+  this feature. Named ratings, categorical usability, and hard-failure gates
+  remain separately reviewable.
 - **FR-025**: The system MUST be maintainer-only tooling and MUST NOT require
   provider credentials in default CI.
 
@@ -256,7 +258,7 @@ scoring failure and can be resumed according to the live-run budget rules.
 - **Deterministic Check Result**: A non-LLM evaluation of format, validation,
   privacy, injection, or length constraints where objective evidence exists.
 - **Judge Configuration**: The fixed judge model, provider, prompt version,
-  rubric version, parameters, and budget metadata used for a scoring run.
+  rubric revision, parameters, and budget metadata used for a scoring run.
 - **Judge Calibration Report**: Maintainer-facing artifact comparing judge
   output against manually annotated examples for one judge configuration.
 - **Judge Result**: Structured LLM-as-judge output with per-dimension scores,
@@ -274,16 +276,17 @@ scoring failure and can be resumed according to the live-run budget rules.
   `max_chars` violations are recorded as hard failures.
 - **SC-002**: In scoring runs with a fixed judge configuration, 100% of scored
   outputs include judge metadata sufficient to identify the judge model, prompt
-  version, rubric version, and parameters used.
-- **SC-003**: In scored artifacts, 100% of outputs preserve per-dimension scores
-  and hard failure gates even when an aggregate score is present.
+  version, rubric revision, and parameters used.
+- **SC-003**: In scored artifacts, 100% of outputs preserve the active
+  profile's named 1–4 per-dimension ratings, categorical usability, and hard
+  failure gates without an aggregate score.
 - **SC-004**: In simulated operational-failure tests, 100% of judge auth, rate
   limit, timeout, network, empty response, and parse failures are recorded as
   operational errors rather than quality errors.
 - **SC-005**: In manual review tests, 100% of annotations and overrides preserve
   the original automated result and include reviewer, timestamp, and rationale
   metadata.
-- **SC-006**: In calibration tests, 100% of judge prompt or rubric versions can
+- **SC-006**: In calibration tests, 100% of judge prompt versions or rubric revisions can
   be evaluated against manually annotated examples and produce agreement and
   parse-failure counts before being used for promoted regression evidence.
 

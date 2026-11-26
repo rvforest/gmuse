@@ -20,10 +20,15 @@ The command must:
 2. Extract gmuse run, case, fixture, generation, validation, hard-gate, and
    scoring metadata.
 3. Run compatibility checks, including the spec 009 scoring-profile and rubric
-   IDs, versions, and digests.
+   IDs, revisions, and digests and the assessment evidence for each matched
+   scored case. Name the changed or missing field. Distinguish intentional
+   model or generation-setting differences from incompatible evidence or
+   scoring criteria.
 4. Match shared cases by stable case ID.
 5. Compute hard-failure deltas and deterministic validation deltas.
-6. Report judge score/category deltas when available.
+6. Report comparable judge score/category deltas when available. Mark affected
+   score comparisons inconclusive when required provenance is missing or the
+   evidence or scoring criteria are incompatible.
 7. Write a comparison report JSON.
 8. Exit non-zero only when strict safety fails or required metadata is invalid.
 
@@ -47,7 +52,8 @@ aggregate score.
 - `failed`: new hard failures or deterministic regressions were found.
 - `inconclusive`: compatibility warnings prevent a clean pass, but no new hard
   failure was proven.
-- `invalid`: required metadata is missing or unreadable.
+- `invalid`: required log metadata is missing or unreadable. Missing scoring
+  provenance makes the affected score comparison `inconclusive`.
 
 ## Out of Scope
 

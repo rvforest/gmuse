@@ -52,12 +52,19 @@ Fields:
 - `operational_errors`
 - `self_judged`
 - `judge_input_controls`
+- `assessment_evidence_ref`: immutable locator and content digests for the
+  exact staged diff and context supplied to the judge, stored outside ordinary
+  Inspect logs
+- `rubric_identity` and `scoring_profile_identity`: ID, revision, and content
+  digest of each asset actually used
 - `effective_ratings`
 - `calibration_report_id`
 
 Rules:
 
 - Candidate operational errors without generated messages are unscored.
+- Verify assessment evidence before judge execution. Missing or unverifiable
+  evidence sets `scoring_status` to `unscored` with an unscorable reason.
 - Deterministic hard failures are not judge-eligible by default.
 - `judge_result` and `judge_operational_error` are mutually exclusive for a
   single judge attempt.

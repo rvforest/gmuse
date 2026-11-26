@@ -144,5 +144,6 @@ ValidationReport ──summarizes──> resolved cases + composition goals
 
 A source asset revision changes the corresponding stable identity/digest used
 by runner and scorer work. Feature 010 resolves the source assets into a
-canonical assessment target and immutable evidence reference. Feature 012
-later emits named ratings and gate results; it does not change source assets.
+generation sample. Feature 012 records the immutable assessment-evidence
+reference and exact rubric and scoring-profile identities alongside named
+ratings and gate results.

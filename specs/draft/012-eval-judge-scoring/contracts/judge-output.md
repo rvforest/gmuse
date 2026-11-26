@@ -24,6 +24,9 @@ The judge request must provide:
 - Relevant case context included by the runner, such as history, branch context,
   user hints, or repository instructions.
 
+Before calling the judge, recover and verify the exact staged diff and context
+under the [scoring metadata contract](scoring-schema.md).
+
 The judge request must not require exact match to an original source commit
 message or any annotated rubric example.
 

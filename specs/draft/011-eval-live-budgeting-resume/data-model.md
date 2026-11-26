@@ -85,33 +85,28 @@ Rules:
 
 ## Optional Reuse Compatibility
 
-Represents conditions for using Inspect-supported rerun/resume behavior.
+Inspect-backed reuse checks both the run metadata and the inputs to each entry.
 
 Fields:
 
-- `suite_id`
-- `suite_revision`
-- `case_selection_digest`
-- `candidate_models_digest`
-- `generation_config_digest`
-- `prompt_version`
-- `fixture_revision_digest`
-- `rubric_id`
-- `rubric_revision`
-- `rubric_digest`
-- `scoring_profile_id`
-- `scoring_profile_revision`
-- `scoring_profile_digest`
-- `assessment_evidence_ref`
-- `inspect_log_schema`
+- `suite_id: str`
+- `suite_revision: str`
+- `case_selection_digest: str`
+- `candidate_models_digest: str`
+- `case_id: str`
+- `fixture_id: str`
+- `fixture_revision_digest: str`
+- `model: str`
+- `generation_config_digest: str` (effective settings for the entry)
+- `prompt_version: str`
+- `inspect_log_schema: str`
+- `gmuse_eval_schema_version: str`
+- `staged_diff_digest: str` (observed staged diff)
+- `prompt_hash: str` (rendered generation prompt)
 
-Rules:
+Verify both hashes and compare them against the planned entry before provider
+calls. An incompatible, missing, or unverifiable required field makes the entry
+ineligible. Any fresh generation must pass the normal limits and confirmation.
 
-- Any mismatch should reject reuse or force a fresh run.
-- Profile/rubric identity or digest mismatches reject reuse even when the case
-  and fixture identities are unchanged.
-- An assessment-evidence reference must remain immutable and privacy-reviewed;
-  reuse may point to it but must not rewrite it.
-- Missing or corrupt Inspect logs reject reuse before provider calls.
-- Safe reuse is optional in v1; rerunning bounded samples is acceptable when
-  Inspect does not provide simple partial-run reuse.
+[Spec 012's scoring model](../012-eval-judge-scoring/data-model.md) records the
+rubric, scoring profile, and judge-evidence reference used for scoring.

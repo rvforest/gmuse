@@ -62,10 +62,9 @@ objective conditions and model or human judgment for subjective questions.
 
 **Rationale**: Fixtures, profiles, rubrics, cases, and suites are reviewable
 source assets independent of an execution framework. The later runner resolves
-them into an Inspect sample: a canonical assessment target plus stable metadata
-and a privacy-reviewed assessment-evidence reference. The later scoring feature
-runs deterministic and judge scorers separately and emits named ratings and
-evidence rather than an opaque per-message total.
+them into an Inspect sample with stable generation metadata. The later scoring
+feature verifies and references exact judge input, records the rubric and
+scoring-profile identities used, and emits named ratings and gate results.
 
 Inspect supports sample inputs, targets, metadata, custom scorers, multiple
 scorers, and separate metrics, which fits this boundary. [Inspect

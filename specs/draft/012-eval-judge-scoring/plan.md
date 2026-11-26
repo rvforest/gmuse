@@ -198,8 +198,8 @@ Post-design constitution re-check:
   budget/resume controls remain mandatory.
 - Security/Privacy: privacy leaks hard-fail; logs and summaries must not expose
   secrets beyond explicit local eval artifacts.
-- Release Discipline: schema, taxonomy, and judge prompt versions plus rubric revisions are
-  part of every scored result.
+- Release Discipline: scored results carry schema, taxonomy, and judge prompt
+  versions plus verified evidence and the exact rubric and profile identities.
 
 ## Phase 2 - Future Implementation Planning
 
@@ -218,6 +218,10 @@ Planned implementation steps:
    rubric from Inspect sample metadata plus spec 009 assets, then combines them
    with the generated message, format/config context, and relevant
    history/branch/hint/repo-instruction context when present in the case.
+   Verify exact evidence before any judge call. Keep raw evidence outside
+   ordinary Inspect logs and record an immutable content-verified reference
+   and the IDs, revisions, and digests of the rubric and profile actually used.
+   Record missing or unverifiable evidence as unscorable with a reason.
 5. Add judge invocation through Inspect/gmuse provider paths while enforcing spec
    011 guardrails and confirmation.
 6. Add structured judge response parsing and validation against the judge output

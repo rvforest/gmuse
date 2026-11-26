@@ -81,7 +81,11 @@ If Inspect supports safe rerun/resume for the selected execution path:
 1. Interrupt a bounded live run after one sample completes.
 2. Rerun with the same suite, models, generation config, and log identity using
    the supported Inspect/gmuse reuse option.
-3. Verify completed work is not repeated.
+3. Verify completed work with matching verified staged-diff and prompt hashes
+   is reused.
+4. Repeat with an altered staged diff or prompt, then with a missing hash.
+   Verify the affected entry is ineligible and that a plan limit that rules out
+   fresh generation results in zero provider calls.
 
 If Inspect does not support safe reuse, the v1 behavior may rerun bounded
 samples. That is acceptable as long as guardrails and confirmation still apply.

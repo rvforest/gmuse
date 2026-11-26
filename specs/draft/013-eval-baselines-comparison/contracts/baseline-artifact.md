@@ -13,6 +13,7 @@ The reference Inspect log must expose:
 
 - suite ID and version/revision
 - case IDs and revisions
+- immutable assessment-evidence references and content digests for scored cases
 - fixture IDs and revisions/digests
 - scoring-profile IDs, versions, and digests
 - rubric IDs, versions, and digests

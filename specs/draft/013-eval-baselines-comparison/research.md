@@ -56,3 +56,14 @@ not necessary to answer whether a candidate run introduced hard failures.
   results.
 - Contracts accept `--reference-log` and `--candidate-log`.
 - Reports are durable JSON summaries that point to Inspect logs.
+
+## Decision: Check score provenance per matched case
+
+**Rationale**: Matching case IDs cannot establish that judges saw equivalent
+evidence or applied the same scoring criteria. Report changed evidence and
+criteria fields and mark their score comparisons inconclusive. Identify model
+and settings changes separately because those can be intentional.
+
+**Alternatives considered**: Comparing all available scores would overstate
+comparability. Rejecting every model or generation-setting change would rule out
+the intended use of comparing models or settings on common evidence.

@@ -24,7 +24,7 @@ uv run python -m tools.evals.gmuse_evals run --mode check --suite smoke
 
 Expected:
 
-- selected case IDs and effective settings are printed;
+- selected case IDs, formats, and sample count are printed;
 - temporary repositories are reconstructed;
 - gmuse uses the production git/context/prompt/validation path;
 - deterministic local output replaces only the provider response;
@@ -41,7 +41,7 @@ uv run python -m tools.evals.gmuse_evals run \
   --mode live \
   --suite smoke \
   --model gpt-4.1-mini \
-  --limit-samples 2 \
+  --limit-samples 5 \
   --yes
 ```
 
@@ -57,7 +57,17 @@ Expected:
   entry.
 
 Multiple live models are allowed, and `--limit-samples` applies to the full
-selected case/model/config matrix.
+selected case/model/config matrix. Add `--show-config` in either mode to print
+the effective settings for each entry.
+
+Use the same model identifiers as `gmuse msg`. For example, pass
+`--model openrouter/openai/gpt-4.1-mini` to route this model through OpenRouter
+using your OpenRouter credential.
+
+The smoke suite has five entries per model. A live sample cap smaller than the
+selected matrix fails before provider calls. Execution is serial; token, cost,
+and time run limits are unsupported and rejected. Inspect cannot account for
+gmuse's direct provider calls. `--max-tokens` still caps each production response.
 
 ## 4. Choose an explicit log directory when needed
 
@@ -66,7 +76,7 @@ uv run python -m tools.evals.gmuse_evals run \
   --mode live \
   --suite smoke \
   --model gpt-4.1-mini \
-  --limit-samples 2 \
+  --limit-samples 5 \
   --log-dir .gmuse-evals/inspect/smoke-gpt-4.1-mini \
   --yes
 ```
@@ -79,7 +89,10 @@ Expected:
 
 ## 5. Inspect result logs
 
-Use Inspect-native log viewing or gmuse log helpers.
+Start the viewer with `uv run inspect view --log-dir <log-directory>`. Open
+a sample and select **Info → Metadata**. The `generated_message` field holds
+the returned commit message, and `production_validation` shows its validation
+outcome and any failure reason. The **Scoring** tab is empty for these runs.
 
 Expected metadata:
 
@@ -88,10 +101,23 @@ Expected metadata:
 - operational errors separated from validation failures;
 - prompt hash, prompt size, token estimates, prompt version, and context
   metadata;
-- suite, case, fixture, rubric, scoring-profile, and generation config identity,
-  including revisions/digests;
-- an immutable, privacy-reviewed assessment-evidence reference;
+- suite, case, fixture, and rubric identity, including integer revisions
+  (`suite_version` is `str(suite.revision)`; sample metadata uses the key
+  `rubric_version` for the integer rubric revision) and generation-config
+  identity;
 - raw prompt text absent by default.
+
+For a run with checked-in assets from a clean checkout, `gmuse_project_revision`
+identifies the source commit. Reconstruct the fixture from that revision and
+compare the expected `fixture_digest` with the observed `staged_diff_digest`.
+The runner warns about local changes in the eval asset tree or runner files,
+and about assets outside the checkout. These runs can still proceed, but you
+may need to retain the local inputs to reproduce them. A live rerun can return
+a different message even with identical inputs.
+
+Rubric digests, scoring-profile identity, and an assessment-evidence reference
+are not recorded yet; they are deferred to judge/scoring (spec 012) and
+Inspect-log comparison (spec 013).
 
 ## 6. Troubleshoot a failing case
 

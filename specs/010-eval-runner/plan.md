@@ -6,11 +6,11 @@
 ## Summary
 
 Add maintainer-only eval runner tooling that consumes the fixture and suite
-foundation from spec 009, exposes validated cases as Inspect AI samples,
+foundation from spec 009, exposes resolved cases as Inspect AI samples,
 reconstructs each selected case in an isolated temporary git repository, and
 invokes gmuse's production generation path from an Inspect solver. The runner
 supports a no-provider `check` mode with deterministic local output and a live
-mode with explicit maintainer confirmation plus Inspect/gmuse spend guardrails.
+mode with explicit maintainer confirmation and a required `--limit-samples` cap.
 Inspect logs are the canonical execution artifacts. This slice stops at
 deterministic production validation and raw output capture; custom judge
 scoring, custom resume accounting, baselines, importers, and public
@@ -116,8 +116,8 @@ tools/
 └── evals/
     └── gmuse_evals/
         ├── cli.py              # Typer app with validate/run commands
-        ├── inspect_tasks.py    # Inspect task/dataset/scorer construction
-        ├── runner.py           # run-plan construction and Inspect orchestration
+        ├── inspect_runner.py   # Inspect task execution and result collection
+        ├── run_plan.py         # run-plan construction and configuration resolution
         ├── execution.py        # temporary repo execution through production path
         ├── logs.py             # gmuse helpers around Inspect logs/metadata
         ├── deterministic.py    # check-mode local output policy
@@ -161,7 +161,7 @@ No constitution violations are expected for this feature.
 Research focus areas:
 
 - Confirm the runner boundary with spec 009 fixture/suite validation so this
-  feature consumes validated cases as Inspect samples rather than redefining
+  feature consumes resolved cases as Inspect samples rather than redefining
   fixture schemas.
 - Decide how check mode represents case/config entries in an Inspect task and
   guarantees zero provider calls.

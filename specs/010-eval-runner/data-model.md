@@ -24,8 +24,12 @@ Represents one maintainer-initiated eval runner invocation.
 - `models: list[str]`
   - Candidate model identifiers selected for live generation. Empty in check mode.
 - `guardrails: dict[str, str | int | float | bool | None]`
-  - Configured live-run limits such as sample, token, cost, time, or concurrency
-    limits.
+  - Configured live-run limits. A positive `--limit-samples` cap is the
+    required live guardrail. Token, cost, and time run limits are rejected
+    because Inspect cannot enforce them over gmuse's direct provider calls.
+    Concurrency must be omitted or `1` because fixture execution changes the
+    process working directory. Broader spend/resume guardrails remain in
+    spec 011.
 - `output_dir: str`
   - Directory or Inspect log location where local eval logs are written.
 - `schema_version: str`
@@ -58,9 +62,13 @@ Represents the fully resolved set of entries for an eval run.
 - `execution_mode: Literal["check", "live"]`
 - `suite_id: str`
 - `suite_version: str`
+  - String form of the spec 009 suite's integer revision
+    (`str(suite.revision)`).
 - `case_count: int`
 - `entry_count: int`
-- `planned_samples: int`
+- `planned_entries: int`
+  - Size of the selected case/format/model matrix. Metadata and the CLI use
+    this name; the plan object field is `planned_entries`.
 - `guardrails: dict[str, str | int | float | bool | None]`
 - `entries: list[RunEntry]`
 - `inspect_log_location: str`
@@ -68,9 +76,9 @@ Represents the fully resolved set of entries for an eval run.
 **Rules**:
 
 - In check mode, live provider calls must be `0`.
-- In live mode, `planned_samples` equals selected cases multiplied by selected
-  model/config combinations.
-- Live mode must fail before provider calls if `planned_samples` exceeds a
+- In live mode, `planned_entries` equals selected cases multiplied by selected
+  format and model combinations.
+- Live mode must fail before provider calls if `planned_entries` exceeds a
   configured sample limit.
 - Entries with invalid fixtures must be rejected before check or live execution.
 - The run plan may be displayed by gmuse and represented in Inspect task/log
@@ -84,18 +92,18 @@ Represents one planned case/model/config entry.
 
 - `entry_id: str`
   - Stable within one run.
-- `suite_id: str`
+- `resolved_case: ResolvedCase`
+  - The spec 009 resolved case, with its fixture, rubric, and scoring profile
+    already bound. Scoring-profile identity is used during validation but is
+    not copied into 010 run or sample metadata.
 - `case_id: str`
 - `case_revision: int`
 - `fixture_id: str`
 - `fixture_revision: int`
-  - Revision or digest supplied by spec 009.
 - `rubric_id: str`
-- `rubric_revision: int`
-- `rubric_digest: str`
-- `scoring_profile_id: str`
-- `scoring_profile_revision: int`
-- `scoring_profile_digest: str`
+- `rubric_version: int`
+  - The integer rubric revision from spec 009. The metadata key is
+    `rubric_version`.
 - `candidate_kind: Literal["deterministic_check", "live_model"]`
 - `model: str | None`
   - Null in check mode, required in live mode.
@@ -109,9 +117,11 @@ Represents one planned case/model/config entry.
   reaches the entry.
 - The fixture must be validated by spec 009 before execution.
 - The plan stores lightweight suite, case, fixture, and rubric identity so
-  scoring can resolve the canonical staged diff and rubric from spec 009 assets.
-- The plan also stores the referenced profile identity and asset digests so
-  changed assessment semantics cannot be silently reused.
+  later scoring can resolve canonical assets from spec 009.
+- Rubric digests, scoring-profile id/revision/digest, and an
+  `AssessmentEvidenceReference` are not recorded by this runner. Those fields
+  are deferred to judge/scoring (spec 012) and Inspect-log comparison
+  (spec 013).
 - Check-mode entries are not candidate model evidence and should be skipped by
   judge scoring unless a future diagnostic mode explicitly opts in.
 
@@ -129,6 +139,8 @@ Represents message-generation settings applied to an entry.
 - `max_chars: int | None`
 - `temperature: float | None`
 - `max_tokens: int | None`
+- `max_diff_bytes: int | None`
+- `timeout: int | None`
 
 **Validation Rules**:
 
@@ -152,7 +164,6 @@ Represents runtime state for executing one entry.
 - `completed_at: str | None`
 - `duration_ms: int | None`
 - `preserved_debug_artifacts: bool`
-- `assessment_evidence_ref: AssessmentEvidenceReference`
 
 **State Transitions**:
 
@@ -166,33 +177,18 @@ Represents runtime state for executing one entry.
 8. Write exactly one Inspect sample result for the entry.
 9. Clean up temporary repository unless debug preservation is explicitly enabled.
 
-## Entity: `AssessmentEvidenceReference`
+## Deferred: `AssessmentEvidenceReference`
 
-Represents the immutable, privacy-reviewed handoff to the canonical staged diff
-and case assessment assets.
+An earlier draft defined an immutable, privacy-reviewed handoff object
+(`AssessmentEvidenceReference`) carrying fixture, rubric, and scoring-profile
+digests for later scoring and comparison. The current runner does not emit
+this object or those digest fields.
 
-**Fields**:
-
-- `reference_id: str`
-- `fixture_id: str`
-- `fixture_digest: str`
-- `rubric_id: str`
-- `rubric_revision: int`
-- `rubric_digest: str`
-- `scoring_profile_id: str`
-- `scoring_profile_revision: int`
-- `scoring_profile_digest: str`
-- `evidence_digest: str`
-- `storage_reference: str`
-
-**Rules**:
-
-- The reference is immutable after the run starts and resolves the canonical
-  staged diff, rubric, and profile without copying raw prompts.
-- `storage_reference` points only to a local, privacy-reviewed evidence
-  location or content-addressed record; it is not a generated prompt.
-- A changed fixture, rubric, or profile creates a new evidence digest and is
-  incompatible with reuse or scoring of the old reference.
+Future work: record rubric/profile digests and an evidence reference on the
+judge/scoring path (spec 012) and reuse them when comparing Inspect logs
+(spec 013). This runner continues to record fixture identity, the observed
+staged-diff digest, `rubric_id`, and `rubric_version` (the integer revision)
+only.
 
 ## Entity: `GenerationAttemptResult`
 
@@ -271,10 +267,8 @@ for one executed case/model/config entry.
 - `fixture_id: str`
 - `fixture_revision: int`
 - `rubric_id: str`
-- `rubric_revision: int`
-- `scoring_profile_id: str`
-- `scoring_profile_revision: int`
-- `assessment_evidence_ref: AssessmentEvidenceReference`
+- `rubric_version: int`
+  - Integer rubric revision; the metadata key is `rubric_version`.
 - `model: str | None`
 - `deterministic_output_policy: str | None`
 - `generation_config: GenerationConfig`
@@ -298,13 +292,17 @@ Represents deterministic production validation for a generated message.
 
 **Fields**:
 
-- `status: Literal["passed", "failed", "not_run"]`
-- `error_categories: list[str]`
-- `details: str | None`
+- `valid: bool`
+- `category: str | None`
+- `message: str | None`
 
 **Rules**:
 
-- `status = "not_run"` only when an operational error prevents validation.
+- `status` is derived as `passed` when `valid` is true and `failed` otherwise.
+  Logs may also expose `validation_state`, `validation_error_category`, and
+  `validation_error_message` as aliases.
+- When an operational error prevents validation, that error is recorded
+  separately rather than as a `not_run` validation status.
 - Format and `max_chars` failures are deterministic validation failures.
 - Accuracy, quality, hallucination, and usability scoring are not part of this entity.
 
@@ -314,15 +312,14 @@ Represents setup or provider failure separately from deterministic validation.
 
 **Fields**:
 
-- `category: Literal["auth_error", "rate_limit", "timeout", "network_error", "context_length", "empty_response", "fixture_setup_error", "unknown_error"]`
+- `category: Literal["authentication", "rate_limit", "timeout", "network", "context_length", "empty_response", "fixture_setup", "unknown"]`
 - `message: str`
-- `provider_status: str | None`
-- `retryable: bool`
+- `exception_type: str`
 
 **Rules**:
 
 - Provider authentication, rate limit, network, timeout, context length, and empty response failures are operational errors.
-- Fixture reconstruction and staged diff verification failures are `fixture_setup_error`.
+- Fixture reconstruction and staged diff verification failures are `fixture_setup`.
 - Validation failures from a received model response are not operational errors.
 - Per-entry operational errors should not stop later entries when the run can
   continue safely.
@@ -342,7 +339,6 @@ maintainer review.
 - `candidate_kind: Literal["deterministic_check", "live_model"]`
 - `inspect_log_location: str`
 - `planned_entries: int`
-- `planned_samples: int`
 - `guardrails: dict[str, str | int | float | bool | None]`
 - `completed_entries: int`
 - `validation_passed: int`

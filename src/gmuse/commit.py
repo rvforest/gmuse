@@ -5,17 +5,24 @@ It orchestrates git operations, prompt building, and LLM interaction.
 
 Public API:
     - generate_message: Main entry point for generating commit messages
+    - generate_message_attempt: Retain output and provider failures for evals
     - gather_context: Collect context from git repository
 
 Data Classes:
     - GenerationContext: Context gathered for generation
     - GenerationResult: Result of message generation
+    - GenerationAttemptResult: Output, validation, and operational failure details
+    - GenerationPromptMetadata: Prompt hashes, sizes, and token estimates
+    - ValidationOutcome: Production message validation state
+    - GenerationOperationalError: Provider or response callback failure
 """
 
+import hashlib
 from dataclasses import dataclass
-from typing import Any, Final, Optional, cast
+from typing import Any, Callable, Final, Optional, cast
 
 from gmuse.config import ConfigDict
+from gmuse.exceptions import InvalidMessageError
 from gmuse.git import (
     BranchInfo,
     CommitHistory,
@@ -29,7 +36,12 @@ from gmuse.git import (
 )
 from gmuse.llm import LLMClient
 from gmuse.logging import get_logger
-from gmuse.prompts import build_prompt, validate_message
+from gmuse.prompts import (
+    PROMPT_VERSION,
+    build_prompt,
+    estimate_tokens,
+    validate_message,
+)
 
 logger = get_logger(__name__)
 
@@ -83,6 +95,188 @@ class GenerationResult:
 
     message: str
     context: GenerationContext
+
+
+@dataclass(frozen=True, slots=True)
+class GenerationPromptMetadata:
+    """Privacy-safe observations about the prompts used for one attempt.
+
+    Prompt text is intentionally not retained. Hashes, byte sizes, and rough
+    token estimates are sufficient for comparing production-path runs without
+    copying repository content into ordinary eval artifacts.
+
+    Attributes:
+        prompt_hash: SHA-256 hash of the system and user prompts together.
+        system_prompt_hash: SHA-256 hash of the system prompt.
+        user_prompt_hash: SHA-256 hash of the user prompt.
+        prompt_size_bytes: Combined UTF-8 prompt size.
+        system_prompt_size_bytes: UTF-8 size of the system prompt.
+        user_prompt_size_bytes: UTF-8 size of the user prompt.
+        estimated_input_tokens: Heuristic input token estimate.
+        estimated_output_tokens: Heuristic output token estimate, when known.
+        prompt_version: Version of gmuse's prompt builder.
+
+    Example:
+        >>> metadata = GenerationPromptMetadata.from_prompts("system", "diff")
+        >>> len(metadata.prompt_hash)
+        64
+    """
+
+    prompt_hash: str
+    system_prompt_hash: str
+    user_prompt_hash: str
+    prompt_size_bytes: int
+    system_prompt_size_bytes: int
+    user_prompt_size_bytes: int
+    estimated_input_tokens: int
+    estimated_output_tokens: int | None = None
+    prompt_version: str = PROMPT_VERSION
+
+    @classmethod
+    def from_prompts(
+        cls,
+        system_prompt: str,
+        user_prompt: str,
+        *,
+        output: str | None = None,
+        prompt_version: str = PROMPT_VERSION,
+    ) -> "GenerationPromptMetadata":
+        """Build metadata without retaining prompt or output text.
+
+        The combined hash and byte size use the system prompt, two newline
+        characters, and the user prompt, encoded as UTF-8.
+
+        Args:
+            system_prompt: System instructions sent to the response generator.
+            user_prompt: Repository context sent to the response generator.
+            output: Generated text for the output token estimate, if available.
+            prompt_version: Prompt builder version associated with this attempt.
+
+        Returns:
+            Hashes, byte sizes, and heuristic token counts for the attempt.
+        """
+
+        def sha256_text(value: str) -> str:
+            return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+        combined = f"{system_prompt}\n\n{user_prompt}"
+        return cls(
+            prompt_hash=sha256_text(combined),
+            system_prompt_hash=sha256_text(system_prompt),
+            user_prompt_hash=sha256_text(user_prompt),
+            prompt_size_bytes=len(combined.encode("utf-8")),
+            system_prompt_size_bytes=len(system_prompt.encode("utf-8")),
+            user_prompt_size_bytes=len(user_prompt.encode("utf-8")),
+            estimated_input_tokens=estimate_tokens(combined),
+            estimated_output_tokens=(
+                estimate_tokens(output) if output is not None else None
+            ),
+            prompt_version=prompt_version,
+        )
+
+    @property
+    def prompt_sha256(self) -> str:
+        """Return the canonical prompt hash under its explicit name."""
+        return self.prompt_hash
+
+
+@dataclass(frozen=True, slots=True)
+class ValidationOutcome:
+    """Structured production validation outcome for a generated message.
+
+    Attributes:
+        valid: Whether output passed validation. Also false when a provider
+            failure prevented validation; check the attempt's operational error.
+        category: ``validation`` for rejected output. Execution wrappers may
+            use ``operational`` for setup failures. None for passed validation
+            or an uncategorized failure.
+        message: Failure details when available, otherwise None.
+    """
+
+    valid: bool
+    category: str | None = None
+    message: str | None = None
+
+    @property
+    def status(self) -> str:
+        """Return the contract-friendly validation state."""
+        return "passed" if self.valid else "failed"
+
+    @property
+    def error_category(self) -> str | None:
+        """Return the validation category under its explicit name."""
+        return self.category
+
+
+@dataclass(frozen=True, slots=True)
+class GenerationOperationalError:
+    """A failure during provider setup or response generation.
+
+    Attributes:
+        category: ``unknown`` at the generation boundary; eval tooling applies
+            its own error classification.
+        message: Original exception's string representation.
+        exception_type: Original exception's class name.
+        exception: Original exception retained for :func:`generate_message` to
+            re-raise. This object is for in-process use, not serialization.
+    """
+
+    category: str
+    message: str
+    exception_type: str
+    exception: Exception | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class GenerationAttemptResult:
+    """Output and failure observations from one production generation attempt.
+
+    Invalid output and provider failures are returned by
+    :func:`generate_message_attempt` for evals to inspect. Context gathering,
+    prompt building, and unexpected validator errors can still raise before
+    a result is returned.
+
+    Attributes:
+        message: Unmodified response, including invalid or empty output. None
+            when provider setup or the response generator raised an exception.
+        context: Repository context used to build the prompts.
+        prompt: Prompt metadata without raw prompt text.
+        validation: Validation result. A false ``valid`` with an operational
+            error means validation was not reached, rather than rejected output.
+        operational_error: Provider or callback failure, otherwise None.
+    """
+
+    message: str | None
+    context: GenerationContext
+    prompt: GenerationPromptMetadata
+    validation: ValidationOutcome
+    operational_error: GenerationOperationalError | None = None
+
+    @property
+    def raw_message(self) -> str | None:
+        """Return the unmodified provider or deterministic response."""
+        return self.message
+
+    @property
+    def prompt_metadata(self) -> GenerationPromptMetadata:
+        """Return prompt observations under the explicit contract name."""
+        return self.prompt
+
+    @property
+    def validation_outcome(self) -> ValidationOutcome:
+        """Return production validation under the explicit contract name."""
+        return self.validation
+
+
+ResponseGenerator = Callable[..., str]
+"""Synchronous callback returning raw message text in place of an LLM call.
+
+Callbacks may accept any subset of the named ``system_prompt``, ``user_prompt``,
+``temperature``, ``max_tokens``, and ``model`` arguments, or all of them via
+``**kwargs``. Two positional prompt arguments are also supported. Exceptions
+are recorded by :func:`generate_message_attempt` and re-raised by
+:func:`generate_message`.
+"""
 
 
 def gather_context(
@@ -155,6 +349,7 @@ def generate_message(
     hint: Optional[str] = None,
     context: Optional[GenerationContext] = None,
     credential_lookup_timeout: float | None = None,
+    response_generator: ResponseGenerator | None = None,
 ) -> GenerationResult:
     """Generate a commit message from staged changes.
 
@@ -165,6 +360,12 @@ def generate_message(
         config: Merged configuration dictionary
         hint: Optional user hint for message generation
         context: Pre-gathered context (if None, will be gathered automatically)
+        credential_lookup_timeout: Credential lookup timeout in seconds passed
+            to the LLM client. None uses the client's default behavior. Ignored
+            when a response generator is supplied.
+        response_generator: Optional synchronous callback replacing the LLM
+            call. See :data:`ResponseGenerator` for accepted arguments. Its raw
+            string response goes through normal production validation.
 
     Returns:
         GenerationResult with the message and context used
@@ -175,6 +376,8 @@ def generate_message(
         LLMError: If LLM interaction fails
         InvalidMessageError: If generated message fails validation
 
+    Exceptions from an injected response generator are re-raised unchanged.
+
     Example:
         >>> from gmuse.config import merge_config
         >>> config = merge_config()
@@ -182,16 +385,73 @@ def generate_message(
         >>> print(result.message)
         'fix(auth): patch XSS vulnerability in login form'
     """
-    # Gather context if not provided
+    attempt = generate_message_attempt(
+        config,
+        hint=hint,
+        context=context,
+        credential_lookup_timeout=credential_lookup_timeout,
+        response_generator=response_generator,
+    )
+    if attempt.operational_error is not None:
+        if attempt.operational_error.exception is not None:
+            raise attempt.operational_error.exception
+        raise _restore_operational_exception(attempt.operational_error)
+    if not attempt.validation.valid:
+        raise InvalidMessageError(
+            attempt.validation.message or "Invalid generated message"
+        )
+    assert attempt.message is not None
+    return GenerationResult(message=attempt.message, context=attempt.context)
+
+
+def generate_message_attempt(
+    config: ConfigDict,
+    hint: Optional[str] = None,
+    context: Optional[GenerationContext] = None,
+    credential_lookup_timeout: float | None = None,
+    response_generator: ResponseGenerator | None = None,
+) -> GenerationAttemptResult:
+    """Observe one production generation attempt without hiding failures.
+
+    The context, prompt builder, provider boundary, and validator are the same
+    components used by :func:`generate_message`. ``response_generator`` is a
+    typed internal seam used by offline evals; when omitted, the normal
+    :class:`~gmuse.llm.LLMClient` is used.
+
+    Exceptions during client setup or response generation are captured as
+    operational errors. InvalidMessageError from message validation is captured
+    as a validation failure with the original response retained. Context
+    gathering, prompt building, and unexpected validator errors still propagate.
+
+    Args:
+        config: Merged gmuse generation configuration.
+        hint: Optional user hint.
+        context: Pre-gathered context, or gather it from the current repository.
+        credential_lookup_timeout: Credential lookup timeout in seconds passed
+            to the LLM client. None uses the client's default behavior. Ignored
+            when a response generator is supplied.
+        response_generator: Optional synchronous callback replacing the LLM
+            call. See :data:`ResponseGenerator` for accepted arguments. It must
+            return raw message text, which is validated without modification.
+
+    Returns:
+        A result containing raw output, prompt metadata, validation, and any
+        operational provider or callback failure. ``message`` is None for an
+        operational failure; invalid responses remain available as strings.
+
+    Raises:
+        NotAGitRepositoryError: If context must be gathered outside a Git repo.
+        NoStagedChangesError: If context must be gathered without staged changes.
+    """
     if context is None:
         context = gather_context(
             history_depth=config.get("history_depth", 5),
+            max_diff_bytes=config.get("max_diff_bytes", DEFAULT_MAX_DIFF_BYTES),
             include_branch=config.get("include_branch", False),
             branch_max_length=config.get("branch_max_length", 60),
         )
 
-    # Build prompt
-    logger.debug(f"Building prompt (format={config.get('format')})...")
+    logger.debug("Building prompt (format=%s)...", config.get("format"))
     system_prompt, user_prompt = build_prompt(
         diff=context.diff,
         format=config.get("format", "freeform"),
@@ -199,45 +459,106 @@ def generate_message(
         repo_instructions=context.repo_instructions,
         branch_info=context.branch_info,
         user_hint=hint,
-        learning_examples=None,  # TODO: Implement learning in Phase 7
+        learning_examples=None,
         max_chars=config.get("max_chars"),
     )
 
-    # Initialize LLM client
-    logger.debug(f"Initializing LLM client (model={config.get('model')})...")
-    client = LLMClient(
-        model=config.get("model"),
-        timeout=int(config.get("timeout") or 30),
-        credential_lookup_timeout=credential_lookup_timeout,
-    )
+    prompt = GenerationPromptMetadata.from_prompts(system_prompt, user_prompt)
+    try:
+        if response_generator is not None:
+            message = _call_response_generator(
+                response_generator,
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=float(config.get("temperature", 0.7)),
+                max_tokens=int(config.get("max_tokens", 500)),
+                model=config.get("model"),
+            )
+        else:
+            client = LLMClient(
+                model=config.get("model"),
+                timeout=int(config.get("timeout") or 30),
+                credential_lookup_timeout=credential_lookup_timeout,
+            )
+            message = client.generate(
+                system_prompt=system_prompt,
+                user_prompt=user_prompt,
+                temperature=float(config.get("temperature", 0.7)),
+                max_tokens=int(config.get("max_tokens", 500)),
+            )
+    except Exception as error:
+        return GenerationAttemptResult(
+            message=None,
+            context=context,
+            prompt=prompt,
+            validation=ValidationOutcome(valid=False),
+            operational_error=GenerationOperationalError(
+                category="unknown",
+                message=str(error),
+                exception_type=type(error).__name__,
+                exception=error,
+            ),
+        )
 
-    # Generate message
-    logger.debug("Generating commit message...")
-    message = client.generate(
-        system_prompt=system_prompt,
-        user_prompt=user_prompt,
-        temperature=float(config.get("temperature", 0.7)),
-        max_tokens=int(config.get("max_tokens", 500)),
-    )
-
-    # Validate message
-    logger.debug("Validating generated message...")
-    # Use configured max_chars if set, otherwise fall back to max_message_length
     max_chars = cast(int | None, config.get("max_chars"))
-    if max_chars is not None:
-        effective_max = max_chars
-    else:
-        effective_max = int(cast(Any, config.get("max_message_length", 1000)))
-
-    validate_message(
-        message,
-        format=config.get("format", "freeform"),
-        max_length=effective_max,
+    effective_max = (
+        max_chars
+        if max_chars is not None
+        else int(cast(Any, config.get("max_message_length", 1000)))
     )
+    try:
+        validate_message(
+            message,
+            format=config.get("format", "freeform"),
+            max_length=effective_max,
+        )
+    except InvalidMessageError as error:
+        return GenerationAttemptResult(
+            message=message,
+            context=context,
+            prompt=GenerationPromptMetadata.from_prompts(
+                system_prompt, user_prompt, output=message
+            ),
+            validation=ValidationOutcome(
+                valid=False, category="validation", message=str(error)
+            ),
+        )
 
-    logger.debug("Generation complete")
-
-    return GenerationResult(
+    return GenerationAttemptResult(
         message=message,
         context=context,
+        prompt=GenerationPromptMetadata.from_prompts(
+            system_prompt, user_prompt, output=message
+        ),
+        validation=ValidationOutcome(valid=True),
     )
+
+
+def _restore_operational_exception(error: GenerationOperationalError) -> Exception:
+    """Recreate the legacy exception class for ``generate_message`` callers."""
+    from gmuse.exceptions import LLMError
+
+    return LLMError(error.message)
+
+
+def _call_response_generator(
+    response_generator: ResponseGenerator,
+    **kwargs: object,
+) -> str:
+    """Call injected seams with either rich or prompt-only callback shapes."""
+    import inspect
+
+    try:
+        signature = inspect.signature(response_generator)
+    except (TypeError, ValueError):
+        return response_generator(**kwargs)
+    parameters = signature.parameters.values()
+    if any(parameter.kind == inspect.Parameter.VAR_KEYWORD for parameter in parameters):
+        return response_generator(**kwargs)
+    keyword_arguments = {
+        name: value for name, value in kwargs.items() if name in signature.parameters
+    }
+    try:
+        return response_generator(**keyword_arguments)
+    except TypeError:
+        return response_generator(kwargs["system_prompt"], kwargs["user_prompt"])

@@ -61,6 +61,7 @@ gmuse = "gmuse.cli.main:app"
 dev = [
   "diff-cover>=9.0",
   "license-expression>=30.0",
+  "inspect-ai>=0.3.120",
   "nox>=2026",
   "pre-commit>=4.2.0",
   "pydantic>=2.0",

@@ -61,7 +61,7 @@ tools/
     └── gmuse_evals/
         ├── cli.py              # extend run command with --plan/--yes/limits
         ├── live_plan.py        # planned work display and guardrail validation
-        └── inspect_tasks.py    # spec 010 Inspect task execution dependency
+        └── inspect_runner.py   # spec 010 Inspect task execution dependency
 
 tests/
 ├── integration/

@@ -19,7 +19,9 @@ Each scored sample result must expose:
   - suite ID
   - case ID and revision
   - fixture ID and revision/digest
-  - rubric ID and version
+- rubric and scoring-profile IDs, revisions, and content digests actually used
+- immutable, content-verified reference to the exact staged diff and context
+  supplied to the judge, with raw evidence kept outside ordinary Inspect logs
 - deterministic check results
 - hard failure gates
 - judge configuration when a judge is planned or used
@@ -49,6 +51,10 @@ Each scored sample result must expose:
 - Judge operational failures must not fabricate quality scores.
 - Candidate operational failures without generated messages must be represented
   as unscored sample results.
+
+Verify the referenced evidence before judge execution. If required evidence
+cannot be recovered or verified, record the sample as unscored with an
+unscorable reason and skip the judge call.
 
 ## Manual Review Metadata
 

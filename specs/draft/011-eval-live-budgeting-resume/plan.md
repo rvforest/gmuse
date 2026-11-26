@@ -100,5 +100,8 @@ Design artifacts:
 3. Add interactive confirmation and `--yes` handling.
 4. Add `--plan` zero-call mode.
 5. Add tests proving no provider call occurs before validation and confirmation.
-6. Investigate Inspect rerun/resume behavior and use it only if it remains a thin
-   adapter rather than a custom ledger.
+6. If Inspect supports thin reuse, check suite, fixture, case, model, effective
+   generation settings, prompt version, and log schema before provider calls.
+   Require matching verified staged-diff and prompt hashes per entry.
+7. Treat mismatched, missing, or unverifiable provenance as ineligible for
+   reuse. Apply normal plan limits and confirmation before fresh generation.

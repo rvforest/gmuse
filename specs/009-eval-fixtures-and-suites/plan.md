@@ -125,8 +125,9 @@ Research is complete in [research.md](research.md).
 4. Put independently assessable criteria, failure conditions, objective gates,
    and examples in case rubrics.
 5. Keep semantic injection-obedience findings out of offline validation.
-6. Require an immutable assessment-evidence handoff policy in downstream runner
-   planning.
+6. Use the staged-diff and prompt hashes from runner execution to verify
+   optional generation reuse. Feature 012 owns the immutable judge-evidence
+   reference and scoring criteria provenance required by PR #105.
 
 ## Phase 1: Data and Contract Design
 
@@ -174,15 +175,19 @@ technical or policy decision remains before task generation.
    identity/revision/digest. It does not render scoring prompts or execute
    scoring.
 9. Update maintainer documentation and quickstart.
-10. Update draft features 010–013 before their implementation begins:
-    - 010 resolves a canonical assessment target, preserves profile/rubric
-      identities and a privacy-reviewed immutable assessment-evidence reference.
-    - 011 treats those identities as reuse compatibility inputs where relevant.
-    - 012 consumes profile-driven 1–4 ratings, separate usability, objective
-      deterministic gates, and judge-sourced semantic injection findings; it
-      does not add an aggregate.
-    - 013 compares compatible profile/rubric identities and named dimensions,
-      distinguishing deterministic from judge-sourced gates.
+10. Align the downstream handoff with [PR #105](https://github.com/rvforest/gmuse/pull/105).
+    - [010](../010-eval-runner/plan.md) supplies generation metadata, including
+      observed staged-diff and rendered prompt hashes.
+    - [011](../draft/011-eval-live-budgeting-resume/plan.md) permits optional
+      reuse only with compatible generation identities and verified matching
+      hashes. Ineligible entries follow normal live-run limits.
+    - [012](../draft/012-eval-judge-scoring/plan.md) verifies and references the
+      exact diff and context supplied to the judge outside ordinary Inspect
+      logs and records the rubric and scoring-profile IDs, revisions, and
+      digests used. Missing or unverifiable evidence makes a sample unscorable.
+    - [013](../draft/013-eval-baselines-comparison/plan.md) checks per-case
+      evidence and scoring criteria before reporting named score deltas.
+      Missing or incompatible provenance makes those deltas inconclusive.
 11. Run focused tests, the smoke/core validation commands, full lint/format/type
     checks, and documentation checks. Verify no provider calls, raw prompt
     exposure, or ordinary-product CLI changes.

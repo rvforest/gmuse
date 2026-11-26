@@ -21,6 +21,7 @@ Fields:
 - `code: str`
 - `severity: Literal["info", "warning", "high", "blocking"]`
 - `scope: Literal["report", "suite", "case", "model", "config", "prompt", "judge", "schema"]`
+- `field: str` (changed or missing field)
 - `affected_cases: list[str]`
 - `reference_value: str | int | float | bool | None`
 - `candidate_value: str | int | float | bool | None`
@@ -51,6 +52,9 @@ Fields:
 - `candidate_rubric_revision: int | None`
 - `hard_failure_delta: HardFailureDelta`
 - `production_validation_delta: str`
+- reference and candidate assessment-evidence content digests
+- reference and candidate rubric and scoring-profile content digests
+- score comparison status: `comparable`, `inconclusive`, or `unscored`
 - `score_deltas: dict[str, float | int | bool | str | None]`
 - `quality_category_delta: CategoryDelta`
 - `operational_error_delta: CategoryDelta`
@@ -60,9 +64,11 @@ Rules:
 
 - One record is created for every shared case.
 - Reference-only and candidate-only cases are recorded separately in the report.
-- Named profile and rubric identities must be compatible before rating deltas
-  are treated as comparable evidence. The comparison never invents an
-  aggregate score.
+- Compare evidence content and rubric and scoring-profile IDs, revisions, and
+  digests per matched scored case. Missing or incompatible provenance makes the
+  score comparison inconclusive and suppresses its score deltas.
+- Identify changed fields and distinguish intentional model/settings changes
+  from incompatible evidence or scoring criteria.
 
 ## HardFailureDelta
 

@@ -71,3 +71,11 @@ Automated tests should prove:
 - Valid judge output parses successfully.
 - Malformed judge output is recorded as `judge_parse_error`.
 - Scoring metadata preserves source run/sample identity.
+
+## Verify Judge Evidence
+
+Score a sample with a mocked judge and recoverable staged diff and context.
+Inspect the result for the immutable evidence reference and the rubric and
+scoring-profile IDs, revisions, and digests. Verify the ordinary log contains
+no raw evidence. Repeat with deleted or altered evidence and verify an unscored
+result with an unscorable reason and zero judge calls.

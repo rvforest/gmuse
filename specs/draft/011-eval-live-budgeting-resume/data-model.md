@@ -85,33 +85,10 @@ Rules:
 
 ## Optional Reuse Compatibility
 
-Represents conditions for using Inspect-supported rerun/resume behavior.
+Each entry eligible for Inspect-backed reuse carries suite, fixture, case, and
+model identities, an effective generation settings digest, the prompt version,
+the Inspect log schema, and staged-diff and rendered prompt hashes.
 
-Fields:
-
-- `suite_id`
-- `suite_revision`
-- `case_selection_digest`
-- `candidate_models_digest`
-- `generation_config_digest`
-- `prompt_version`
-- `fixture_revision_digest`
-- `rubric_id`
-- `rubric_revision`
-- `rubric_digest`
-- `scoring_profile_id`
-- `scoring_profile_revision`
-- `scoring_profile_digest`
-- `assessment_evidence_ref`
-- `inspect_log_schema`
-
-Rules:
-
-- Any mismatch should reject reuse or force a fresh run.
-- Profile/rubric identity or digest mismatches reject reuse even when the case
-  and fixture identities are unchanged.
-- An assessment-evidence reference must remain immutable and privacy-reviewed;
-  reuse may point to it but must not rewrite it.
-- Missing or corrupt Inspect logs reject reuse before provider calls.
-- Safe reuse is optional in v1; rerunning bounded samples is acceptable when
-  Inspect does not provide simple partial-run reuse.
+Verify both hashes and compare them against the planned entry before provider
+calls. An incompatible, missing, or unverifiable required field makes the entry
+ineligible. Any fresh generation must pass the normal limits and confirmation.

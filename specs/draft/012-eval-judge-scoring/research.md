@@ -114,9 +114,11 @@ analysis without allowing a summary score to hide a hard failure.
 rubric, selected format/config constraints, and relevant case context such as
 history, branch, hints, or repository instructions. The scoring command resolves
 the canonical staged diff and rubric from Inspect sample metadata and spec 009
-fixture/rubric assets rather than requiring full diffs or rubrics to be copied
-into every Inspect sample result. The rendered generation prompt is not primary
-judge evidence.
+fixture/rubric assets and verifies the exact evidence before judge execution.
+Store an immutable, content-verified reference in the scored log and keep raw
+evidence outside ordinary logs. Record the IDs, revisions, and digests of the
+rubric and scoring profile used. Missing or unverifiable evidence is unscorable
+with a reason.
 
 **Rationale**: The judge should assess whether the output matches the underlying
 change and rubric, not whether it matches the exact prompt wording. Runner

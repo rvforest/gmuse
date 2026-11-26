@@ -72,3 +72,12 @@ resume subsystem.
   records.
 - Resume contracts should document compatibility expectations for optional
   Inspect-backed reuse, not define gmuse-owned resume files.
+
+## Decision: Verify generation inputs per reused entry
+
+**Rationale**: Suite and case identities can remain stable while the actual
+diff, prompt, or effective generation settings change. Verify the staged-diff
+and rendered prompt hashes before reusing a result.
+
+**Alternatives considered**: Matching revisions alone cannot verify the inputs.
+When verification fails, bounded fresh generation preserves the live guardrails.

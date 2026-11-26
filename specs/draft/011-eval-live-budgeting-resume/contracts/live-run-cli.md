@@ -57,9 +57,11 @@ The command fails before provider calls when:
 - planned samples exceed `--limit-samples`;
 - Inspect limit configuration is invalid;
 - fixture/suite validation fails;
-- a non-interactive run omits `--yes`;
-- optional Inspect-backed reuse is requested but prior logs are missing,
-  corrupt, or incompatible.
+- a non-interactive run omits `--yes`.
+
+When optional Inspect-backed reuse is requested, entries with missing, corrupt,
+or incompatible provenance are ineligible for reuse. Fresh generation follows
+the normal plan limits and confirmation.
 
 ## Out of Scope
 

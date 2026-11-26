@@ -12,30 +12,17 @@ spend-safety requirement.
 
 ## Compatibility Fields
 
-Any reuse attempt must compare:
-
-- suite ID and revision
-- selected case IDs
-- fixture revisions or digests
-- rubric ID, version, and digest
-- scoring-profile ID, version, and digest
-- immutable assessment-evidence reference
-- candidate model set
-- prompt-affecting generation config
-- prompt version
-- Inspect task/log schema version when available
-- gmuse eval metadata schema version
+Check suite, fixture, case, model, effective generation settings, prompt version,
+and log schema before any provider calls. For each reused entry, require
+verified staged-diff and rendered prompt hashes that match the planned inputs.
 
 ## Rules
 
-- Missing or corrupt Inspect logs reject reuse before provider calls.
-- Incompatible metadata rejects reuse or forces a fresh run before provider
-  calls.
-- A changed profile, rubric, or evidence reference is incompatible even when
-  the selected cases and fixture digests are unchanged.
-- Reuse must not overwrite generated messages in existing Inspect logs.
-- If Inspect does not provide safe partial-run reuse for a scenario, gmuse may
-  rerun bounded samples instead of implementing custom bookkeeping.
+- An incompatible, missing, or unverifiable required identity or hash makes
+  the entry ineligible for reuse.
+- Apply normal plan limits and confirmation before generating a new candidate.
+- Preserve prior Inspect logs and their generated messages.
+- If Inspect cannot safely reuse completed entries, rerun bounded samples.
 
 ## Out of Scope
 

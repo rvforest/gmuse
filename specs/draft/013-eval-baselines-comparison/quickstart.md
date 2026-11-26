@@ -66,5 +66,15 @@ Automated tests should prove:
 - New hard failures fail.
 - Score-only movement does not fail.
 - Metadata mismatches warn.
-- Missing required metadata is invalid.
+- Missing required log metadata is invalid. Missing scoring provenance makes
+  the affected score comparison inconclusive.
 - No live calls occur during comparison.
+
+## Verify Per-Case Score Comparability
+
+Compare scored logs with matching assessment evidence and criterion identities
+and a different candidate model. Verify the changed model is reported separately
+and named score deltas remain comparable. Change a rubric or scoring-profile
+digest, or remove assessment provenance from one case. Verify the report names
+the affected case and field and marks its score comparison inconclusive.
+Verify comparison makes zero provider calls.

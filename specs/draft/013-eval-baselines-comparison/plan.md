@@ -81,7 +81,12 @@ tests/
 2. Add compatibility checks for suite, cases, fixtures, model/config, prompt,
    judge, scorer, and schema.
 3. Add per-case hard-failure and deterministic validation deltas.
-4. Add optional score/category deltas for review evidence.
+4. Verify per-case assessment evidence and compare the rubric and scoring-profile
+   IDs, revisions, and digests before calculating score deltas. Report the
+   changed field and distinguish intentional model or generation-setting changes
+   from incompatible evidence or scoring criteria. Classify affected score
+   comparisons as inconclusive when required provenance is missing or
+   incompatible.
 5. Add strict safety gate classification and command exit behavior.
 6. Add report serialization with stable warning and delta schemas.
 7. Add tests for new hard failures, metadata mismatches, score-only movement,

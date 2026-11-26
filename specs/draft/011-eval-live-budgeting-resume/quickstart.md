@@ -18,16 +18,27 @@ uv run python -m tools.evals.gmuse_evals run \
   --mode live \
   --suite smoke \
   --model example-model \
-  --limit-samples 2 \
+  --limit-samples 5 \
   --plan
 ```
 
 Expected:
 
-- The command displays suite, case count, model list, planned samples, limits,
-  and Inspect log location.
+- The command displays the suite, selected cases, model, planned entries,
+  sample cap, privacy-safe per-entry generation settings, and log location.
 - No provider calls occur.
-- No live sample results are written.
+- No live sample results or run artifacts are written.
+
+The checked-in smoke suite currently plans five entries with one model, so the
+sample cap must be at least `5` for this example.
+
+`--limit-samples` is required for every live run and must be positive. An
+optional `--max-tokens` sets the per-response output token cap. It does not
+limit total tokens across the run.
+
+The direct provider path rejects run-wide `--limit-tokens`, `--limit-cost`,
+and `--limit-time`. `--concurrency` may be omitted or set to `1`; any other
+value is rejected.
 
 ## Validate Guardrail Rejection
 
@@ -54,7 +65,7 @@ uv run python -m tools.evals.gmuse_evals run \
   --mode live \
   --suite smoke \
   --model example-model \
-  --limit-samples 2
+  --limit-samples 5
 ```
 
 Non-interactive:
@@ -64,7 +75,7 @@ uv run python -m tools.evals.gmuse_evals run \
   --mode live \
   --suite smoke \
   --model example-model \
-  --limit-samples 2 \
+  --limit-samples 5 \
   --yes
 ```
 
@@ -74,28 +85,42 @@ Expected:
 - Non-interactive mode requires `--yes`.
 - `--yes` does not suppress plan output.
 
-## Validate Optional Reuse Behavior
+## Reuse Decision
 
-If Inspect supports safe rerun/resume for the selected execution path:
+The pinned Inspect version cannot reconstruct gmuse's ephemeral task closure.
+Its native sample lookup checks sample ID, epoch, and success state, but does
+not verify the staged diff or rendered prompt hashes. Safe reuse is therefore
+deferred; interrupted runs may generate entries again. Use a fresh bounded run
+and retain its Inspect log. Do not assume a previous successful sample will be
+reused. Any future reuse support must verify each entry's inputs before making
+provider calls.
 
-1. Interrupt a bounded live run after one sample completes.
-2. Rerun with the same suite, models, generation config, and log identity using
-   the supported Inspect/gmuse reuse option.
-3. Verify completed work with matching verified staged-diff and prompt hashes
-   is reused.
-4. Repeat with an altered staged diff or prompt, then with a missing hash.
-   Verify the affected entry is ineligible and that a plan limit that rules out
-   fresh generation results in zero provider calls.
+## Run Offline And Mocked Scenarios
 
-If Inspect does not support safe reuse, the v1 behavior may rerun bounded
-samples. That is acceptable as long as guardrails and confirmation still apply.
+Run the repository's offline smoke check and the mocked live preflight and
+guardrail scenarios without provider credentials:
+
+```bash
+uv run nox -s evals-check
+uv run pytest tests/integration/test_eval_live_guardrails.py \
+  tests/integration/test_eval_runner_live.py tests/integration/test_eval_runner_logs.py
+```
+
+The mocked scenarios cover plan-only output without Inspect execution or log
+creation, required sample caps, cap overflow, unsupported run-wide limits,
+serial concurrency, and the confirmation rules. Live execution prompts only
+when both stdin and stdout are TTYs; use `--yes` in non-interactive invocations.
 
 ## Verification
 
 Automated tests should prove:
 
 - `--plan` makes zero provider calls.
-- Missing guardrails fail before provider calls.
+- `--plan` does not prompt or create a log directory.
+- Missing, zero, or negative `--limit-samples` fails before provider calls.
+- Unsupported run-wide token, cost, and time limits fail before provider calls.
+- `--concurrency` values other than `1` fail before provider calls.
 - Sample limits fail before provider calls when exceeded.
 - Non-interactive live mode without `--yes` fails before provider calls.
+- Live plans display privacy-safe effective settings for each entry.
 - Fixture validation failures stop before provider calls.

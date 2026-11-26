@@ -81,3 +81,16 @@ and rendered prompt hashes before reusing a result.
 
 **Alternatives considered**: Matching revisions alone cannot verify the inputs.
 When verification fails, bounded fresh generation preserves the live guardrails.
+
+## Inspect 0.3.290 reuse decision
+
+Defer native reuse for the direct provider runner. The pinned
+`inspect_ai._eval.eval.eval_retry_async` path reconstructs a task from a file or
+the task registry. The gmuse runner builds a task in memory with a solver
+closure over its validated run entries. Inspect's
+`inspect_ai._eval.task.run.eval_log_sample_source` matches prior samples by ID
+and epoch and checks the prior sample's error and invalidation state. It cannot
+verify gmuse's staged diff and rendered prompt before skipping that solver.
+Changing the task registration would still require separate per-entry input
+verification. Keep prior Inspect logs and apply the full live preflight to
+every fresh rerun.

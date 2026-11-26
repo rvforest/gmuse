@@ -101,7 +101,8 @@ def test_live_limit_overflow_fails_before_confirmation(tmp_path) -> None:
     assert not (tmp_path / "inspect").exists()
 
 
-def test_live_cancellation_does_not_create_logs(tmp_path) -> None:
+@pytest.mark.parametrize("show_config", [False, True])
+def test_live_cancellation_does_not_create_logs(tmp_path, show_config: bool) -> None:
     result = CliRunner().invoke(
         app,
         [
@@ -116,9 +117,14 @@ def test_live_cancellation_does_not_create_logs(tmp_path) -> None:
             "5",
             "--log-dir",
             str(tmp_path / "inspect"),
+            *(["--show-config"] if show_config else []),
         ],
         input="n\n",
     )
     assert result.exit_code == 0
+    assert "Planned entries: 5" in result.stdout
+    assert "Models: test/model" in result.stdout
+    assert "Sample limit: 5" in result.stdout
+    assert ("'history_depth':" in result.stdout) is show_config
     assert "cancelled" in result.stdout.lower()
     assert not (tmp_path / "inspect").exists()

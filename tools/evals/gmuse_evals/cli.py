@@ -192,6 +192,9 @@ def run(
     yes: bool = typer.Option(
         False, "--yes", help="Acknowledge the displayed live plan."
     ),
+    show_config: bool = typer.Option(
+        False, "--show-config", help="Show the effective settings for each entry."
+    ),
     preserve_debug: bool = typer.Option(False, "--preserve-debug"),
     strict_composition: bool = typer.Option(False, "--strict-composition"),
 ) -> None:
@@ -262,11 +265,15 @@ def run(
     typer.echo(f"Suite: {plan.suite_id}")
     typer.echo(f"Planned entries: {plan.planned_entries}")
     typer.echo(f"Selected cases: {', '.join(plan.selected_case_ids)}")
+    formats = dict.fromkeys(entry.generation.format for entry in plan.entries)
+    typer.echo(f"Formats: {', '.join(formats)}")
     if plan.models:
         typer.echo(f"Models: {', '.join(plan.models)}")
-    typer.echo(f"Guardrails: {plan.guardrails.as_dict()}")
-    for entry in plan.entries:
-        typer.echo(f"Entry {entry.entry_id}: {entry.generation.as_dict()}")
+    if plan.guardrails.max_samples is not None:
+        typer.echo(f"Sample limit: {plan.guardrails.max_samples}")
+    if show_config:
+        for entry in plan.entries:
+            typer.echo(f"Entry {entry.entry_id}: {entry.generation.as_dict()}")
     if mode == "check":
         typer.echo("Candidate kind: deterministic_check")
         typer.echo("Provider calls: 0")

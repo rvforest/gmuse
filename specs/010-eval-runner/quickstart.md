@@ -24,7 +24,7 @@ uv run python -m tools.evals.gmuse_evals run --mode check --suite smoke
 
 Expected:
 
-- selected case IDs and effective settings are printed;
+- selected case IDs, formats, and sample count are printed;
 - temporary repositories are reconstructed;
 - gmuse uses the production git/context/prompt/validation path;
 - deterministic local output replaces only the provider response;
@@ -57,7 +57,8 @@ Expected:
   entry.
 
 Multiple live models are allowed, and `--limit-samples` applies to the full
-selected case/model/config matrix.
+selected case/model/config matrix. Add `--show-config` in either mode to print
+the effective settings for each entry.
 
 Use the same model identifiers as `gmuse msg`. For example, pass
 `--model openrouter/openai/gpt-4.1-mini` to route this model through OpenRouter

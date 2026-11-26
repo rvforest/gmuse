@@ -217,7 +217,12 @@ scoring failure and can be resumed according to the live-run budget rules.
   model are the same or otherwise declared equivalent for self-judging purposes.
 - **FR-014**: The judge input MUST use the raw staged diff and case rubric as
   primary evidence, plus only the case context needed to evaluate the generated
-  message.
+  message. Each scored result MUST carry an immutable, content-verified
+  reference to the exact staged diff and context supplied to the judge, plus
+  the ID, revision, and content digest of the rubric and scoring profile
+  actually used. Keep raw evidence outside ordinary Inspect logs and verify it
+  before judge execution. If the required evidence cannot be recovered or
+  verified, record the sample as unscorable with a reason.
 - **FR-015**: Judge prompts SHOULD hide candidate model/provider identity unless
   an explicit diagnostic mode records why identity is included.
 - **FR-016**: The judge MUST NOT require exact match to an original source commit

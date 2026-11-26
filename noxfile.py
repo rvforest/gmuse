@@ -175,7 +175,6 @@ def linkcheck(session: nox.Session) -> None:
 def clean(session: nox.Session) -> None:
     """Clean up build artifacts."""
     patterns = [
-        ".mypy_cache",
         ".pytest_cache",
         ".ruff_cache",
         "htmlcov",

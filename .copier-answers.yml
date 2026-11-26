@@ -1,5 +1,5 @@
 # Changes here will be overwritten by Copier
-_commit: v0.4.0
+_commit: v0.5.0
 _src_path: https://github.com/rvforest/copier-py-general
 author: Robert Forest
 author_email: rvforest@gmail.com
@@ -8,4 +8,5 @@ description: AI generated commit messages.
 gh_owner: rvforest
 has_cli: true
 project_name: gmuse
+py_max_version: '3.15'
 py_min_version: '3.11'

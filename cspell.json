@@ -30,7 +30,6 @@
     "listdir",
     "litellm",
     "livedocs",
-    "mypy",
     "noqa",
     "noxfile",
     "pipx",

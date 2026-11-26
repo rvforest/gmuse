@@ -1,0 +1,71 @@
+# Shared GitHub labels for projects generated from this template,
+# plus the release-note extras used by Release Drafter (ci, testing,
+# and refactor).
+#
+# Sync these into a repository manually. Do not add a GitHub Actions
+# workflow for this. Examples:
+#
+#   gh label create wren --color 6f42c1 \
+#     --description "Opened or authored by Wren" --force
+#
+#   # or a small script / github-label-sync:
+#   github-label-sync --labels .github/labels.yml --allow-added-labels
+#
+# Dependabot ecosystem labels (python:uv, github_actions, pre_commit,
+# javascript, docker) are created automatically and are not listed here.
+
+- name: wren
+  color: "6f42c1"
+  description: Opened or authored by Wren
+
+- name: needs-input
+  color: "d876e3"
+  description: Waiting on a decision or more information from the maintainer
+
+- name: bug
+  color: "d73a4a"
+  description: Something isn't working
+
+- name: enhancement
+  color: "1d76db"
+  description: New feature or request
+
+- name: documentation
+  color: "0075ca"
+  description: Improvements or additions to documentation
+
+- name: breaking-change
+  color: "b60205"
+  description: Breaking change
+
+- name: performance
+  color: "fbca04"
+  description: Performance improvement
+
+- name: security
+  color: "eb1372"
+  description: Security fix or report
+
+- name: dependencies
+  color: "0366d6"
+  description: Dependency update
+
+- name: internal
+  color: "6e7781"
+  description: Routine maintenance with no user impact (omitted from release notes)
+
+- name: ignore-for-release
+  color: "bfd4f2"
+  description: Omit this change from release notes
+
+- name: ci
+  color: "8d7110"
+  description: CI or workflow maintenance (omitted from release notes)
+
+- name: testing
+  color: "c05b05"
+  description: Test-only changes (omitted from release notes)
+
+- name: refactor
+  color: "0e8a16"
+  description: Internal restructuring with no user-facing change (omitted from release notes)

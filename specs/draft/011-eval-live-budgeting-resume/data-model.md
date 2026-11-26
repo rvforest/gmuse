@@ -85,10 +85,28 @@ Rules:
 
 ## Optional Reuse Compatibility
 
-Each entry eligible for Inspect-backed reuse carries suite, fixture, case, and
-model identities, an effective generation settings digest, the prompt version,
-the Inspect log schema, and staged-diff and rendered prompt hashes.
+Inspect-backed reuse checks both the run metadata and the inputs to each entry.
+
+Fields:
+
+- `suite_id: str`
+- `suite_revision: str`
+- `case_selection_digest: str`
+- `candidate_models_digest: str`
+- `case_id: str`
+- `fixture_id: str`
+- `fixture_revision_digest: str`
+- `model: str`
+- `generation_config_digest: str` (effective settings for the entry)
+- `prompt_version: str`
+- `inspect_log_schema: str`
+- `gmuse_eval_schema_version: str`
+- `staged_diff_digest: str` (observed staged diff)
+- `prompt_hash: str` (rendered generation prompt)
 
 Verify both hashes and compare them against the planned entry before provider
 calls. An incompatible, missing, or unverifiable required field makes the entry
 ineligible. Any fresh generation must pass the normal limits and confirmation.
+
+[Spec 012's scoring model](../012-eval-judge-scoring/data-model.md) records the
+rubric, scoring profile, and judge-evidence reference used for scoring.

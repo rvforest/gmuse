@@ -59,6 +59,10 @@ Expected:
 Multiple live models are allowed, and `--limit-samples` applies to the full
 selected case/model/config matrix.
 
+Use the same model identifiers as `gmuse msg`. For example, pass
+`--model openrouter/openai/gpt-4.1-mini` to route this model through OpenRouter
+using your OpenRouter credential.
+
 The smoke suite has five entries per model. A live sample cap smaller than the
 selected matrix fails before provider calls. Execution is serial; token, cost,
 and time run limits are unsupported and rejected. Inspect cannot account for
@@ -84,7 +88,10 @@ Expected:
 
 ## 5. Inspect result logs
 
-Use Inspect-native log viewing or gmuse log helpers.
+Start the viewer with `uv run inspect view --log-dir <log-directory>`. Open
+a sample and select **Info → Metadata**. The `generated_message` field holds
+the returned commit message, and `production_validation` shows its validation
+outcome and any failure reason. The **Scoring** tab is empty for these runs.
 
 Expected metadata:
 

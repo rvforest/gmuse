@@ -47,17 +47,14 @@ version-resolver:
   minor:
     labels:
       - 'breaking-change'  # only for v0
-      - 'feature'
       - 'enhancement'
   patch:
     labels:
       - 'bug'
       - 'performance'
-      - 'optimization'
       - 'security'
       - 'dependencies'
       - 'documentation'
-      - 'docs'
   default: patch # If no explicit version-bump label is found, default to a patch bump
 
 # Define the template for the release notes.

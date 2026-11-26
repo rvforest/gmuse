@@ -3,8 +3,8 @@
 Status: planning guide for converting `requirements.md` into formal Speckit
 specifications.
 
-The formal eval specs live under `specs/draft/` because they describe proposed
-maintainer-only eval tooling, not current gmuse behavior.
+The formal specs for implemented eval tooling live under `specs/`. Proposed
+eval tooling specs live under `specs/draft/`.
 
 The eval system is maintainer-only tooling. It should not become part of the
 ordinary `gmuse msg` user workflow, should not require provider credentials in
@@ -26,7 +26,7 @@ small Speckit specs that can be implemented and validated independently.
 
 ### 1. Eval Fixture And Suite Foundation
 
-Formal spec: `specs/draft/009-eval-fixtures-and-suites/`
+Formal spec: `specs/009-eval-fixtures-and-suites/`
 
 Goal: Define the offline data model and prove fixtures can reproduce staged
 diffs.
@@ -64,7 +64,7 @@ Acceptance focus:
 
 ### 2. Production-Path Eval Runner
 
-Formal spec: `specs/draft/010-eval-runner/`
+Formal spec: `specs/010-eval-runner/`
 
 Goal: Run gmuse against validated fixtures using production generation behavior
 inside an Inspect task.
@@ -102,7 +102,7 @@ Acceptance focus:
 
 ### 3. Live Run Guardrails
 
-Formal spec: `specs/draft/011-eval-live-budgeting-resume/`
+Formal spec: `specs/011-eval-live-budgeting-resume/`
 
 Goal: Make live maintainer eval runs explicit and bounded against runaway spend.
 

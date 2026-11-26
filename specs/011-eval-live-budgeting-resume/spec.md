@@ -4,10 +4,7 @@
 
 **Created**: 2026-06-11
 
-**Status**: Draft
-
-**Draft Note**: This specification describes proposed maintainer-only eval
-tooling. It does not describe current gmuse behavior.
+**Status**: Implemented. Optional Inspect-backed reuse is deferred.
 
 **Framework Alignment Update (2026-06-14)**: This feature is narrowed from a
 custom provider-call budgeting and JSONL resume subsystem to live-run guardrails

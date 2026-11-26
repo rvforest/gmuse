@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typer.testing import CliRunner
 import pytest
+from typer.testing import CliRunner
 
 from tools.evals.gmuse_evals import cli
 from tools.evals.gmuse_evals.cli import app
@@ -50,3 +50,37 @@ def test_live_plan_displays_preflight_without_prompt_or_execution(
     assert "Completed entries:" not in result.stdout
     assert calls == []
     assert not log_dir.exists()
+
+
+@pytest.mark.parametrize("mode_option", ["--plan", "--yes"])
+def test_live_preflight_rejects_a_log_path_beneath_a_file(
+    tmp_path, monkeypatch, mode_option
+):
+    parent_file = tmp_path / "file"
+    parent_file.touch()
+
+    def unexpected_execution(*args, **kwargs):
+        pytest.fail("an invalid destination must fail before execution")
+
+    monkeypatch.setattr(cli, "run_inspect_plan", unexpected_execution)
+    result = CliRunner().invoke(
+        app,
+        [
+            "run",
+            "--mode",
+            "live",
+            "--suite",
+            "smoke",
+            "--model",
+            "test/model",
+            "--limit-samples",
+            "5",
+            mode_option,
+            "--log-dir",
+            str(parent_file / "inspect"),
+        ],
+    )
+
+    assert result.exit_code == 2, result.stdout
+    assert "Inspect log location is not a directory" in result.stdout
+    assert "Planned entries:" not in result.stdout

@@ -102,14 +102,21 @@ guardrail scenarios without provider credentials:
 
 ```bash
 uv run nox -s evals-check
-uv run pytest tests/integration/test_eval_live_guardrails.py \
-  tests/integration/test_eval_runner_live.py tests/integration/test_eval_runner_logs.py
+LITELLM_LOCAL_MODEL_COST_MAP=True uv run pytest \
+  tests/unit/test_eval_runner_plan.py \
+  tests/integration/test_eval_live_guardrails.py \
+  tests/integration/test_eval_runner_live.py \
+  tests/integration/test_eval_runner_logs.py \
+  tests/integration/test_eval_runner_check.py \
+  tests/contract/test_eval_runner_automation.py
 ```
 
 The mocked scenarios cover plan-only output without Inspect execution or log
 creation, required sample caps, cap overflow, unsupported run-wide limits,
-serial concurrency, and the confirmation rules. Live execution prompts only
-when both stdin and stdout are TTYs; use `--yes` in non-interactive invocations.
+serial concurrency, the confirmation rules, and recovery of a completed sample
+from a cancelled Inspect log. The environment variable keeps LiteLLM's price
+map local. Live execution prompts only when both stdin and stdout are TTYs.
+Use `--yes` in non-interactive invocations.
 
 ## Verification
 

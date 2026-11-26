@@ -108,5 +108,5 @@ Verify both hashes and compare them against the planned entry before provider
 calls. An incompatible, missing, or unverifiable required field makes the entry
 ineligible. Any fresh generation must pass the normal limits and confirmation.
 
-[Spec 012's scoring model](../012-eval-judge-scoring/data-model.md) records the
+[Spec 012's scoring model](../draft/012-eval-judge-scoring/data-model.md) records the
 rubric, scoring profile, and judge-evidence reference used for scoring.

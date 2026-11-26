@@ -67,8 +67,13 @@ def locate_log_dir(
         .expanduser()
         .resolve()
     )
-    if path.exists() and not path.is_dir():
-        raise LogLocationError(f"Inspect log location is not a directory: {path}")
+    for ancestor in (path, *path.parents):
+        if ancestor.exists():
+            if not ancestor.is_dir():
+                raise LogLocationError(
+                    f"Inspect log location is not a directory: {ancestor}"
+                )
+            break
     if explicit and any(path.glob("*.eval")):
         raise LogLocationError(
             "Inspect log location already contains a conflicting run identity; choose a new --log-dir"

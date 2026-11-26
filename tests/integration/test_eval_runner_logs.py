@@ -74,6 +74,9 @@ def test_interrupted_live_run_preserves_completed_sample(tmp_path) -> None:
     log = read_eval_log(str(path))
     assert log.status == "cancelled"
     assert log.samples is not None
-    (completed,) = log.samples
+    # Inspect can also record the in-flight sample when it handles SIGINT.
+    (completed,) = (
+        sample for sample in log.samples if sample.id == plan.entries[0].entry_id
+    )
     assert completed.error is None
     assert completed.output.completion == message

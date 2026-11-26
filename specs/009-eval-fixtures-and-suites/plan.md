@@ -178,7 +178,7 @@ technical or policy decision remains before task generation.
 10. Align the downstream handoff with [PR #105](https://github.com/rvforest/gmuse/pull/105).
     - [010](../010-eval-runner/plan.md) supplies generation metadata, including
       observed staged-diff and rendered prompt hashes.
-    - [011](../draft/011-eval-live-budgeting-resume/plan.md) permits optional
+    - [011](../011-eval-live-budgeting-resume/plan.md) permits optional
       reuse only with compatible generation identities and verified matching
       hashes. Ineligible entries follow normal live-run limits.
     - [012](../draft/012-eval-judge-scoring/plan.md) verifies and references the

@@ -125,7 +125,7 @@ choose whether advisory curation gaps should block validation.
 verification for the complete final design.
 
 - [X] T029 [P] Update maintainer validation guidance, command examples, report terminology, rubric-reading guidance, and deterministic-gate limits in `docs/source/development/contributing.md` and `specs/009-eval-fixtures-and-suites/quickstart.md`.
-- [X] T030 [P] Align future runner and resume design with profile/rubric identities and a privacy-reviewed immutable assessment-evidence reference in `specs/draft/010-eval-runner/` and `specs/draft/011-eval-live-budgeting-resume/`.
+- [X] T030 [P] Align future runner and resume design with profile/rubric identities and a privacy-reviewed immutable assessment-evidence reference in `specs/010-eval-runner/` and `specs/011-eval-live-budgeting-resume/`.
 - [X] T031 [P] Align future scoring and comparison design with named 1–4 profile ratings, categorical usability, deterministic versus judge-sourced gates, and no aggregate score in `specs/draft/012-eval-judge-scoring/` and `specs/draft/013-eval-baselines-comparison/`.
 - [X] T032 Run the documented offline smoke and core validation walkthroughs in `specs/009-eval-fixtures-and-suites/quickstart.md` and confirm no provider call, normal `gmuse` CLI behavior, or ordinary report exposes raw generation prompts.
 - [X] T033 Run evaluator-focused tests in `tests/unit/test_eval_foundation_*.py` and `tests/integration/test_eval_foundation_*.py`.

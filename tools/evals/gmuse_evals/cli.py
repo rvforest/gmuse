@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -21,6 +22,55 @@ app = typer.Typer(
 )
 validate_app = typer.Typer(add_completion=False, help="Validate an eval suite.")
 app.add_typer(validate_app, name="validate")
+
+
+def _warn_on_unpinned_inputs(evals_dir: Path) -> None:
+    """Warn when HEAD may not identify the runner and eval assets on disk."""
+    try:
+        root = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        checkout = Path(root.stdout.strip()).resolve()
+        assets = evals_dir.resolve()
+        if not assets.is_relative_to(checkout):
+            typer.echo(
+                "Warning: eval assets are outside the checkout. The project revision "
+                "does not identify those assets.",
+                err=True,
+            )
+            return
+        status = subprocess.run(
+            [
+                "git",
+                "status",
+                "--porcelain",
+                "--untracked-files=all",
+                "--",
+                str(assets.relative_to(checkout)),
+                "src/gmuse",
+                "tools/evals",
+                "pyproject.toml",
+                "uv.lock",
+            ],
+            cwd=checkout,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        typer.echo("Warning: could not verify eval checkout provenance.", err=True)
+        return
+    if status.stdout:
+        typer.echo(
+            "Warning: eval assets or runner inputs have local changes. The recorded "
+            "project revision may be insufficient to reproduce this run.",
+            err=True,
+        )
 
 
 def _render_issues(title: str, issues: Sequence[ValidationIssue]) -> None:
@@ -207,6 +257,7 @@ def run(
         typer.echo("No provider calls were made.")
         raise typer.Exit(code=2)
 
+    _warn_on_unpinned_inputs(evals_dir)
     typer.echo(f"Run mode: {mode}")
     typer.echo(f"Suite: {plan.suite_id}")
     typer.echo(f"Planned entries: {plan.planned_entries}")

@@ -99,6 +99,14 @@ Expected metadata:
   identity;
 - raw prompt text absent by default.
 
+For a run with checked-in assets from a clean checkout, `gmuse_project_revision`
+identifies the source commit. Reconstruct the fixture from that revision and
+compare the expected `fixture_digest` with the observed `staged_diff_digest`.
+The runner warns about local changes in the eval asset tree or runner files,
+and about assets outside the checkout. These runs can still proceed, but you
+may need to retain the local inputs to reproduce them. A live rerun can return
+a different message even with identical inputs.
+
 Rubric digests, scoring-profile identity, and an assessment-evidence reference
 are not recorded yet; they are deferred to judge/scoring (spec 012) and
 Inspect-log comparison (spec 013).

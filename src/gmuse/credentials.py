@@ -255,7 +255,7 @@ def _read_keyring_value(
             return _call_keyring(
                 lambda: keyring.get_password(SERVICE_NAME, variable_name)
             )
-        except (KeyringError, NoKeyringError):
+        except KeyringError:
             return None
 
     result: dict[str, object] = {}
@@ -302,7 +302,7 @@ def write_managed_variables(variables: set[str]) -> None:
     if not cleaned:
         try:
             _call_keyring(lambda: keyring.delete_password(SERVICE_NAME, INDEX_USERNAME))
-        except (KeyringError, NoKeyringError):
+        except KeyringError:
             return
         return
 
@@ -312,7 +312,7 @@ def write_managed_variables(variables: set[str]) -> None:
                 SERVICE_NAME, INDEX_USERNAME, ",".join(cleaned)
             )
         )
-    except (KeyringError, NoKeyringError) as exc:
+    except KeyringError as exc:
         raise KeyringUnavailableError(str(exc)) from exc
 
 
@@ -336,7 +336,7 @@ def store_credential(variable_name: str, secret: str) -> None:
 
     try:
         _call_keyring(lambda: keyring.set_password(SERVICE_NAME, variable_name, secret))
-    except (KeyringError, NoKeyringError) as exc:
+    except KeyringError as exc:
         raise KeyringUnavailableError(str(exc)) from exc
 
     add_managed_variable(variable_name)
@@ -350,7 +350,7 @@ def delete_credential(variable_name: str) -> bool:
         existing = _call_keyring(
             lambda: keyring.get_password(SERVICE_NAME, variable_name)
         )
-    except (KeyringError, NoKeyringError) as exc:
+    except KeyringError as exc:
         raise KeyringUnavailableError(str(exc)) from exc
 
     if existing is None:
@@ -358,7 +358,7 @@ def delete_credential(variable_name: str) -> bool:
 
     try:
         _call_keyring(lambda: keyring.delete_password(SERVICE_NAME, variable_name))
-    except (KeyringError, NoKeyringError) as exc:
+    except KeyringError as exc:
         raise KeyringUnavailableError(str(exc)) from exc
 
     remove_managed_variable(variable_name)
@@ -372,7 +372,7 @@ def credential_exists(variable_name: str) -> bool:
             _call_keyring(lambda: keyring.get_password(SERVICE_NAME, variable_name))
             is not None
         )
-    except (KeyringError, NoKeyringError):
+    except KeyringError:
         return False
 
 

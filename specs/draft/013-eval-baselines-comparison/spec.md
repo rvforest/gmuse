@@ -70,9 +70,15 @@ gate.
   deltas when available, but MUST NOT fail solely on subjective score movement
   in v1.
 - **FR-007**: The command MUST emit compatibility warnings for suite, case,
-  fixture, model, config, prompt, judge, scorer, and schema mismatches.
+  fixture, model, config, prompt, judge, scorer, and schema mismatches. For
+  scored results, check the assessment evidence for each matched case and the
+  rubric and scoring-profile IDs, revisions, and digests. Identify the changed
+  field and distinguish intentional model or generation-setting differences
+  from differences that prevent comparing scores under the same criteria.
 - **FR-008**: Incompatible or insufficient metadata MUST produce
   `inconclusive` or `invalid` evidence classification rather than a clean pass.
+  Missing required provenance or incompatible evidence or scoring criteria
+  MUST make the affected score comparison inconclusive.
 - **FR-009**: The command MUST run offline without live candidate or judge calls.
 - **FR-010**: Named baseline promotion and custom baseline artifact management
   are out of scope for v1; a prior Inspect log can serve as the reference.

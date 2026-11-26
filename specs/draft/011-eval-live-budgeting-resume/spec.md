@@ -105,8 +105,11 @@ same guardrails and confirmation.
 - **FR-010**: gmuse MUST NOT introduce a custom JSONL resume ledger in v1 solely
   to avoid repeated generations.
 - **FR-011**: Optional reuse MUST reject incompatible suite, fixture, case,
-  model, generation config, prompt version, or log schema metadata before
-  provider calls.
+  model, effective generation settings, prompt version, or log schema metadata
+  before provider calls. Reuse requires matching verified staged diff and
+  prompt hashes. A revision or ID alone is insufficient. If a required identity
+  or hash is missing or cannot be verified, treat the entry as ineligible for
+  reuse and apply the normal plan limits before generating a new candidate.
 - **FR-012**: Default repository automation MUST NOT expose a live-call path or
   require provider credentials.
 - **FR-013**: This feature MUST NOT define judge execution, judge rubric design,

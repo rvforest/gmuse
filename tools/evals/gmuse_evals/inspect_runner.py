@@ -11,6 +11,7 @@ from gmuse.commit import ResponseGenerator
 from .execution import CaseExecutionResult, execute_entry
 from .logs import build_run_metadata, resolve_log_dir
 from .run_plan import RunPlan
+from .scoring_evidence import capture_scoring_evidence
 
 
 def _debug_directory(log_dir: Path) -> Path:
@@ -59,6 +60,7 @@ def build_task(
     debug_dir: Path | str | None = None,
     result_sink: list[dict[str, object]] | None = None,
     response_generator: ResponseGenerator | None = None,
+    evidence_log_dir: Path | None = None,
 ) -> Any:
     """Build a framework task whose solver invokes gmuse production code.
 
@@ -75,6 +77,7 @@ def build_task(
             metadata dictionary for each executed entry.
         response_generator: Optional synchronous response callback for all
             entries; see :data:`gmuse.commit.ResponseGenerator`.
+        evidence_log_dir: Log directory where private judging inputs are kept.
 
     Returns:
         An Inspect task using gmuse generation with no quality scorer. Callers
@@ -87,6 +90,19 @@ def build_task(
 
     entries = {entry.entry_id: entry for entry in plan.entries}
     collected = result_sink if result_sink is not None else []
+    run_metadata = build_run_metadata(
+        execution_mode=plan.mode,
+        suite_id=plan.suite_id,
+        suite_version=plan.suite_version,
+        selected_case_ids=plan.selected_case_ids,
+        selected_model_ids=plan.models,
+        prompt_version="1.0.0",
+        effective_generation_defaults=plan.overrides,
+        guardrails=dict(plan.guardrails.as_dict()),
+        deterministic_output_policy=(
+            "format_valid_v1" if plan.mode == "check" else None
+        ),
+    )
 
     @solver
     def gmuse_solver() -> Any:
@@ -100,6 +116,27 @@ def build_task(
                 response_generator=response_generator,
             )
             metadata = result.as_metadata(entry)
+            if (
+                evidence_log_dir is not None
+                and result.message is not None
+                and result.context is not None
+                and result.canonical_staged_diff is not None
+            ):
+                try:
+                    metadata["assessment_evidence_ref"] = capture_scoring_evidence(
+                        evidence_log_dir,
+                        run_metadata,
+                        metadata,
+                        entry.resolved_case,
+                        staged_diff=result.canonical_staged_diff,
+                        context=result.context,
+                        user_hint=entry.generation.hint,
+                    )
+                except OSError:
+                    # The candidate can still be used for deterministic scoring.
+                    metadata["assessment_evidence_error"] = (
+                        "evidence_storage_unavailable"
+                    )
             collected.append(metadata)
             state.metadata = {**(state.metadata or {}), **metadata}
             state.output = ModelOutput(
@@ -116,25 +153,12 @@ def build_task(
 
         return solve
 
-    metadata = build_run_metadata(
-        execution_mode=plan.mode,
-        suite_id=plan.suite_id,
-        suite_version=plan.suite_version,
-        selected_case_ids=plan.selected_case_ids,
-        selected_model_ids=plan.models,
-        prompt_version="1.0.0",
-        effective_generation_defaults=plan.overrides,
-        guardrails=dict(plan.guardrails.as_dict()),
-        deterministic_output_policy=(
-            "format_valid_v1" if plan.mode == "check" else None
-        ),
-    )
     return Task(
         dataset=build_dataset(plan),
         solver=gmuse_solver(),
         scorer=None,
         model="mockllm/deterministic",
-        metadata=metadata,
+        metadata=run_metadata,
         name=f"gmuse-{plan.suite_id}-{plan.mode}",
         fail_on_error=False,
         continue_on_fail=True,
@@ -153,7 +177,8 @@ def run_inspect_plan(
 
     The solver uses gmuse's provider client for live entries. Inspect records
     output and metadata without scoring message quality. Ordinary metadata
-    excludes raw prompts and repository context.
+    excludes raw prompts and repository context. Judge inputs are stored under
+    the log directory's private evidence directory.
 
     Args:
         plan: Selected entries and run metadata. Live entries make provider
@@ -186,6 +211,7 @@ def run_inspect_plan(
         debug_dir=(_debug_directory(resolved_log_dir) if preserve_debug else None),
         result_sink=results,
         response_generator=response_generator,
+        evidence_log_dir=resolved_log_dir,
     )
     logs = inspect_eval(
         task,

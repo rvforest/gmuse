@@ -318,6 +318,19 @@ Git. Raw prompts are excluded from ordinary logs; use `--preserve-debug` only
 when troubleshooting and treat the resulting `.gmuse-evals/debug/` files as
 sensitive.
 
+Apply deterministic scoring to an existing candidate log with a new output path.
+
+```bash
+uv run python -m tools.evals.gmuse_evals score \
+  --log ".gmuse-evals/inspect/<candidate-log>.eval" \
+  --output .gmuse-evals/scored/smoke.eval
+```
+
+The command makes zero provider calls and writes a separate Inspect log.
+Open the `gmuse_deterministic` score metadata for each sample to see its checks,
+hard gates, or unscored reason. Hard failures set usability to `unusable`.
+Subjective ratings require the judge scoring workflow.
+
 Live runs require explicit model selection, a positive sample cap covering the
 entire selected matrix. Preview the work before making provider calls with
 `--plan`:
@@ -352,3 +365,31 @@ and confirmation scenarios can be run without credentials:
 ```bash
 uv run pytest tests/integration/test_eval_live_guardrails.py tests/integration/test_eval_runner_live.py
 ```
+
+## Judge and review saved evals
+
+Use the scoring plan to see how many candidate messages would go to a live
+judge. Set `candidate_log` to the path reported by the runner.
+
+```bash
+uv run python -m tools.evals.gmuse_evals score \
+  --log "$candidate_log" --output .gmuse-evals/scored/smoke-judged.eval \
+  --judge-model openai/gpt-4o-mini --limit-samples 5 --plan
+```
+
+Remove `--plan` and confirm when ready. Use `--yes` for non-interactive
+execution. The scorer calls the judge serially for eligible samples with
+verified evidence. It skips deterministic hard failures by default.
+`--resume <previous-scored-log>` reuses compatible results and applies the
+explicit call cap to the remaining attempts.
+
+Keep the source candidate log and its adjacent `.gmuse-evidence/` and
+`.gmuse-judge-responses/` directories together. These directories hold the
+exact judge inputs and original judge response bodies. Regular Inspect score
+metadata holds their content digests and locators, the named ratings,
+rationales, hard gates, and operational status.
+
+The maintainer API in `tools.evals.gmuse_evals.calibration` compares judge
+outputs with labeled examples. Pass the saved JSON report with
+`--calibration-report` to link it to matching scores. Record manual reviews
+with the append-only events in `tools.evals.gmuse_evals.review_events`.

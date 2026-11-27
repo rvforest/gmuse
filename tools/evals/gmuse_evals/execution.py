@@ -46,6 +46,8 @@ class CaseExecutionResult:
         preserved_repository: Debug repository copy path, when created.
         raw_prompt: Debug prompt file path, rather than prompt text. Debug
             paths and repository context are excluded from ``as_metadata``.
+        canonical_staged_diff: The exact staged diff before prompt truncation.
+            Kept in memory until the runner writes private scoring evidence.
     """
 
     entry_id: str
@@ -59,6 +61,7 @@ class CaseExecutionResult:
     duration_seconds: float
     preserved_repository: str | None = None
     raw_prompt: str | None = None
+    canonical_staged_diff: str | None = None
 
     def as_metadata(self, entry: RunEntry) -> dict[str, object]:
         """Return Inspect-safe sample metadata, including invalid output."""
@@ -234,6 +237,7 @@ def execute_entry(
                     duration_seconds=time.perf_counter() - started,
                     preserved_repository=preserved_repository,
                     raw_prompt=prompt_path,
+                    canonical_staged_diff=repository.staged_diff.raw_diff,
                 )
     except Exception as error:
         operational = classify_error(error)

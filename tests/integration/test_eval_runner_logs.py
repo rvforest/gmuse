@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import signal
+
 from inspect_ai.log import read_eval_log
 
 from tools.evals.gmuse_evals.inspect_runner import run_inspect_plan
@@ -45,3 +47,36 @@ def test_live_sample_cap_bounds_actual_production_attempts(tmp_path) -> None:
     samples = read_eval_log(str(execution.logs[0].location)).samples
     assert samples is not None
     assert len(samples) == 2
+
+
+def test_interrupted_live_run_preserves_completed_sample(tmp_path) -> None:
+    attempts = 0
+    message = "docs: update documentation"
+
+    def response(**kwargs) -> str:
+        nonlocal attempts
+        attempts += 1
+        if attempts == 2:
+            signal.raise_signal(signal.SIGINT)
+        return message
+
+    plan = build_run_plan(
+        validate_suite("evals", "smoke"),
+        mode="live",
+        models=("test/model",),
+        guardrails=Guardrails(max_samples=2),
+    )
+    log_dir = tmp_path / "inspect"
+    run_inspect_plan(plan, log_dir=log_dir, response_generator=response)
+
+    assert attempts == 2
+    (path,) = log_dir.glob("*.eval")
+    log = read_eval_log(str(path))
+    assert log.status == "cancelled"
+    assert log.samples is not None
+    # Inspect can also record the in-flight sample when it handles SIGINT.
+    (completed,) = (
+        sample for sample in log.samples if sample.id == plan.entries[0].entry_id
+    )
+    assert completed.error is None
+    assert completed.output.completion == message

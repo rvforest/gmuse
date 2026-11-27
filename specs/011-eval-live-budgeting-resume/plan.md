@@ -1,6 +1,6 @@
 # Implementation Plan: Eval Live Guardrails
 
-**Branch**: `011-eval-live-budgeting-resume` | **Date**: 2026-06-11 | **Spec**: ../011-eval-live-budgeting-resume/spec.md
+**Branch**: `011-eval-live-budgeting-resume` | **Date**: 2026-06-11 | **Spec**: [spec.md](spec.md)
 
 ## Summary
 
@@ -14,7 +14,7 @@ for v1.
 
 ## Technical Context
 
-**Language/Version**: Python 3.10+
+**Language/Version**: Python 3.11+
 
 **Primary Dependencies**: Inspect AI execution/logging from spec 010, spec 009
 fixture/suite artifacts, Typer CLI under `tools/evals/gmuse_evals`, pytest,

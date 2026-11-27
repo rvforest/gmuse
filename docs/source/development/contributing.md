@@ -319,20 +319,36 @@ when troubleshooting and treat the resulting `.gmuse-evals/debug/` files as
 sensitive.
 
 Live runs require explicit model selection, a positive sample cap covering the
-entire selected matrix, and confirmation (or `--yes`):
+entire selected matrix. Preview the work before making provider calls with
+`--plan`:
 
 ```bash
 uv run python -m tools.evals.gmuse_evals run \
   --mode live --suite smoke --model gpt-4.1-mini \
-  --limit-samples 5 --yes
+  --limit-samples 5 --plan
 ```
+
+The preflight displays the suite revision, selected cases and models, planned
+entries, sample cap, privacy-safe effective settings for each entry, and log
+destination. `--plan` makes no provider calls and creates no live logs or
+results. For an actual run, omit `--plan`; the CLI displays the same plan before
+asking for confirmation. Both stdin and stdout must be TTYs for the prompt, or
+pass `--yes` for a non-interactive run.
 
 Execution is serial. Token, cost, and wall-clock run limits are rejected because
 Inspect cannot enforce them on gmuse's direct provider calls. Use
 `--limit-samples` to bound attempts and `--max-tokens` to cap each response;
 these do not promise a dollar budget. A sample cap smaller than the selected
-matrix fails before provider calls.
+matrix fails before provider calls. Inspect's native retry cannot reconstruct
+gmuse's ephemeral task closure or verify staged-diff and rendered-prompt
+hashes, so safe reuse is deferred; an interrupted bounded run may generate
+completed entries again.
 
 Live execution is not wired into the default GitHub workflows. The optional
 local convenience command `uv run nox -s evals-check` runs only the offline
-smoke check with a temporary Inspect log directory.
+smoke check with a temporary Inspect log directory. The mocked live preflight
+and confirmation scenarios can be run without credentials:
+
+```bash
+uv run pytest tests/integration/test_eval_live_guardrails.py tests/integration/test_eval_runner_live.py
+```

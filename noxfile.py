@@ -126,6 +126,7 @@ def evals_check(session: nox.Session) -> None:
             "--log-dir",
             log_dir,
             env={
+                "LITELLM_LOCAL_MODEL_COST_MAP": "True",
                 "OPENAI_API_KEY": "",
                 "ANTHROPIC_API_KEY": "",
                 "COHERE_API_KEY": "",

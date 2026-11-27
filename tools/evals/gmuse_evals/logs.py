@@ -16,7 +16,7 @@ DEFAULT_INSPECT_LOG_DIR = Path(".gmuse-evals") / "inspect"
 
 
 class LogLocationError(ValueError):
-    """Raised before execution when an explicit log location conflicts."""
+    """Raised before execution when a log location is invalid or conflicts."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,24 +42,50 @@ class RunSummary:
         }
 
 
-def resolve_log_dir(
+def locate_log_dir(
     log_dir: Path | str | None = None, *, explicit: bool = False
 ) -> Path:
-    """Create and validate a local Inspect log directory.
+    """Resolve and validate a local Inspect log path without creating it.
 
-    Default directories may contain prior independent runs. An explicitly
-    selected directory is treated as a run identity and must be empty of
-    existing Inspect logs to prevent accidental mixing.
+    Args:
+        log_dir: Destination, defaulting to ``.gmuse-evals/inspect``.
+        explicit: Reject a directory containing a prior Inspect run.
+
+    Returns:
+        Absolute directory path, which may not yet exist.
+
+    Raises:
+        LogLocationError: If the destination is not a directory or conflicts
+            with a prior run.
+
+    Example:
+        >>> locate_log_dir("new-eval-logs").name
+        'new-eval-logs'
     """
     path = (
         (Path(log_dir) if log_dir is not None else DEFAULT_INSPECT_LOG_DIR)
         .expanduser()
         .resolve()
     )
-    if explicit and path.exists() and any(path.glob("*.eval")):
+    for ancestor in (path, *path.parents):
+        if ancestor.exists():
+            if not ancestor.is_dir():
+                raise LogLocationError(
+                    f"Inspect log location is not a directory: {ancestor}"
+                )
+            break
+    if explicit and any(path.glob("*.eval")):
         raise LogLocationError(
             "Inspect log location already contains a conflicting run identity; choose a new --log-dir"
         )
+    return path
+
+
+def resolve_log_dir(
+    log_dir: Path | str | None = None, *, explicit: bool = False
+) -> Path:
+    """Create the validated local Inspect log directory for execution."""
+    path = locate_log_dir(log_dir, explicit=explicit)
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -239,6 +265,7 @@ __all__ = [
     "build_sample_metadata",
     "independent_run_id",
     "json_metadata",
+    "locate_log_dir",
     "resolve_log_dir",
     "summarize_results",
 ]

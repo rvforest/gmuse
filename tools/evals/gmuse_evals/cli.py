@@ -3,15 +3,16 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from collections.abc import Sequence
 from pathlib import Path
 
 import typer
 
-from .load import EvalLoadError
-from .models import SuiteComposition, ValidationIssue
-from .logs import LogLocationError, summarize_results
 from .inspect_runner import run_inspect_plan
+from .load import EvalLoadError
+from .logs import LogLocationError, locate_log_dir, summarize_results
+from .models import SuiteComposition, ValidationIssue
 from .run_plan import Guardrails, RunPlanError, build_run_plan
 from .validate import validate_suite
 
@@ -189,18 +190,33 @@ def run(
     limit_time: int | None = typer.Option(None, "--limit-time"),
     concurrency: int | None = typer.Option(None, "--concurrency"),
     log_dir: Path | None = typer.Option(None, "--log-dir"),
-    yes: bool = typer.Option(
-        False, "--yes", help="Acknowledge the displayed live plan."
+    plan_only: bool = typer.Option(
+        False,
+        "--plan",
+        help="Preview a live run without calling providers or writing logs.",
     ),
+    yes: bool = typer.Option(False, "--yes", help="Confirm the displayed live plan."),
     show_config: bool = typer.Option(
-        False, "--show-config", help="Show the effective settings for each entry."
+        False,
+        "--show-config",
+        help="Show effective settings in check mode; live always shows them.",
     ),
     preserve_debug: bool = typer.Option(False, "--preserve-debug"),
     strict_composition: bool = typer.Option(False, "--strict-composition"),
 ) -> None:
-    """Run a validated suite through the production-path Inspect runner."""
+    """Run a validated suite through the production-path Inspect runner.
+
+    Raises:
+        typer.Exit: If preflight or execution fails, or the maintainer declines.
+
+    Example:
+        Run ``python -m tools.evals.gmuse_evals run --mode check --suite smoke``.
+    """
     if mode not in {"check", "live"}:
         typer.echo("Error: --mode must be one of: check, live.")
+        raise typer.Exit(code=2)
+    if plan_only and mode != "live":
+        typer.echo("Error: --plan is only valid with --mode live.")
         raise typer.Exit(code=2)
     if repository_instructions is not None:
         try:
@@ -260,9 +276,20 @@ def run(
         typer.echo("No provider calls were made.")
         raise typer.Exit(code=2)
 
+    live_log_dir = None
+    if mode == "live":
+        try:
+            live_log_dir = locate_log_dir(log_dir, explicit=log_dir is not None)
+        except (LogLocationError, OSError, RuntimeError) as error:
+            typer.echo(f"Error: {error}")
+            raise typer.Exit(code=2) from error
+
     _warn_on_unpinned_inputs(evals_dir)
     typer.echo(f"Run mode: {mode}")
     typer.echo(f"Suite: {plan.suite_id}")
+    if mode == "live":
+        typer.echo(f"Suite revision: {plan.suite_version}")
+        typer.echo(f"Cases: {len(plan.selected_case_ids)}")
     typer.echo(f"Planned entries: {plan.planned_entries}")
     typer.echo(f"Selected cases: {', '.join(plan.selected_case_ids)}")
     formats = dict.fromkeys(entry.generation.format for entry in plan.entries)
@@ -271,13 +298,27 @@ def run(
         typer.echo(f"Models: {', '.join(plan.models)}")
     if plan.guardrails.max_samples is not None:
         typer.echo(f"Sample limit: {plan.guardrails.max_samples}")
-    if show_config:
+    if live_log_dir is not None:
+        typer.echo("Concurrency: 1")
+        typer.echo(f"Inspect log directory: {live_log_dir}")
+        confirmation = "plan_only" if plan_only else "--yes" if yes else "interactive"
+        typer.echo(f"Confirmation: {confirmation}")
+    if show_config or mode == "live":
         for entry in plan.entries:
             typer.echo(f"Entry {entry.entry_id}: {entry.generation.as_dict()}")
+    if plan_only:
+        typer.echo("Provider calls: 0")
+        return
     if mode == "check":
         typer.echo("Candidate kind: deterministic_check")
         typer.echo("Provider calls: 0")
     if mode == "live" and not yes:
+        if not (sys.stdin.isatty() and sys.stdout.isatty()):
+            typer.echo(
+                "Error: non-interactive live runs require --yes. "
+                "Review the run with --plan before confirming."
+            )
+            raise typer.Exit(code=2)
         if not typer.confirm("Proceed with live provider calls?", default=False):
             typer.echo("Live eval cancelled. No provider calls were made.")
             raise typer.Exit(code=0)
@@ -286,7 +327,7 @@ def run(
         execution = run_inspect_plan(
             plan, log_dir=log_dir, preserve_debug=preserve_debug
         )
-    except (LogLocationError, RuntimeError, ValueError) as error:
+    except (OSError, RuntimeError, ValueError) as error:
         typer.echo(f"Error: {error}")
         raise typer.Exit(code=2) from error
     locations = tuple(

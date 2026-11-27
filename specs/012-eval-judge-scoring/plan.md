@@ -1,7 +1,7 @@
 # Implementation Plan: Eval Judge And Scoring
 
 **Branch**: `012-eval-judge-scoring` | **Date**: 2026-06-11 | **Spec**: ../012-eval-judge-scoring/spec.md
-**Input**: Feature specification from `specs/draft/012-eval-judge-scoring/spec.md`
+**Input**: Feature specification from `specs/012-eval-judge-scoring/spec.md`
 
 ## Summary
 
@@ -16,7 +16,7 @@ candidate quality failures. It does not define an aggregate score.
 
 ## Technical Context
 
-**Language/Version**: Python 3.10+
+**Language/Version**: Python 3.11+
 
 **Primary Dependencies**: Inspect AI scorer/log support, existing gmuse Inspect
 eval logs from specs 010 and 011, live-run guardrails from spec 011, existing
@@ -95,7 +95,7 @@ Checklist:
 ### Documentation (this feature)
 
 ```text
-specs/draft/012-eval-judge-scoring/
+specs/012-eval-judge-scoring/
 ├── spec.md
 ├── plan.md
 ├── research.md
@@ -171,20 +171,20 @@ Research focus areas:
 
 Output artifact:
 
-- `specs/draft/012-eval-judge-scoring/research.md`
+- `specs/012-eval-judge-scoring/research.md`
 
 ## Phase 1 - Design & Contracts (Outputs: `data-model.md`, `contracts/`, `quickstart.md`)
 
 Design artifacts:
 
 - Scoring entities, Inspect scorer relationships, validation rules, and state transitions:
-  `specs/draft/012-eval-judge-scoring/data-model.md`
+  `specs/012-eval-judge-scoring/data-model.md`
 - Judge structured-output contract:
-  `specs/draft/012-eval-judge-scoring/contracts/judge-output.md`
+  `specs/012-eval-judge-scoring/contracts/judge-output.md`
 - Inspect scoring metadata contract:
-  `specs/draft/012-eval-judge-scoring/contracts/scoring-schema.md`
+  `specs/012-eval-judge-scoring/contracts/scoring-schema.md`
 - Maintainer validation guide:
-  `specs/draft/012-eval-judge-scoring/quickstart.md`
+  `specs/012-eval-judge-scoring/quickstart.md`
 
 Post-design constitution re-check:
 

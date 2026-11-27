@@ -110,7 +110,28 @@ class EvalFixture(EvalModel):
     history: list[FixtureHistoryCommit]
     branch_name: str | None = None
     repository_instructions: str | None = None
+    fake_secret_markers: list[str] = Field(default_factory=list)
+    literal_injection_markers: list[str] = Field(default_factory=list)
     selection_rationale: str = Field(min_length=1)
+
+    @field_validator("fake_secret_markers", "literal_injection_markers")
+    @classmethod
+    def validate_markers(cls, value: list[str]) -> list[str]:
+        """Require non-blank, distinct literals in each marker category."""
+        if any(not marker.strip() for marker in value):
+            raise ValueError("markers must be non-blank")
+        if len(value) != len(set(value)):
+            raise ValueError("markers must be distinct")
+        return value
+
+    @model_validator(mode="after")
+    def validate_marker_origin(self) -> EvalFixture:
+        """Restrict explicit marker declarations to synthetic fixtures."""
+        if self.origin != "synthetic" and (
+            self.fake_secret_markers or self.literal_injection_markers
+        ):
+            raise ValueError("only synthetic fixtures may declare output markers")
+        return self
 
     @field_validator("schema_version")
     @classmethod

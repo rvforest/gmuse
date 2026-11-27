@@ -8,6 +8,12 @@ to Inspect sample results. Inspect logs are the canonical scored artifact.
 Custom `scored-records.jsonl` and `judge-records.jsonl` files are not required
 unless a framework spike identifies a metadata gap.
 
+Inspect sample scores use the names `gmuse_deterministic` and `gmuse_judge`.
+Judge runs expose `gmuse_scoring` in the Inspect run metadata with the scoring
+run ID, source log identity, judge configuration, and call count. The
+sample's `judge_status` records whether judging completed, failed, was skipped
+for a hard gate, remains pending after interruption, or was unscorable.
+
 ## Required Scoring Metadata
 
 Each scored sample result must expose:
@@ -55,6 +61,11 @@ Each scored sample result must expose:
 Verify the referenced evidence before judge execution. If required evidence
 cannot be recovered or verified, record the sample as unscored with an
 unscorable reason and skip the judge call.
+
+Judge evidence and raw response locators resolve relative to the source
+candidate log. Ordinary Inspect logs carry the content digests and parsed
+results. The original candidate and scored runs remain available when a resume
+run writes a new log.
 
 ## Manual Review Metadata
 

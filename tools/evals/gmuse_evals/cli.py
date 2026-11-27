@@ -10,6 +10,7 @@ from pathlib import Path
 import typer
 
 from .inspect_runner import run_inspect_plan
+from .inspect_scorers import InspectScoringError, score_inspect_log
 from .load import EvalLoadError
 from .logs import LogLocationError, locate_log_dir, summarize_results
 from .models import SuiteComposition, ValidationIssue
@@ -19,7 +20,7 @@ from .validate import validate_suite
 app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
-    help="Validate offline gmuse evaluation fixtures and suites.",
+    help="Validate, run, and score maintainer gmuse evaluations.",
 )
 validate_app = typer.Typer(add_completion=False, help="Validate an eval suite.")
 app.add_typer(validate_app, name="validate")
@@ -345,3 +346,35 @@ def run(
     typer.echo(f"Validation passed: {summary.validation_passed}")
     typer.echo(f"Validation failed: {summary.validation_failed}")
     typer.echo(f"Operational errors: {summary.operational_errors}")
+
+
+@app.command("score")
+def score(
+    log: Path = typer.Option(..., "--log", help="Source candidate Inspect log."),
+    output: Path = typer.Option(..., "--output", help="New scored .eval file."),
+    evals_dir: Path = typer.Option(
+        Path("evals"), "--evals-dir", help="Root directory containing eval assets."
+    ),
+) -> None:
+    """Apply deterministic checks to saved candidate outputs.
+
+    Example:
+        Run ``python -m tools.evals.gmuse_evals score --log run.eval --output scored.eval``.
+    """
+    try:
+        summary = score_inspect_log(log, output, evals_dir=evals_dir)
+    except (InspectScoringError, ImportError) as error:
+        message = (
+            "Install the development dependencies to score Inspect logs."
+            if isinstance(error, ImportError)
+            else str(error)
+        )
+        typer.echo(f"Error: {message}", err=True)
+        raise typer.Exit(code=2) from error
+
+    typer.echo(f"Scored Inspect log: {summary.destination}")
+    typer.echo(f"Candidate samples: {summary.total}")
+    typer.echo(f"Deterministically scored: {summary.scored}")
+    typer.echo(f"Hard failures: {summary.hard_failed}")
+    typer.echo(f"Unscored: {summary.unscored}")
+    typer.echo("Provider calls: 0")

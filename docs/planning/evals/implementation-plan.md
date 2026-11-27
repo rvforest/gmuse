@@ -128,7 +128,7 @@ Acceptance focus:
 
 ### 4. Judge And Scoring
 
-Formal spec: `specs/draft/012-eval-judge-scoring/`
+Formal spec: `specs/012-eval-judge-scoring/`
 
 Goal: Add Inspect scorer-based rubric scoring for maintainer review and
 regression analysis.
@@ -161,8 +161,8 @@ Does not include:
 
 Acceptance focus:
 
-- Hard failures gate aggregate usability.
-- Per-dimension scores are preserved even when an aggregate score is computed.
+- Hard failures force unusable status.
+- Per-dimension scores and categorical usability are recorded separately.
 - Judge metadata is sufficient to compare runs later.
 
 ### 5. Safety Comparison

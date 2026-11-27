@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from collections.abc import Sequence
@@ -406,6 +407,9 @@ def score(
         "--equivalent-candidate-model",
         help="Candidate provider/model to flag as self-judged. Repeat for aliases.",
     ),
+    calibration_report: Path | None = typer.Option(
+        None, "--calibration-report", help="Versioned calibration report JSON."
+    ),
     resume: Path | None = typer.Option(
         None, "--resume", help="Previous compatible scored Inspect log."
     ),
@@ -432,6 +436,7 @@ def score(
                         timeout,
                         identity_reason,
                         equivalent_models,
+                        calibration_report,
                         resume,
                     )
                 )
@@ -468,6 +473,18 @@ def score(
                 raise InspectScoringError(
                     "Judge settings require a provider, temperature from 0 to 2, and positive --max-tokens and --timeout."
                 ) from error
+            report = None
+            if calibration_report is not None:
+                try:
+                    report = json.loads(calibration_report.read_text(encoding="utf-8"))
+                except (OSError, ValueError) as error:
+                    raise InspectScoringError(
+                        "Cannot read the calibration report JSON."
+                    ) from error
+                if not isinstance(report, dict):
+                    raise InspectScoringError(
+                        "The calibration report must be a JSON object."
+                    )
             plan = prepare_inspect_judge_plan(
                 log,
                 output,
@@ -479,6 +496,7 @@ def score(
                 diagnostic_hard_failures=judge_hard_failures,
                 identity_inclusion_reason=identity_reason,
                 equivalent_models=tuple(aliases),
+                calibration_report=report,
                 resume=resume,
             )
             typer.echo(f"Judge provider and model: {provider} / {model}")
@@ -493,6 +511,11 @@ def score(
             typer.echo(f"Judge temperature: {configuration.temperature}")
             typer.echo(f"Reused judge results: {plan.reused_count}")
             typer.echo(f"Scored Inspect log destination: {plan.destination}")
+            if plan.uncalibrated_count:
+                typer.echo(
+                    f"Judge samples without matching calibration: {plan.uncalibrated_count}",
+                    err=True,
+                )
             if plan_only:
                 typer.echo("Provider calls: 0")
                 return

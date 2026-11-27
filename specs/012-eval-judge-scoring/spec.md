@@ -2,10 +2,7 @@
 
 **Feature Branch**: `012-eval-judge-scoring`
 **Created**: 2026-06-11
-**Status**: Draft
-
-**Draft Note**: This specification describes proposed maintainer-only eval
-tooling. It does not describe current gmuse behavior.
+**Status**: Implemented as maintainer-only eval tooling.
 
 **Framework Alignment Update (2026-06-14)**: Adopt Inspect AI scorers/logs for
 judge execution and score recording when the spike confirms fit. gmuse owns

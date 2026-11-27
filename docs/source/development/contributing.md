@@ -388,3 +388,8 @@ Keep the source candidate log and its adjacent `.gmuse-evidence/` and
 exact judge inputs and original judge response bodies. Regular Inspect score
 metadata holds their content digests and locators, the named ratings,
 rationales, hard gates, and operational status.
+
+The maintainer API in `tools.evals.gmuse_evals.calibration` compares judge
+outputs with labeled examples. Pass the saved JSON report with
+`--calibration-report` to link it to matching scores. Record manual reviews
+with the append-only events in `tools.evals.gmuse_evals.review_events`.

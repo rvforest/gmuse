@@ -11,6 +11,8 @@ from typing import Annotated, Any, Literal
 
 from pydantic import Field, StringConstraints
 
+from gmuse.exceptions import LLMError
+
 from .errors import ErrorCategory, classify_error
 from .results import ResolvedCase
 from .schema import EvalModel
@@ -321,7 +323,6 @@ def default_judge_provider(
     configuration: JudgeConfiguration, prompt: JudgePrompt
 ) -> str:
     """Call the configured provider once with gmuse credential resolution."""
-    from gmuse.exceptions import LLMError
     from gmuse.llm import LLMClient, _suppress_litellm_output, litellm
 
     provider = configuration.judge_provider.lower()

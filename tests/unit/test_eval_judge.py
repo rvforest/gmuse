@@ -2,7 +2,9 @@
 
 import hashlib
 import json
+from types import SimpleNamespace
 from typing import Any
+from unittest.mock import Mock
 
 import pytest
 
@@ -250,9 +252,6 @@ def test_invalid_response_is_preserved_but_not_published(
 def test_default_provider_preserves_model_case_and_raw_response(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from types import SimpleNamespace
-    from unittest.mock import Mock
-
     from gmuse import llm
 
     client = Mock(return_value=SimpleNamespace(provider="huggingface", api_key=None))

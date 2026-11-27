@@ -12,7 +12,7 @@ from typing import Any
 
 from gmuse.commit import GenerationPromptMetadata, ValidationOutcome
 
-EVAL_SCHEMA_VERSION = "1.0"
+EVAL_SCHEMA_VERSION = "2.0"
 DEFAULT_INSPECT_LOG_DIR = Path(".gmuse-evals") / "inspect"
 
 

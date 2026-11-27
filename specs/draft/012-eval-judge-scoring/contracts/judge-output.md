@@ -108,7 +108,7 @@ support order-swapped or randomized presentation for calibration.
 The scoring system must classify the judge response as `judge_parse_error` when:
 
 - Required fields are missing.
-- Numeric scores are outside 1 through 5.
+- Numeric scores are outside 1 through 4.
 - Unknown enum values appear in usability, hard failure findings, or error
   categories.
 - The response cannot be parsed as the expected structured payload.

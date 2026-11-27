@@ -13,7 +13,7 @@ from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any
 
 from . import judge
-from .logs import EVAL_SCHEMA_VERSION, independent_run_id, public_generation_defaults
+from .logs import EVAL_SCHEMA_VERSION, independent_run_id
 from .run_plan import Guardrails
 from .scoring import (
     JUDGE_RESPONSE_DIRECTORY,
@@ -115,12 +115,6 @@ class InspectJudgePlan:
         )
 
 
-def _redact_legacy_overrides(metadata: dict[str, Any]) -> None:
-    defaults = metadata.get("effective_generation_defaults")
-    if isinstance(defaults, dict):
-        metadata["effective_generation_defaults"] = public_generation_defaults(defaults)
-
-
 def _paths(source: Path, destination: Path) -> tuple[Path, Path]:
     try:
         source = source.expanduser().resolve()
@@ -163,12 +157,12 @@ def _candidate_records(
     equivalent_models: tuple[tuple[str, str], ...] = (),
     calibration_report: Mapping[str, object] | None = None,
 ) -> tuple[EvalLog, str | None, dict[tuple[int | str, int], _ScoringSample]]:
-    from inspect_ai.log import MetadataEdit
-
     log, source_digest = _read_log(source, digest=configuration is not None)
     run_metadata = log.metadata or {}
     if run_metadata.get("gmuse_eval_schema_version") != EVAL_SCHEMA_VERSION:
-        raise InspectScoringError("Unsupported gmuse runner log schema.")
+        raise InspectScoringError(
+            "Unsupported gmuse runner log schema. Rerun the eval with the current runner."
+        )
     if not log.samples:
         raise InspectScoringError("The Inspect log has no original candidate samples.")
     if log.eval.model_roles or any(
@@ -192,14 +186,6 @@ def _candidate_records(
             "The eval suite revision differs from the runner log."
         )
     cases = {resolved.case.id: resolved for resolved in validated.resolved_cases}
-
-    # Version 1.0 runner logs could put raw CLI overrides in the run header.
-    _redact_legacy_overrides(run_metadata)
-    _redact_legacy_overrides(log.eval.metadata or {})
-    for update in log.log_updates or []:
-        for edit in update.edits:
-            if isinstance(edit, MetadataEdit):
-                _redact_legacy_overrides(edit.metadata_set)
 
     records = {}
     for sample in log.samples:

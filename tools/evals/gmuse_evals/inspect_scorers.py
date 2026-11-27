@@ -202,7 +202,20 @@ def score_inspect_log(
     *,
     evals_dir: Path = Path("evals"),
 ) -> InspectScoringSummary:
-    """Apply offline deterministic checks and publish a new native Inspect log."""
+    """Score a saved candidate run without making provider calls.
+
+    Args:
+        source: An original gmuse candidate log on the local filesystem.
+        destination: A new, distinct path ending in ``.eval``.
+        evals_dir: Directory containing the suite and case assets.
+
+    Returns:
+        Scoring counts and the path of the new Inspect log.
+
+    Raises:
+        InspectScoringError: If the source or its suite cannot be used, or
+            the destination cannot be reserved or written.
+    """
     source, destination = _paths(source, destination)
     log, samples = _candidate_records(source, evals_dir)
     with _reserve_destination(destination):

@@ -261,7 +261,11 @@ def build_judge_prompt(
 
 
 def judge_result_metadata(result: JudgeResult, prompt: JudgePrompt) -> dict[str, Any]:
-    """Serialize judge findings while removing verbatim private evidence."""
+    """Serialize judge findings and redact configured strings in rationales.
+
+    Replace exact occurrences of the prompt's protected strings with
+    ``[private evidence]`` and mark the metadata if a replacement was made.
+    """
     metadata = result.model_dump(mode="json")
     for key, rationale in metadata["rationales"].items():
         if isinstance(rationale, str):

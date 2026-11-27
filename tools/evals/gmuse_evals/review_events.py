@@ -173,8 +173,17 @@ def _unique_events(events: Iterable[ReviewEvent]) -> Iterator[ReviewEvent]:
 def append_review_event(directory: Path, event: ReviewEvent) -> Path:
     """Append one event to the annotation or override JSONL sidecar.
 
+    Args:
+        directory: Directory for the review sidecars, created if needed.
+        event: Annotation or override to append.
+
     Returns:
-        Path to the sidecar. The automated scoring log is separate.
+        Path to the JSONL sidecar for the event kind.
+
+    Raises:
+        ReviewEventError: If the append writes only part of the event.
+        OSError: If the directory or sidecar cannot be opened or written,
+            or the write cannot be synced.
     """
     directory.mkdir(parents=True, exist_ok=True)
     path = directory / _EVENT_FILES[event.kind]

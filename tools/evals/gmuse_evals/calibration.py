@@ -115,8 +115,9 @@ def run_calibration(
         expected_label_version: Maintainer-provided annotation revision.
         provider_call: Optional judge callback for offline testing. The default
             uses the configured live provider.
-        limit_samples: Explicit attempt cap required with the live provider.
-        confirmed: Whether the caller reviewed and approved the live calibration.
+        limit_samples: Positive attempt cap required with the live provider.
+            It must cover the entire calibration set.
+        confirmed: Must be true when using the default live provider.
         identity_inclusion_reason: Reason for including candidate identity in a
             diagnostic run. Omit this argument to hide identity.
         notes: Optional maintainer notes for the report.
@@ -127,9 +128,10 @@ def run_calibration(
         separately and retain their expected labels.
 
     Raises:
-        ValueError: The calibration set has invalid labels or evidence, is
-            empty, has duplicate IDs, has no label version, or mixes rubric
-            or profile identities.
+        ValueError: If live calibration lacks confirmation or a positive cap
+            covering the set, the set is empty, IDs repeat, the label version
+            is blank, rubric or profile identities differ, or labels or
+            evidence are invalid.
     """
     if provider_call is None or provider_call is judge.default_judge_provider:
         if not confirmed or type(limit_samples) is not int or limit_samples <= 0:

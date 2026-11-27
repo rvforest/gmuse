@@ -217,10 +217,11 @@ def capture_scoring_evidence(
         user_hint: Hint used to generate the candidate, if any.
 
     Returns:
-        An immutable relative locator and digests suitable for Inspect metadata.
+        A dictionary with a relative locator and SHA-256 digests for Inspect metadata.
 
     Raises:
-        OSError: If private evidence cannot be written.
+        OSError: If the staged diff disagrees with its recorded digest or the
+            private evidence cannot be written.
     """
     diff_digest = _digest(staged_diff.encode("utf-8"))
     if diff_digest != sample_metadata.get("staged_diff_digest"):

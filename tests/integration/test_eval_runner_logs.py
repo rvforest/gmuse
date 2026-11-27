@@ -17,7 +17,7 @@ def test_inspect_log_contains_raw_invalid_output_and_privacy_safe_prompt_fields(
 
     assert len(execution.results) == len(plan.entries)
     log = read_eval_log(str(execution.logs[0].location))
-    assert log.metadata["gmuse_eval_schema_version"] == "1.0"
+    assert log.metadata["gmuse_eval_schema_version"] == "2.0"
     assert log.samples is not None
     assert len(log.samples) == len(plan.entries)
     for sample in log.samples:

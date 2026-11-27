@@ -289,7 +289,17 @@ def prepare_inspect_judge_plan(
     equivalent_models: tuple[tuple[str, str], ...] = (),
     resume: Path | None = None,
 ) -> InspectJudgePlan:
-    """Verify live scoring inputs and optional reuse without calling a provider."""
+    """Plan live judge scoring without calling a provider.
+
+    Verify saved evidence and identify compatible results from the optional
+    resume log before counting new calls. The plan requires a positive sample
+    cap that covers those calls. Execution is serial. Configure the response
+    token limit and timeout per call on the judge configuration.
+
+    Raises:
+        InspectScoringError: If the logs, destination, or judge options are
+            invalid, or the new calls exceed the sample cap.
+    """
     if not guardrails.configured():
         raise InspectScoringError(
             "Live judging requires an explicit positive --limit-samples."
@@ -526,7 +536,20 @@ def score_inspect_log(
     *,
     evals_dir: Path = Path("evals"),
 ) -> InspectScoringSummary:
-    """Apply offline deterministic checks and publish a new native Inspect log."""
+    """Score a saved candidate run without making provider calls.
+
+    Args:
+        source: An original gmuse candidate log on the local filesystem.
+        destination: A new, distinct path ending in ``.eval``.
+        evals_dir: Directory containing the suite and case assets.
+
+    Returns:
+        Scoring counts and the path of the new Inspect log.
+
+    Raises:
+        InspectScoringError: If the source or its suite cannot be used, or
+            the destination cannot be reserved or written.
+    """
     source, destination = _paths(source, destination)
     log, _, samples = _candidate_records(source, evals_dir)
     with _reserve_destination(destination):

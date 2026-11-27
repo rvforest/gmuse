@@ -1,4 +1,11 @@
-"""Plan and attach gmuse scoring to saved Inspect candidate logs."""
+"""Score saved candidate samples and write a separate Inspect log.
+
+For offline scoring, ``score_inspect_log`` applies deterministic checks and
+writes the results directly. For live judging, ``prepare_inspect_judge_plan``
+verifies evidence, reuses compatible judgments, and counts the new calls.
+After confirmation, ``execute_inspect_judge_plan`` runs those calls and writes
+the results. Both paths use Inspect to attach the completed scoring records.
+"""
 
 from __future__ import annotations
 
@@ -62,6 +69,12 @@ class InspectScoringSummary:
 
 @dataclass(slots=True)
 class _ScoringSample:
+    """A sample's scoring record and any prompt scheduled for a new call.
+
+    During planning, ``prompt`` is ``None`` for offline, skipped, unscorable,
+    and reused samples. The record stores the outcome or reason.
+    """
+
     record: dict[str, Any]
     prompt: judge.JudgePrompt | None = None
 
@@ -390,6 +403,12 @@ def _attach_scores(
     samples: dict[tuple[int | str, int], _ScoringSample],
     name: str,
 ) -> EvalLog:
+    """Attach gmuse's precomputed results to the saved Inspect samples.
+
+    The scorer looks up each record by sample ID and epoch. Inspect uses
+    ``mockllm/deterministic`` as its local model context because all judge
+    calls happen before this step.
+    """
     from inspect_ai import score
     from inspect_ai.scorer import Score, Scorer, Target, scorer
     from inspect_ai.solver import TaskState

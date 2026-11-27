@@ -11,9 +11,11 @@ from inspect_ai.log import read_eval_log
 from typer.testing import CliRunner
 
 from tools.evals.gmuse_evals import judge
+from tools.evals.gmuse_evals.calibration import CalibrationExample, run_calibration
 from tools.evals.gmuse_evals.cli import app
 from tools.evals.gmuse_evals.inspect_runner import run_inspect_plan
 from tools.evals.gmuse_evals.run_plan import build_run_plan
+from tools.evals.gmuse_evals.scoring_evidence import recover_scoring_evidence
 from tools.evals.gmuse_evals.validate import validate_suite
 
 ASSETS = Path(__file__).resolve().parents[2] / "evals"
@@ -265,9 +267,6 @@ def test_judge_response_keeps_echoed_evidence_in_private_store(
 def test_calibration_report_is_linked_to_compatible_judgments(
     candidate_log: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from tools.evals.gmuse_evals.calibration import CalibrationExample, run_calibration
-    from tools.evals.gmuse_evals.scoring_evidence import recover_scoring_evidence
-
     def provider(
         _configuration: judge.JudgeConfiguration, prompt: judge.JudgePrompt
     ) -> str:

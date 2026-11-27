@@ -7,6 +7,7 @@ from typing import Any, cast
 
 import pytest
 
+from tools.evals.gmuse_evals import judge
 from tools.evals.gmuse_evals.calibration import (
     CALIBRATION_SCHEMA_VERSION,
     CalibrationExample,
@@ -302,8 +303,6 @@ def test_calibration_validates_examples_before_calling_judge(
 def test_live_calibration_requires_confirmation_and_cap(
     example: CalibrationExample, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from tools.evals.gmuse_evals import judge
-
     attempted = []
 
     def provider(configuration: JudgeConfiguration, prompt: JudgePrompt) -> str:

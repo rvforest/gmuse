@@ -8,7 +8,6 @@ from .schema import SCHEMA_VERSION, UsabilityLabel
 
 SCORING_SCHEMA_VERSION = "1.0"
 JUDGE_OUTPUT_SCHEMA_VERSION = 1
-JUDGE_PROMPT_VERSION = 1
 TAXONOMY_VERSION = 1
 RATING_MIN: Final[int] = 1
 RATING_MAX: Final[int] = 4
@@ -49,7 +48,6 @@ JudgeOperationalErrorCategory = Literal[
 
 __all__ = [
     "JUDGE_OUTPUT_SCHEMA_VERSION",
-    "JUDGE_PROMPT_VERSION",
     "RATING_MAX",
     "RATING_MIN",
     "SCHEMA_VERSION",

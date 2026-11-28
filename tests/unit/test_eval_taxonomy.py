@@ -8,7 +8,6 @@ from tools.evals.gmuse_evals import schema, taxonomy
 def test_scoring_versions_and_reused_asset_types() -> None:
     assert taxonomy.SCORING_SCHEMA_VERSION == "1.0"
     assert taxonomy.JUDGE_OUTPUT_SCHEMA_VERSION == 1
-    assert taxonomy.JUDGE_PROMPT_VERSION == 1
     assert taxonomy.TAXONOMY_VERSION == 1
     assert taxonomy.SCHEMA_VERSION == schema.SCHEMA_VERSION
     assert taxonomy.UsabilityLabel is schema.UsabilityLabel

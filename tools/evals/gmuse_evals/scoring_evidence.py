@@ -14,6 +14,7 @@ from tempfile import NamedTemporaryFile
 from typing import Any
 
 from gmuse.commit import GenerationContext
+from gmuse.prompts import PROMPT_HISTORY_LIMIT
 
 from .inspect_adapter import stable_asset_digest
 from .results import ResolvedCase
@@ -180,7 +181,9 @@ def _used_context(context: GenerationContext, user_hint: str | None) -> dict[str
     """Project the context onto the fields used by the production prompt."""
     data: dict[str, Any] = {}
     if context.history and context.history.commits:
-        data["history"] = [record.message for record in context.history.commits[:5]]
+        data["history"] = [
+            record.message for record in context.history.commits[:PROMPT_HISTORY_LIMIT]
+        ]
     if context.branch_info:
         branch = {
             "type": context.branch_info.branch_type,

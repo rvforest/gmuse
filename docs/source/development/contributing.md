@@ -330,11 +330,7 @@ uv run python -m tools.evals.gmuse_evals score \
 The command makes zero provider calls and writes a separate Inspect log.
 Open the `gmuse_deterministic` score metadata for each sample to see its checks,
 hard gates, or unscored reason. Hard failures set usability to `unusable`.
-This workflow records objective checks and hard failure evidence.
-
-The runner saves the staged diff and context in a private `.gmuse-evidence/`
-directory beside the candidate log. Keep that directory with the log for
-later judge scoring. The log records content digests and locators.
+Subjective ratings require the judge scoring workflow.
 
 Live runs require explicit model selection, a positive sample cap covering the
 entire selected matrix. Preview the work before making provider calls with
@@ -370,3 +366,26 @@ and confirmation scenarios can be run without credentials:
 ```bash
 uv run pytest tests/integration/test_eval_live_guardrails.py tests/integration/test_eval_runner_live.py
 ```
+
+## Judge and review saved evals
+
+Use the scoring plan to see how many candidate messages would go to a live
+judge. Set `candidate_log` to the path reported by the runner.
+
+```bash
+uv run python -m tools.evals.gmuse_evals score \
+  --log "$candidate_log" --output .gmuse-evals/scored/smoke-judged.eval \
+  --judge-model openai/gpt-4o-mini --limit-samples 5 --plan
+```
+
+Remove `--plan` and confirm when ready. Use `--yes` for non-interactive
+execution. The scorer calls the judge serially for eligible samples with
+verified evidence. It skips deterministic hard failures by default.
+`--resume <previous-scored-log>` reuses compatible results and applies the
+explicit call cap to the remaining attempts.
+
+Keep the source candidate log and its adjacent `.gmuse-evidence/` and
+`.gmuse-judge-responses/` directories together. These directories hold the
+exact judge inputs and original judge response bodies. Regular Inspect score
+metadata holds their content digests and locators, the named ratings,
+rationales, hard gates, and operational status.

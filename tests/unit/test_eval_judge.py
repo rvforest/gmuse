@@ -130,6 +130,7 @@ def test_missing_duplicate_and_non_json_fields_rejected(
 
 def test_prompt_supplies_evidence_and_hides_candidate_identity(
     resolved_case: ResolvedCase,
+    configuration: judge.JudgeConfiguration,
 ) -> None:
     raw_diff = 'diff --git a/f b/f\n+example "text"\n'
     context = {"history": ["docs: explain fixture"], "candidate_model": "private-model"}
@@ -157,7 +158,10 @@ def test_prompt_supplies_evidence_and_hides_candidate_identity(
     assert prompt.input_controls.candidate_identity_inclusion_reason is None
     assert "private-provider" not in prompt.user_prompt
     assert "private-model" not in prompt.user_prompt
-    assert "Judge prompt revision 1" in prompt.system_prompt
+    assert configuration.judge_prompt_version == 1
+    assert prompt.system_prompt.startswith(
+        f"Judge prompt revision {configuration.judge_prompt_version}. "
+    )
 
 
 def test_diagnostic_prompt_records_reason_and_candidate_identity(

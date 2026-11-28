@@ -18,7 +18,6 @@ from .results import ResolvedCase
 from .schema import EvalModel
 from .taxonomy import (
     JUDGE_OUTPUT_SCHEMA_VERSION,
-    JUDGE_PROMPT_VERSION,
     JudgeHardFailureGateName,
     JudgeOperationalErrorCategory,
     QualityError,
@@ -27,6 +26,8 @@ from .taxonomy import (
 )
 
 _Nonblank = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+
+JUDGE_PROMPT_VERSION = 1
 _JUDGE_SYSTEM_INSTRUCTIONS = (
     "Evaluate the supplied commit message independently using the staged diff, "
     "format constraints, context, rubric, and profile anchors. Read the diff, "

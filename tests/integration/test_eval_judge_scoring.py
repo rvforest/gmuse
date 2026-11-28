@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
 from inspect_ai.log import read_eval_log
 from typer.testing import CliRunner
 
-from tools.evals.gmuse_evals import judge
+from tools.evals.gmuse_evals import cli, judge
 from tools.evals.gmuse_evals.calibration import CalibrationExample, run_calibration
 from tools.evals.gmuse_evals.cli import app
 from tools.evals.gmuse_evals.inspect_runner import run_inspect_plan
@@ -119,6 +120,16 @@ def test_live_plan_budget_confirmation_and_hard_gate_skip(
     planned = runner.invoke(app, [*_args(candidate_log, output), "--plan"])
     assert planned.exit_code == 0, planned.output
     assert "Planned judge calls: 2" in planned.output
+
+    with monkeypatch.context() as terminal:
+        stdin = SimpleNamespace(isatty=lambda: True)
+        terminal.setattr(cli, "sys", SimpleNamespace(stdin=stdin))
+        declined = runner.invoke(app, _args(candidate_log, output), input="n\n")
+    assert declined.exit_code == 0, declined.output
+    assert declined.output.index("Planned judge calls: 2") < declined.output.index(
+        "Proceed with live judge scoring?"
+    )
+    assert "Judge scoring cancelled. Provider calls: 0" in declined.output
     assert len(seen) == 0
     assert not output.exists()
 

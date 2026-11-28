@@ -15,6 +15,7 @@ from .inspect_runner import run_inspect_plan
 from .inspect_scorers import (
     InspectJudgePlan,
     InspectScoringError,
+    InspectScoringSummary,
     JudgeCallLimitExceeded,
     JudgeCallLimitRequired,
     UnsupportedJudgeRunLimits,
@@ -434,6 +435,19 @@ def _scoring_error_message(error: InspectScoringError | ImportError) -> str:
     return str(error)
 
 
+def _render_scoring_summary(summary: InspectScoringSummary, *, live: bool) -> None:
+    """Display the scores written to the destination log."""
+    typer.echo(f"Scored Inspect log: {summary.destination}")
+    typer.echo(f"Candidate samples: {summary.total}")
+    label = "Scored" if live else "Deterministically scored"
+    typer.echo(f"{label}: {summary.scored}")
+    typer.echo(f"Hard failures: {summary.hard_failed}")
+    typer.echo(f"Unscored: {summary.unscored}")
+    if live:
+        typer.echo(f"Judge operational failures: {summary.judge_failures}")
+    typer.echo(f"Provider calls: {summary.judge_calls}")
+
+
 @app.command("score")
 def score(
     log: Path = typer.Option(..., "--log", help="Source candidate Inspect log."),
@@ -495,78 +509,69 @@ def score(
     """
     try:
         if judge_model is None:
+            judge_options = (
+                judge_provider,
+                limit_samples,
+                limit_tokens,
+                limit_cost,
+                limit_time,
+                concurrency,
+                temperature,
+                max_tokens,
+                timeout,
+                identity_reason,
+                equivalent_models,
+                resume,
+            )
             if (
-                any(
-                    value is not None
-                    for value in (
-                        judge_provider,
-                        limit_samples,
-                        limit_tokens,
-                        limit_cost,
-                        limit_time,
-                        concurrency,
-                        temperature,
-                        max_tokens,
-                        timeout,
-                        identity_reason,
-                        equivalent_models,
-                        resume,
-                    )
-                )
+                any(value is not None for value in judge_options)
                 or plan_only
                 or yes
                 or judge_hard_failures
             ):
                 raise InspectScoringError("Judge options require --judge-model.")
             summary = score_inspect_log(log, output, evals_dir=evals_dir)
-        else:
-            configuration, aliases = _resolve_judge_options(
-                judge_model,
-                judge_provider=judge_provider,
-                equivalent_models=equivalent_models,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                timeout=timeout,
-            )
-            plan = prepare_inspect_judge_plan(
-                log,
-                output,
-                configuration=configuration,
-                guardrails=Guardrails(
-                    limit_samples, limit_tokens, limit_cost, limit_time, concurrency
-                ),
-                evals_dir=evals_dir,
-                diagnostic_hard_failures=judge_hard_failures,
-                identity_inclusion_reason=identity_reason,
-                equivalent_models=aliases,
-                resume=resume,
-            )
-            _render_judge_plan(plan)
-            if plan_only:
-                typer.echo("Provider calls: 0")
-                return
-            if not yes:
-                if not sys.stdin.isatty():
-                    raise InspectScoringError(
-                        "Non-interactive live judging requires --yes."
-                    )
-                if not typer.confirm("Proceed with live judge scoring?", default=False):
-                    typer.echo("Judge scoring cancelled. Provider calls: 0")
-                    return
-            summary = execute_inspect_judge_plan(plan, confirmed=True)
+            _render_scoring_summary(summary, live=False)
+            return
+
+        configuration, aliases = _resolve_judge_options(
+            judge_model,
+            judge_provider=judge_provider,
+            equivalent_models=equivalent_models,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            timeout=timeout,
+        )
+        plan = prepare_inspect_judge_plan(
+            log,
+            output,
+            configuration=configuration,
+            guardrails=Guardrails(
+                limit_samples, limit_tokens, limit_cost, limit_time, concurrency
+            ),
+            evals_dir=evals_dir,
+            diagnostic_hard_failures=judge_hard_failures,
+            identity_inclusion_reason=identity_reason,
+            equivalent_models=aliases,
+            resume=resume,
+        )
+        _render_judge_plan(plan)
+        if plan_only:
+            typer.echo("Provider calls: 0")
+            return
+        if not yes and not sys.stdin.isatty():
+            raise InspectScoringError("Non-interactive live judging requires --yes.")
+        if not yes and not typer.confirm(
+            "Proceed with live judge scoring?", default=False
+        ):
+            typer.echo("Judge scoring cancelled. Provider calls: 0")
+            return
+        summary = execute_inspect_judge_plan(plan, confirmed=True)
     except (InspectScoringError, ImportError) as error:
         typer.echo(f"Error: {_scoring_error_message(error)}", err=True)
         raise typer.Exit(code=2) from error
 
-    typer.echo(f"Scored Inspect log: {summary.destination}")
-    typer.echo(f"Candidate samples: {summary.total}")
-    label = "Deterministically scored" if judge_model is None else "Scored"
-    typer.echo(f"{label}: {summary.scored}")
-    typer.echo(f"Hard failures: {summary.hard_failed}")
-    typer.echo(f"Unscored: {summary.unscored}")
-    if judge_model is not None:
-        typer.echo(f"Judge operational failures: {summary.judge_failures}")
-    typer.echo(f"Provider calls: {summary.judge_calls}")
+    _render_scoring_summary(summary, live=True)
     if summary.interrupted:
         typer.echo(
             "Judge scoring interrupted. Resume from the saved scored log.", err=True

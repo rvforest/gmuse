@@ -50,7 +50,29 @@ _REUSE_FIELDS = (
 
 
 class InspectScoringError(ValueError):
-    """A saved Inspect run or output location cannot be used for scoring."""
+    """A saved Inspect run cannot be scored with the supplied inputs."""
+
+
+class JudgeCallLimitRequired(InspectScoringError):
+    """Live judging was requested without a positive call limit."""
+
+    def __init__(self) -> None:
+        super().__init__("Live judging requires a positive call limit.")
+
+
+class JudgeCallLimitExceeded(InspectScoringError):
+    """The plan contains more new judge calls than the allowed limit."""
+
+    def __init__(self, planned_calls: int, limit: int) -> None:
+        self.planned_calls = planned_calls
+        self.limit = limit
+        super().__init__(
+            f"Planned judge calls {planned_calls} exceed the call limit of {limit}."
+        )
+
+
+class UnsupportedJudgeRunLimits(InspectScoringError):
+    """The direct provider path cannot enforce the requested run-wide limits."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -300,16 +322,14 @@ def prepare_inspect_judge_plan(
             invalid, or the new calls exceed the sample cap.
     """
     if not guardrails.configured():
-        raise InspectScoringError(
-            "Live judging requires an explicit positive --limit-samples."
-        )
+        raise JudgeCallLimitRequired()
     if any(
         value is not None
         for value in (guardrails.max_tokens, guardrails.max_cost, guardrails.time_limit)
     ):
-        raise InspectScoringError(
+        raise UnsupportedJudgeRunLimits(
             "Run-wide token, cost, and time limits are unsupported by the direct judge "
-            "provider path. Use --limit-samples, --max-tokens, and --timeout."
+            "provider path."
         )
     if guardrails.concurrency not in (None, 1):
         raise InspectScoringError("Live judge concurrency must be 1.")
@@ -356,10 +376,11 @@ def prepare_inspect_judge_plan(
 
 def _check_call_count(plan: InspectJudgePlan) -> None:
     limit = plan.guardrails.max_samples
-    if limit is None or plan.planned_calls > limit:
-        raise InspectScoringError(
-            f"Planned judge calls {plan.planned_calls} exceed --limit-samples {limit}."
-        )
+    if limit is None or limit <= 0:
+        raise JudgeCallLimitRequired()
+    planned_calls = plan.planned_calls
+    if planned_calls > limit:
+        raise JudgeCallLimitExceeded(planned_calls, limit)
 
 
 @contextmanager

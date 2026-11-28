@@ -14,6 +14,7 @@ from gmuse.credentials import infer_provider_from_model
 
 from .inspect_runner import run_inspect_plan
 from .inspect_scorers import (
+    InspectJudgePlan,
     InspectScoringError,
     execute_inspect_judge_plan,
     prepare_inspect_judge_plan,
@@ -357,6 +358,67 @@ def run(
     typer.echo(f"Operational errors: {summary.operational_errors}")
 
 
+def _resolve_judge_options(
+    judge_model: str,
+    *,
+    judge_provider: str | None,
+    equivalent_models: Sequence[str] | None,
+    temperature: float | None,
+    max_tokens: int | None,
+    timeout: int | None,
+) -> tuple[JudgeConfiguration, tuple[tuple[str, str], ...]]:
+    """Validate the judge configuration and declared model aliases."""
+    model = judge_model.strip()
+    provider = judge_provider or infer_provider_from_model(model)
+    if not model or not provider:
+        raise InspectScoringError(
+            "Specify a judge model with a provider prefix or --judge-provider."
+        )
+    aliases = []
+    for identity in equivalent_models or []:
+        alias_provider, _, alias_model = identity.partition("/")
+        if not alias_provider.strip() or not alias_model.strip():
+            raise InspectScoringError(
+                "Equivalent candidate models must use provider/model."
+            )
+        aliases.append((alias_provider.strip(), alias_model.strip()))
+    try:
+        configuration = JudgeConfiguration(
+            judge_provider=provider,
+            judge_model=model,
+            temperature=0.0 if temperature is None else temperature,
+            max_tokens=1000 if max_tokens is None else max_tokens,
+            timeout=30 if timeout is None else timeout,
+        )
+    except ValueError as error:
+        raise InspectScoringError(
+            "Judge settings require a provider, temperature from 0 to 2, and positive --max-tokens and --timeout."
+        ) from error
+    return configuration, tuple(aliases)
+
+
+def _render_judge_plan(plan: InspectJudgePlan) -> None:
+    """Display the resolved plan before confirmation or execution."""
+    configuration = plan.configuration
+    typer.echo(
+        f"Judge provider and model: {configuration.judge_provider} / {configuration.judge_model}"
+    )
+    typer.echo(f"Judge prompt version: {configuration.judge_prompt_version}")
+    typer.echo(f"Rubric revisions: {', '.join(plan.rubric_revisions) or 'none'}")
+    typer.echo(f"Planned judge calls: {plan.planned_calls}")
+    typer.echo(f"Judge call limit: {plan.guardrails.max_samples}")
+    typer.echo(f"Judge response token limit: {configuration.max_tokens}")
+    typer.echo(f"Judge call timeout: {configuration.timeout}s")
+    typer.echo(f"Judge temperature: {configuration.temperature}")
+    typer.echo(f"Reused judge results: {plan.reused_count}")
+    typer.echo(f"Scored Inspect log destination: {plan.destination}")
+    if plan.uncalibrated_count:
+        typer.echo(
+            f"Judge samples without matching calibration: {plan.uncalibrated_count}",
+            err=True,
+        )
+
+
 @app.command("score")
 def score(
     log: Path = typer.Option(..., "--log", help="Source candidate Inspect log."),
@@ -447,32 +509,14 @@ def score(
                 raise InspectScoringError("Judge options require --judge-model.")
             summary = score_inspect_log(log, output, evals_dir=evals_dir)
         else:
-            model = judge_model.strip()
-            provider = judge_provider or infer_provider_from_model(model)
-            if not model or not provider:
-                raise InspectScoringError(
-                    "Specify a judge model with a provider prefix or --judge-provider."
-                )
-            aliases = []
-            for identity in equivalent_models or []:
-                alias_provider, _, alias_model = identity.partition("/")
-                if not alias_provider.strip() or not alias_model.strip():
-                    raise InspectScoringError(
-                        "Equivalent candidate models must use provider/model."
-                    )
-                aliases.append((alias_provider.strip(), alias_model.strip()))
-            try:
-                configuration = JudgeConfiguration(
-                    judge_provider=provider,
-                    judge_model=model,
-                    temperature=0.0 if temperature is None else temperature,
-                    max_tokens=1000 if max_tokens is None else max_tokens,
-                    timeout=30 if timeout is None else timeout,
-                )
-            except ValueError as error:
-                raise InspectScoringError(
-                    "Judge settings require a provider, temperature from 0 to 2, and positive --max-tokens and --timeout."
-                ) from error
+            configuration, aliases = _resolve_judge_options(
+                judge_model,
+                judge_provider=judge_provider,
+                equivalent_models=equivalent_models,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                timeout=timeout,
+            )
             report = None
             if calibration_report is not None:
                 try:
@@ -495,27 +539,11 @@ def score(
                 evals_dir=evals_dir,
                 diagnostic_hard_failures=judge_hard_failures,
                 identity_inclusion_reason=identity_reason,
-                equivalent_models=tuple(aliases),
+                equivalent_models=aliases,
                 calibration_report=report,
                 resume=resume,
             )
-            typer.echo(f"Judge provider and model: {provider} / {model}")
-            typer.echo(f"Judge prompt version: {configuration.judge_prompt_version}")
-            typer.echo(
-                f"Rubric revisions: {', '.join(plan.rubric_revisions) or 'none'}"
-            )
-            typer.echo(f"Planned judge calls: {plan.planned_calls}")
-            typer.echo(f"Judge call limit: {limit_samples}")
-            typer.echo(f"Judge response token limit: {configuration.max_tokens}")
-            typer.echo(f"Judge call timeout: {configuration.timeout}s")
-            typer.echo(f"Judge temperature: {configuration.temperature}")
-            typer.echo(f"Reused judge results: {plan.reused_count}")
-            typer.echo(f"Scored Inspect log destination: {plan.destination}")
-            if plan.uncalibrated_count:
-                typer.echo(
-                    f"Judge samples without matching calibration: {plan.uncalibrated_count}",
-                    err=True,
-                )
+            _render_judge_plan(plan)
             if plan_only:
                 typer.echo("Provider calls: 0")
                 return

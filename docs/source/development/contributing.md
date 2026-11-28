@@ -334,6 +334,10 @@ Open the `gmuse_deterministic` score metadata for each sample to see its checks,
 hard gates, or unscored reason. Hard failures set usability to `unusable`.
 This workflow records objective checks and hard failure evidence.
 
+The runner saves the staged diff and context in a private `.gmuse-evidence/`
+directory beside the candidate log. Keep that directory with the log for
+later judge scoring. The log records content digests and locators.
+
 Live runs require explicit model selection, a positive sample cap covering the
 entire selected matrix. Preview the work before making provider calls with
 `--plan`:

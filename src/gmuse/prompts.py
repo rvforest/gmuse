@@ -31,6 +31,9 @@ logger = get_logger(__name__)
 PROMPT_VERSION: Final[str] = "1.0.0"
 """Version identifier for prompt format (useful for tracking/debugging)."""
 
+PROMPT_HISTORY_LIMIT: Final[int] = 5
+"""Maximum number of recent commits included as style context."""
+
 SYSTEM_PROMPT: Final[
     str
 ] = """You are an expert commit message generator. Your role is to analyze code changes and produce clear, informative commit messages that help developers understand what changed and why.
@@ -219,7 +222,7 @@ def build_context(
     # Add commit history if available
     if commit_history and commit_history.commits:
         parts.append("Recent commits for style reference:")
-        for commit in commit_history.commits[:5]:  # Limit to 5 commits
+        for commit in commit_history.commits[:PROMPT_HISTORY_LIMIT]:
             parts.append(f"- {commit.message}")
         parts.append("")  # Empty line
 

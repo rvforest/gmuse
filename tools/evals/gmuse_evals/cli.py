@@ -384,13 +384,18 @@ def _resolve_judge_options(
                 "Equivalent candidate models must use provider/model."
             )
         aliases.append((alias_provider.strip(), alias_model.strip()))
+    overrides = {
+        key: value
+        for key, value in (
+            ("temperature", temperature),
+            ("max_tokens", max_tokens),
+            ("timeout", timeout),
+        )
+        if value is not None
+    }
     try:
-        configuration = JudgeConfiguration(
-            judge_provider=provider,
-            judge_model=model,
-            temperature=0.0 if temperature is None else temperature,
-            max_tokens=1000 if max_tokens is None else max_tokens,
-            timeout=30 if timeout is None else timeout,
+        configuration = JudgeConfiguration.model_validate(
+            {"judge_provider": provider, "judge_model": model, **overrides}
         )
     except ValueError as error:
         raise InspectScoringError(

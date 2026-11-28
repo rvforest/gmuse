@@ -24,10 +24,9 @@ from pydantic import (
     model_validator,
 )
 
-from .taxonomy import HardFailureGateName, QualityError, UsabilityLabel
+from .taxonomy import HardFailureGateName, QualityError, ScoreRating, UsabilityLabel
 
 _NonBlank = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
-_Rating = Annotated[int, Field(strict=True, ge=1, le=4)]
 _RATING_FIELDS = ("accuracy", "message_quality", "style_context_fit", "usability")
 _EVENT_FILES = {"annotation": "annotations.jsonl", "override": "overrides.jsonl"}
 _PERSISTED_EVENT_FIELDS = {"schema_version", "event_id", "timestamp"}
@@ -57,9 +56,9 @@ class OverrideChanges(_ReviewModel):
     or previously added manual gates.
     """
 
-    accuracy: _Rating | None = None
-    message_quality: _Rating | None = None
-    style_context_fit: _Rating | None = None
+    accuracy: ScoreRating | None = None
+    message_quality: ScoreRating | None = None
+    style_context_fit: ScoreRating | None = None
     usability: UsabilityLabel | None = None
     quality_errors: tuple[QualityError, ...] = ()
     hard_failure_gates: tuple[HardFailureGateName, ...] = ()

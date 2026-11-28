@@ -20,7 +20,7 @@ from .judge import (
     run_judge,
 )
 from .results import ResolvedCase
-from .taxonomy import JudgeHardFailureGateName, UsabilityLabel
+from .taxonomy import RATING_MAX, RATING_MIN, JudgeHardFailureGateName, UsabilityLabel
 
 CALIBRATION_SCHEMA_VERSION = 1
 _DIMENSIONS = ("accuracy", "message_quality", "style_context_fit")
@@ -82,7 +82,8 @@ def _validate_example(example: CalibrationExample) -> None:
         raise ValueError("calibration hard-failure labels must belong to the taxonomy")
     for dimension, score in example.expected_scores.items():
         if dimension not in _DIMENSIONS or (
-            score is not None and (type(score) is not int or not 1 <= score <= 4)
+            score is not None
+            and (type(score) is not int or not RATING_MIN <= score <= RATING_MAX)
         ):
             raise ValueError(
                 "calibration scores must use the supported dimensions and scale"

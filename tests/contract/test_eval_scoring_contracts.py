@@ -1,6 +1,7 @@
 """Offline scoring contracts for saved gmuse Inspect logs."""
 
 from pathlib import Path
+from zipfile import ZipFile
 
 import pytest
 from inspect_ai.log import EvalLog, read_eval_log, write_eval_log
@@ -101,7 +102,7 @@ def test_offline_scoring_preserves_source_and_attaches_native_evidence(
     [
         ("unknown_version", "Unsupported gmuse runner log schema"),
         ("missing_samples", "no original candidate samples"),
-        ("suite_revision", "suite revision differs"),
+        ("missing_suite", "missing its suite identity"),
     ],
 )
 def test_incompatible_runner_logs_do_not_write_output(
@@ -114,7 +115,7 @@ def test_incompatible_runner_logs_do_not_write_output(
     elif change == "missing_samples":
         log.samples = None
     else:
-        log.eval.metadata["suite_version"] = "999"
+        del log.eval.metadata["suite_id"]
     source = tmp_path / "source.eval"
     write_eval_log(log, source)
     destination = tmp_path / "scored.eval"
@@ -125,26 +126,33 @@ def test_incompatible_runner_logs_do_not_write_output(
     assert not destination.exists()
 
 
-def test_scoring_rejects_version_one_log_with_raw_context(
-    candidate_log: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def test_scored_copy_omits_raw_context_from_legacy_headers(
+    candidate_log: Path, tmp_path: Path
 ) -> None:
-    original = candidate_log.read_bytes()
     log = _read_local_log(candidate_log)
     assert log.eval.metadata is not None
-    log.metadata["gmuse_eval_schema_version"] = "1.0"
-    log.metadata["effective_generation_defaults"] = {
+    log.eval.metadata["gmuse_eval_schema_version"] = "1.0"
+    log.eval.metadata["suite_version"] = "0"
+    log.eval.metadata["effective_generation_defaults"] = {
         "temperature": 0.2,
         "hint": "legacy private hint",
         "repository_instructions": "legacy private instructions",
     }
-    monkeypatch.setattr("inspect_ai.log.read_eval_log", lambda _stream: log)
+    source = tmp_path / "legacy.eval"
+    write_eval_log(log, source)
+    original = source.read_bytes()
     destination = tmp_path / "scored.eval"
 
-    with pytest.raises(InspectScoringError, match="Rerun the eval"):
-        score_inspect_log(candidate_log, destination, evals_dir=ASSETS)
+    summary = score_inspect_log(source, destination, evals_dir=ASSETS)
 
-    assert candidate_log.read_bytes() == original
-    assert not destination.exists()
+    assert source.read_bytes() == original
+    assert (summary.scored, summary.unscored, summary.hard_failed) == (1, 1, 1)
+    scored = _read_local_log(destination)
+    assert scored.metadata["effective_generation_defaults"] == {"temperature": 0.2}
+    with ZipFile(destination) as archive:
+        assert all(
+            b"legacy private" not in archive.read(name) for name in archive.namelist()
+        )
 
 
 def test_scoring_refuses_to_replace_any_existing_log(

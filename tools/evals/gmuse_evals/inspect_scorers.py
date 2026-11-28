@@ -10,7 +10,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any
 
-from .logs import EVAL_SCHEMA_VERSION
+from .logs import EVAL_SCHEMA_VERSION, public_generation_defaults
 from .scoring import score_deterministic
 from .validate import validate_suite
 
@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from inspect_ai.log import EvalLog
 
 DETERMINISTIC_SCORER_NAME = "gmuse_deterministic"
+LEGACY_RUN_SCHEMA_VERSION = "1.0"
 
 
 class InspectScoringError(ValueError):
@@ -33,6 +34,12 @@ class InspectScoringSummary:
     unscored: int
     hard_failed: int
     destination: Path
+
+
+def _omit_legacy_overrides(metadata: dict[str, Any]) -> None:
+    defaults = metadata.get("effective_generation_defaults")
+    if isinstance(defaults, dict):
+        metadata["effective_generation_defaults"] = public_generation_defaults(defaults)
 
 
 def _paths(source: Path, destination: Path) -> tuple[Path, Path]:
@@ -57,7 +64,7 @@ def _candidate_records(
     source: Path,
     evals_dir: Path,
 ) -> tuple[EvalLog, dict[tuple[int | str, int], dict[str, Any]]]:
-    from inspect_ai.log import read_eval_log
+    from inspect_ai.log import MetadataEdit, read_eval_log
 
     try:
         with source.open("rb") as stream:
@@ -65,10 +72,18 @@ def _candidate_records(
     except Exception as error:
         raise InspectScoringError("Cannot read the requested Inspect log.") from error
     run_metadata = log.metadata or {}
-    if run_metadata.get("gmuse_eval_schema_version") != EVAL_SCHEMA_VERSION:
+    version = run_metadata.get("gmuse_eval_schema_version")
+    if version not in (LEGACY_RUN_SCHEMA_VERSION, EVAL_SCHEMA_VERSION):
         raise InspectScoringError(
             "Unsupported gmuse runner log schema. Rerun the eval with the current runner."
         )
+    if version == LEGACY_RUN_SCHEMA_VERSION:
+        # The original runner could store raw CLI overrides in the header.
+        _omit_legacy_overrides(log.eval.metadata or {})
+        for update in log.log_updates or []:
+            for edit in update.edits:
+                if isinstance(edit, MetadataEdit):
+                    _omit_legacy_overrides(edit.metadata_set)
     if not log.samples:
         raise InspectScoringError("The Inspect log has no original candidate samples.")
     if log.eval.model_roles or any(
@@ -86,10 +101,6 @@ def _candidate_records(
         raise InspectScoringError("Cannot load the runner log's eval suite.") from error
     if validated.suite is None or validated.report.status != "passed":
         raise InspectScoringError("The runner log's eval suite did not validate.")
-    if run_metadata.get("suite_version") != str(validated.suite.revision):
-        raise InspectScoringError(
-            "The eval suite revision differs from the runner log."
-        )
     cases = {resolved.case.id: resolved for resolved in validated.resolved_cases}
 
     records = {}

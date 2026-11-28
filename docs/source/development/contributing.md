@@ -318,8 +318,10 @@ Git. Raw prompts are excluded from ordinary logs; use `--preserve-debug` only
 when troubleshooting and treat the resulting `.gmuse-evals/debug/` files as
 sensitive.
 
-Apply deterministic scoring to a candidate log from the current runner with a
-new output path. Rerun the eval if the log uses an older schema.
+Apply deterministic scoring to a saved candidate log using a new output path.
+Runner logs in schemas 1.0 and 2.0 are supported. The scorer checks each
+candidate against the matching case, fixture, and rubric revisions and records
+an unscored reason when the required inputs are unavailable.
 
 ```bash
 uv run python -m tools.evals.gmuse_evals score \

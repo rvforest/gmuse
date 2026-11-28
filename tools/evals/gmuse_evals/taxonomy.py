@@ -1,6 +1,8 @@
-"""Shared versions and categories for judge scoring and its metadata."""
+"""Shared versions, rating scale, and categories for scoring metadata."""
 
-from typing import Literal
+from typing import Annotated, Final, Literal
+
+from pydantic import Field
 
 from .schema import SCHEMA_VERSION, UsabilityLabel
 
@@ -8,6 +10,10 @@ SCORING_SCHEMA_VERSION = "1.0"
 JUDGE_OUTPUT_SCHEMA_VERSION = 1
 JUDGE_PROMPT_VERSION = 1
 TAXONOMY_VERSION = 1
+RATING_MIN: Final[int] = 1
+RATING_MAX: Final[int] = 4
+
+ScoreRating = Annotated[int, Field(strict=True, ge=RATING_MIN, le=RATING_MAX)]
 
 JudgeHardFailureGateName = Literal[
     "privacy_leak",
@@ -44,6 +50,8 @@ JudgeOperationalErrorCategory = Literal[
 __all__ = [
     "JUDGE_OUTPUT_SCHEMA_VERSION",
     "JUDGE_PROMPT_VERSION",
+    "RATING_MAX",
+    "RATING_MIN",
     "SCHEMA_VERSION",
     "SCORING_SCHEMA_VERSION",
     "TAXONOMY_VERSION",
@@ -51,5 +59,6 @@ __all__ = [
     "JudgeHardFailureGateName",
     "JudgeOperationalErrorCategory",
     "QualityError",
+    "ScoreRating",
     "UsabilityLabel",
 ]

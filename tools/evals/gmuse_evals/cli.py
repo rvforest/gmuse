@@ -16,6 +16,9 @@ from .inspect_runner import run_inspect_plan
 from .inspect_scorers import (
     InspectJudgePlan,
     InspectScoringError,
+    JudgeCallLimitExceeded,
+    JudgeCallLimitRequired,
+    UnsupportedJudgeRunLimits,
     execute_inspect_judge_plan,
     prepare_inspect_judge_plan,
     score_inspect_log,
@@ -419,6 +422,19 @@ def _render_judge_plan(plan: InspectJudgePlan) -> None:
         )
 
 
+def _scoring_error_message(error: InspectScoringError | ImportError) -> str:
+    """Add CLI guidance to errors from the scoring API."""
+    if isinstance(error, ImportError):
+        return "Install the development dependencies to score Inspect logs."
+    if isinstance(error, JudgeCallLimitRequired):
+        return "Live judging requires an explicit positive --limit-samples."
+    if isinstance(error, JudgeCallLimitExceeded):
+        return f"Planned judge calls {error.planned_calls} exceed --limit-samples {error.limit}."
+    if isinstance(error, UnsupportedJudgeRunLimits):
+        return f"{error} Use --limit-samples, --max-tokens, and --timeout."
+    return str(error)
+
+
 @app.command("score")
 def score(
     log: Path = typer.Option(..., "--log", help="Source candidate Inspect log."),
@@ -557,12 +573,7 @@ def score(
                     return
             summary = execute_inspect_judge_plan(plan, confirmed=True)
     except (InspectScoringError, ImportError) as error:
-        message = (
-            "Install the development dependencies to score Inspect logs."
-            if isinstance(error, ImportError)
-            else str(error)
-        )
-        typer.echo(f"Error: {message}", err=True)
+        typer.echo(f"Error: {_scoring_error_message(error)}", err=True)
         raise typer.Exit(code=2) from error
 
     typer.echo(f"Scored Inspect log: {summary.destination}")

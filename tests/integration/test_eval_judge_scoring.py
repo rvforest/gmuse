@@ -14,7 +14,11 @@ from tools.evals.gmuse_evals import judge
 from tools.evals.gmuse_evals.calibration import CalibrationExample, run_calibration
 from tools.evals.gmuse_evals.cli import app
 from tools.evals.gmuse_evals.inspect_runner import run_inspect_plan
-from tools.evals.gmuse_evals.run_plan import build_run_plan
+from tools.evals.gmuse_evals.inspect_scorers import (
+    InspectScoringError,
+    prepare_inspect_judge_plan,
+)
+from tools.evals.gmuse_evals.run_plan import Guardrails, build_run_plan
 from tools.evals.gmuse_evals.scoring_evidence import recover_scoring_evidence
 from tools.evals.gmuse_evals.validate import validate_suite
 
@@ -136,6 +140,50 @@ def test_live_plan_budget_confirmation_and_hard_gate_skip(
     assert all(
         record["judge_result"]["raw_response_metadata"]["sha256"] for record in judged
     )
+
+
+@pytest.mark.parametrize(
+    ("guardrails", "args", "guidance"),
+    [
+        (Guardrails(), [], "explicit positive --limit-samples"),
+        (
+            Guardrails(max_samples=2, max_tokens=100),
+            ["--limit-samples", "2", "--limit-tokens", "100"],
+            "Use --limit-samples, --max-tokens, and --timeout.",
+        ),
+        (
+            Guardrails(max_samples=1),
+            ["--limit-samples", "1"],
+            "Planned judge calls 2 exceed --limit-samples 1.",
+        ),
+    ],
+)
+def test_judge_limit_errors_get_flag_guidance_at_the_cli(
+    candidate_log: Path,
+    tmp_path: Path,
+    guardrails: Guardrails,
+    args: list[str],
+    guidance: str,
+) -> None:
+    output = tmp_path / "scored.eval"
+    with pytest.raises(InspectScoringError) as error:
+        prepare_inspect_judge_plan(
+            candidate_log,
+            output,
+            configuration=judge.JudgeConfiguration(
+                judge_provider="openai", judge_model="openai/gpt-4o-mini"
+            ),
+            guardrails=guardrails,
+            evals_dir=ASSETS,
+        )
+    assert "--" not in str(error.value)
+
+    result = CliRunner().invoke(
+        app, [*_args(candidate_log, output)[:-2], *args, "--plan"]
+    )
+    assert result.exit_code == 2, result.output
+    assert guidance in result.output
+    assert not output.exists()
 
 
 @pytest.mark.parametrize(

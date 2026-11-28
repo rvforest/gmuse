@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import uuid
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,7 +12,7 @@ from typing import Any
 
 from gmuse.commit import GenerationPromptMetadata, ValidationOutcome
 
-EVAL_SCHEMA_VERSION = "1.0"
+EVAL_SCHEMA_VERSION = "2.0"
 DEFAULT_INSPECT_LOG_DIR = Path(".gmuse-evals") / "inspect"
 
 
@@ -96,6 +97,20 @@ def independent_run_id(suite_id: str, mode: str) -> str:
     return f"{timestamp}-{suite_id}-{mode}-{uuid.uuid4().hex[:8]}"
 
 
+def public_generation_defaults(defaults: Mapping[str, object]) -> dict[str, object]:
+    """Keep generation settings that can appear in ordinary Inspect logs.
+
+    Example:
+        >>> public_generation_defaults({"max_chars": 80, "hint": "local context"})
+        {'max_chars': 80}
+    """
+    return {
+        key: value
+        for key, value in defaults.items()
+        if key not in {"hint", "repository_instructions"}
+    }
+
+
 def build_run_metadata(
     *,
     execution_mode: str,
@@ -119,7 +134,9 @@ def build_run_metadata(
         "selected_case_ids": list(selected_case_ids),
         "selected_model_ids": list(selected_model_ids),
         "deterministic_output_policy": deterministic_output_policy,
-        "effective_generation_defaults": effective_generation_defaults or {},
+        "effective_generation_defaults": public_generation_defaults(
+            effective_generation_defaults or {}
+        ),
         "prompt_version": prompt_version,
         "gmuse_project_revision": _project_revision(),
         "guardrails": guardrails or {},
@@ -266,6 +283,7 @@ __all__ = [
     "independent_run_id",
     "json_metadata",
     "locate_log_dir",
+    "public_generation_defaults",
     "resolve_log_dir",
     "summarize_results",
 ]

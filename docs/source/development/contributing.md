@@ -318,6 +318,22 @@ Git. Raw prompts are excluded from ordinary logs; use `--preserve-debug` only
 when troubleshooting and treat the resulting `.gmuse-evals/debug/` files as
 sensitive.
 
+Apply deterministic scoring to a saved candidate log using a new output path.
+Runner logs in schemas 1.0 and 2.0 are supported. The scorer checks each
+candidate against the matching case, fixture, and rubric revisions and records
+an unscored reason when the required inputs are unavailable.
+
+```bash
+uv run python -m tools.evals.gmuse_evals score \
+  --log ".gmuse-evals/inspect/<candidate-log>.eval" \
+  --output .gmuse-evals/scored/smoke.eval
+```
+
+The command makes zero provider calls and writes a separate Inspect log.
+Open the `gmuse_deterministic` score metadata for each sample to see its checks,
+hard gates, or unscored reason. Hard failures set usability to `unusable`.
+This workflow records objective checks and hard failure evidence.
+
 Live runs require explicit model selection, a positive sample cap covering the
 entire selected matrix. Preview the work before making provider calls with
 `--plan`:

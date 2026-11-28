@@ -12,6 +12,7 @@ from inspect_ai.log import read_eval_log
 from typer.testing import CliRunner
 
 from tools.evals.gmuse_evals import cli, judge
+from tools.evals.gmuse_evals.calibration import CalibrationExample, run_calibration
 from tools.evals.gmuse_evals.cli import app
 from tools.evals.gmuse_evals.inspect_runner import run_inspect_plan
 from tools.evals.gmuse_evals.inspect_scorers import (
@@ -19,6 +20,7 @@ from tools.evals.gmuse_evals.inspect_scorers import (
     prepare_inspect_judge_plan,
 )
 from tools.evals.gmuse_evals.run_plan import Guardrails, build_run_plan
+from tools.evals.gmuse_evals.scoring_evidence import recover_scoring_evidence
 from tools.evals.gmuse_evals.validate import validate_suite
 
 ASSETS = Path(__file__).resolve().parents[2] / "evals"
@@ -319,3 +321,66 @@ def test_judge_response_keeps_echoed_evidence_in_private_store(
             assert judged["rationales"]["accuracy"] == "[private evidence]"
             raw = candidate_log.parent / judged["raw_response_metadata"]["locator"]
             assert "diff --git" in json.loads(raw.read_text())["rationales"]["accuracy"]
+
+
+def test_calibration_report_is_linked_to_compatible_judgments(
+    candidate_log: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def provider(
+        _configuration: judge.JudgeConfiguration, prompt: judge.JudgePrompt
+    ) -> str:
+        return _response(prompt)
+
+    with candidate_log.open("rb") as stream:
+        log = read_eval_log(stream)
+    case = next(
+        item
+        for item in validate_suite(ASSETS, "smoke").resolved_cases
+        if item.case.id == "docs-history"
+    )
+    assert log.samples is not None
+    sample = next(
+        item for item in log.samples if item.metadata["case_id"] == case.case.id
+    )
+    evidence = recover_scoring_evidence(
+        candidate_log, sample.metadata, log.metadata, case
+    )
+    example = CalibrationExample(
+        example_id="docs-review",
+        resolved_case=case,
+        staged_diff=evidence.staged_diff,
+        context=evidence.context,
+        generated_message=sample.metadata["generated_message"],
+        format_name=sample.metadata["format"],
+        max_chars=sample.metadata["max_chars"],
+        expected_usability="usable",
+    )
+    report = run_calibration(
+        [example],
+        judge.JudgeConfiguration(
+            judge_model="openai/gpt-4o-mini", judge_provider="openai"
+        ),
+        expected_label_version="docs-labels-1",
+        provider_call=provider,
+    )
+    report_path = tmp_path / "report.json"
+    report_path.write_text(json.dumps(report), encoding="utf-8")
+    monkeypatch.setattr(judge, "default_judge_provider", provider)
+    output = tmp_path / "scored.eval"
+    result = CliRunner().invoke(
+        app,
+        [
+            *_args(candidate_log, output),
+            "--calibration-report",
+            str(report_path),
+            "--yes",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "Judge samples without matching calibration" not in result.output
+    judged = [record for record in _records(output) if record["judge_result"]]
+    assert len(judged) == 2
+    assert all(
+        record["calibration_report_id"] == report["calibration_report_id"]
+        for record in judged
+    )

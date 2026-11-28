@@ -11,6 +11,7 @@ from typing import Any
 from gmuse.credentials import infer_provider_from_model
 
 from . import judge
+from .calibration import compatible_calibration_report_id
 from .deterministic_checks import run_deterministic_checks
 from .inspect_adapter import stable_asset_digest
 from .results import ResolvedCase
@@ -191,6 +192,7 @@ def prepare_judge_scoring(
     diagnostic_hard_failures: bool,
     identity_inclusion_reason: str | None,
     equivalent_models: tuple[tuple[str, str], ...],
+    calibration_report: Mapping[str, object] | None,
 ) -> judge.JudgePrompt | None:
     """Prepare a verified judge request and enrich a deterministic score record.
 
@@ -268,6 +270,15 @@ def prepare_judge_scoring(
         judge_input_controls=prompt.input_controls.model_dump(mode="json"),
         self_judged=flags.self_judged,
         same_model_family=flags.same_model_family,
+    )
+    record["calibration_report_id"] = compatible_calibration_report_id(
+        calibration_report,
+        judge_configuration=configuration.model_dump(mode="json"),
+        rubric_identity=evidence.rubric_identity,
+        scoring_profile_identity=evidence.scoring_profile_identity,
+        bias_controls={
+            "candidate_identity_hidden": prompt.input_controls.candidate_identity_hidden
+        },
     )
     return prompt
 

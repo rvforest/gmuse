@@ -12,7 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from collections.abc import Iterator
+from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -128,6 +128,15 @@ class InspectJudgePlan:
         )
 
     @property
+    def uncalibrated_count(self) -> int:
+        """Count planned or reused judge assessments without matching calibration."""
+        return sum(
+            (sample.prompt is not None or sample.record.get("judge_result") is not None)
+            and sample.record.get("calibration_report_id") is None
+            for sample in self.samples.values()
+        )
+
+    @property
     def rubric_revisions(self) -> tuple[str, ...]:
         """Return the rubric IDs and revisions represented in the plan."""
         return tuple(
@@ -181,6 +190,7 @@ def _candidate_records(
     diagnostic_hard_failures: bool = False,
     identity_inclusion_reason: str | None = None,
     equivalent_models: tuple[tuple[str, str], ...] = (),
+    calibration_report: Mapping[str, object] | None = None,
 ) -> tuple[EvalLog, str | None, dict[tuple[int | str, int], _ScoringSample]]:
     log, source_digest = _read_log(source, digest=configuration is not None)
     run_metadata = log.metadata or {}
@@ -228,6 +238,7 @@ def _candidate_records(
                 diagnostic_hard_failures=diagnostic_hard_failures,
                 identity_inclusion_reason=identity_inclusion_reason,
                 equivalent_models=equivalent_models,
+                calibration_report=calibration_report,
             )
             if configuration is not None
             else None
@@ -308,6 +319,7 @@ def prepare_inspect_judge_plan(
     diagnostic_hard_failures: bool = False,
     identity_inclusion_reason: str | None = None,
     equivalent_models: tuple[tuple[str, str], ...] = (),
+    calibration_report: Mapping[str, object] | None = None,
     resume: Path | None = None,
 ) -> InspectJudgePlan:
     """Plan live judge scoring without calling a provider.
@@ -347,6 +359,7 @@ def prepare_inspect_judge_plan(
         diagnostic_hard_failures=diagnostic_hard_failures,
         identity_inclusion_reason=identity_inclusion_reason,
         equivalent_models=equivalent_models,
+        calibration_report=calibration_report,
     )
     plan = InspectJudgePlan(
         source=source,
@@ -506,6 +519,7 @@ def execute_inspect_judge_plan(
             sample.record["judge_configuration"].update(
                 guardrails=plan.guardrails.as_dict(),
                 rubric_revision=rubric.get("revision"),
+                calibration_report_id=sample.record["calibration_report_id"],
             )
         try:
             for sample in plan.samples.values():

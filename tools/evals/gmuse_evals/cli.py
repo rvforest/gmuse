@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from collections.abc import Sequence
@@ -420,6 +421,11 @@ def _render_judge_plan(plan: InspectJudgePlan) -> None:
     typer.echo(f"Judge temperature: {configuration.temperature}")
     typer.echo(f"Reused judge results: {plan.reused_count}")
     typer.echo(f"Scored Inspect log destination: {plan.destination}")
+    if plan.uncalibrated_count:
+        typer.echo(
+            f"Judge samples without matching calibration: {plan.uncalibrated_count}",
+            err=True,
+        )
 
 
 def _scoring_error_message(error: InspectScoringError | ImportError) -> str:
@@ -446,6 +452,19 @@ def _render_scoring_summary(summary: InspectScoringSummary, *, live: bool) -> No
     if live:
         typer.echo(f"Judge operational failures: {summary.judge_failures}")
     typer.echo(f"Provider calls: {summary.judge_calls}")
+
+
+def _load_calibration_report(path: Path | None) -> dict[str, object] | None:
+    """Read the optional calibration report as a JSON object."""
+    if path is None:
+        return None
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        raise InspectScoringError("Cannot read the calibration report JSON.") from error
+    if not isinstance(report, dict):
+        raise InspectScoringError("The calibration report must be a JSON object.")
+    return report
 
 
 @app.command("score")
@@ -498,6 +517,9 @@ def score(
         "--equivalent-candidate-model",
         help="Candidate provider/model to flag as self-judged. Repeat for aliases.",
     ),
+    calibration_report: Path | None = typer.Option(
+        None, "--calibration-report", help="Versioned calibration report JSON."
+    ),
     resume: Path | None = typer.Option(
         None, "--resume", help="Previous compatible scored Inspect log."
     ),
@@ -521,6 +543,7 @@ def score(
                 timeout,
                 identity_reason,
                 equivalent_models,
+                calibration_report,
                 resume,
             )
             if (
@@ -542,6 +565,7 @@ def score(
             max_tokens=max_tokens,
             timeout=timeout,
         )
+        report = _load_calibration_report(calibration_report)
         plan = prepare_inspect_judge_plan(
             log,
             output,
@@ -553,6 +577,7 @@ def score(
             diagnostic_hard_failures=judge_hard_failures,
             identity_inclusion_reason=identity_reason,
             equivalent_models=aliases,
+            calibration_report=report,
             resume=resume,
         )
         _render_judge_plan(plan)
